@@ -6,10 +6,10 @@
 
 # Variáveis
 RESOURCE_GROUP="clyvovet-rg"
-LOCATION="eastus2"
+LOCATION="canadacentral"
 VM_NAME="clyvovet-vm"
 VM_IMAGE="Ubuntu2204"
-VM_SIZE="Standard_D2s_v5"
+VM_SIZE="Standard_B2s_v2"
 ADMIN_USER="clyvovet"
 DNS_LABEL="clyvovet-api"
 
