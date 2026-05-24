@@ -128,7 +128,7 @@ http://localhost:8080/swagger-ui.html
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/tutores` | Lista todos (paginado). Filtros: `?nome=` `?cidade=` |
+| GET | `/tutores` | Lista todos (paginado). Filtros: nome, cidade |
 | GET | `/tutores/{id}` | Busca por ID |
 | POST | `/tutores` | Cadastra novo tutor |
 | PUT | `/tutores/{id}` | Atualiza tutor |
@@ -138,7 +138,7 @@ http://localhost:8080/swagger-ui.html
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/animais` | Lista todos (paginado). Filtros: `?nome=` `?especie=` |
+| GET | `/animais` | Lista todos (paginado). Filtros: nome, especie |
 | GET | `/animais/{id}` | Busca por ID |
 | POST | `/animais` | Cadastra novo animal |
 | PUT | `/animais/{id}` | Atualiza animal |
@@ -148,7 +148,7 @@ http://localhost:8080/swagger-ui.html
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/clinicas` | Lista todas (paginado). Filtros: `?nome=` `?cidade=` |
+| GET | `/clinicas` | Lista todas (paginado). Filtros: nome, cidade |
 | GET | `/clinicas/{id}` | Busca por ID |
 | POST | `/clinicas` | Cadastra nova clínica |
 | PUT | `/clinicas/{id}` | Atualiza clínica |
@@ -158,7 +158,7 @@ http://localhost:8080/swagger-ui.html
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/veterinarios` | Lista todos (paginado). Filtros: `?nome=` `?especialidade=` |
+| GET | `/veterinarios` | Lista todos (paginado). Filtros: nome, especialidade |
 | GET | `/veterinarios/{id}` | Busca por ID |
 | POST | `/veterinarios` | Cadastra novo veterinário |
 | PUT | `/veterinarios/{id}` | Atualiza veterinário |
@@ -168,7 +168,7 @@ http://localhost:8080/swagger-ui.html
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/eventos-clinicos` | Lista todos (paginado). Filtros: `?tipoEvento=` `?animalNome=` |
+| GET | `/eventos-clinicos` | Lista todos (paginado). Filtros: tipoEvento, animalNome |
 | GET | `/eventos-clinicos/{id}` | Busca por ID |
 | POST | `/eventos-clinicos` | Cadastra novo evento |
 | PUT | `/eventos-clinicos/{id}` | Atualiza evento |
@@ -180,7 +180,7 @@ Valores válidos para `tipoEvento`: `CONSULTA` `RETORNO` `VACINA` `EXAME` `CIRUR
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/pagamentos` | Lista todos (paginado). Filtros: `?statusPagamento=` `?formaPagamento=` |
+| GET | `/pagamentos` | Lista todos (paginado). Filtros: statusPagamento, formaPagamento |
 | GET | `/pagamentos/{id}` | Busca por ID |
 | POST | `/pagamentos` | Registra novo pagamento |
 | PUT | `/pagamentos/{id}` | Atualiza pagamento |
@@ -288,7 +288,7 @@ POST /pagamentos
 | Cache para otimizar requisições | ✅ todas as 6 entidades |
 | Tratamento de erros/exceções | ✅ GlobalExceptionHandler + EntityNotFoundException |
 | DTOs (Request/Response) | ✅ todas as 6 entidades |
-| Documentação com Swagger | ✅ `/swagger-ui.html` |
+| Documentação com Swagger | ✅ /swagger-ui.html |
 
 ---
 
@@ -349,101 +349,3 @@ bash deploy.sh
 ```
 
 O `deploy.sh` provisiona automaticamente uma VM Linux na Azure, instala Docker e Git, e sobe a aplicação via `docker-compose`.
-
-## Docker Compose
-
-```yaml
-services:
-  clyvovet-db:
-    image: oscarfonts/h2
-    container_name: clyvovet-db
-    ports:
-      - "1521:1521"
-      - "81:81"
-    environment:
-      - H2_OPTIONS=-ifNotExists
-    volumes:
-      - clyvovet-h2-data:/opt/h2-data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:81"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-
-  clyvovet-api:
-    build: .
-    container_name: clyvovet-api
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=h2
-    depends_on:
-      clyvovet-db:
-        condition: service_healthy
-    restart: unless-stopped
-
-volumes:
-  clyvovet-h2-data:
-    name: clyvovet-h2-data
-```
-
-## Script Azure CLI — deploy.sh
-
-Script completo para provisionar a infraestrutura na Azure e fazer o deploy automaticamente:
-
-```bash
-#!/bin/bash
-# ============================================================
-# CLYVO VET — Script Azure CLI
-# Provisiona VM Linux, instala Docker e Git, sobe a aplicação
-# ============================================================
-
-RESOURCE_GROUP="clyvovet-rg"
-LOCATION="canadacentral"
-VM_NAME="clyvovet-vm"
-VM_IMAGE="Ubuntu2204"
-VM_SIZE="Standard_B2s_v2"
-ADMIN_USER="clyvovet"
-DNS_LABEL="clyvovet-api"
-
-az group create --name $RESOURCE_GROUP --location $LOCATION
-
-az vm create \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --image $VM_IMAGE \
-  --size $VM_SIZE \
-  --admin-username $ADMIN_USER \
-  --generate-ssh-keys \
-  --public-ip-sku Standard \
-  --public-ip-address-dns-name $DNS_LABEL
-
-az vm open-port --resource-group $RESOURCE_GROUP --name $VM_NAME --port 8080 --priority 1001
-az vm open-port --resource-group $RESOURCE_GROUP --name $VM_NAME --port 80 --priority 1002
-
-az vm run-command invoke \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --command-id RunShellScript \
-  --scripts "
-    apt-get update -y &&
-    apt-get install -y git curl nano &&
-    curl -fsSL https://get.docker.com | sh &&
-    systemctl enable docker &&
-    systemctl start docker &&
-    usermod -aG docker $ADMIN_USER
-  "
-
-az vm run-command invoke \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --command-id RunShellScript \
-  --scripts "
-    cd /home/$ADMIN_USER &&
-    git clone https://github.com/leojp04/clyvovet-backend-java.git &&
-    cd clyvovet-backend-java &&
-    docker compose up -d --build
-  "
-```liv
