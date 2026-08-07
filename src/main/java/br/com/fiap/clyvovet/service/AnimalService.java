@@ -7,6 +7,7 @@ import br.com.fiap.clyvovet.model.Animal;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
+import br.com.fiap.clyvovet.security.SegurancaService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,10 +25,21 @@ public class AnimalService {
     private final AnimalRepository animalRepository;
     private final AnimalMapper animalMapper;
     private final TutorRepository tutorRepository;
+    private final SegurancaService seguranca;
 
-    @Cacheable(value = "animais", key = "#nome + '-' + #especie + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    /**
+     * A chave do cache inclui o tutor do usuario logado. Sem isso, a primeira
+     * listagem de um tutor seria servida a qualquer outro que usasse os mesmos
+     * filtros e paginacao — vazamento de dados entre contas.
+     *
+     * Usar #pageable inteiro em vez de pageNumber e pageSize traz o sort junto:
+     * antes, ?sort=nome,asc e ?sort=nome,desc colidiam na mesma chave e a
+     * segunda chamada recebia o resultado da primeira, na ordem errada.
+     */
+    @Cacheable(value = "animais",
+            key = "#nome + '-' + #especie + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
     public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pageable) {
-        return animalRepository.buscarPorFiltros(nome, especie, pageable)
+        return animalRepository.buscarPorFiltros(nome, especie, seguranca.tutorIdParaFiltro(), pageable)
                 .map(animalMapper::animalToResponse);
     }
 

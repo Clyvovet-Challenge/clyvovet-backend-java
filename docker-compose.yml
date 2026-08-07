@@ -24,6 +24,9 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=h2
+      # Defina JWT_SECRET no ambiente (ou num .env fora do versionamento).
+      # O default abaixo serve apenas para subir o compose localmente.
+      - JWT_SECRET=${JWT_SECRET:-ZGVzZW52b2x2aW1lbnRvLWNseXZvdmV0LWNoYXZlLWhtYWMtc2hhMjU2LWxvY2Fs}
     depends_on:
       clyvovet-db:
         condition: service_healthy

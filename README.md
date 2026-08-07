@@ -53,6 +53,22 @@ Este repositório contém o **backend Java/Spring Boot**, responsável por expor
 
 ---
 
+## Documentação Técnica
+
+A documentação completa do projeto está na pasta [`docs/`](docs/):
+
+| Documento | Conteúdo |
+|---|---|
+| [Arquitetura](docs/01-arquitetura.md) | Camadas, fluxo de requisição, cache, tratamento de erros |
+| [Modelo de Dados](docs/02-modelo-de-dados.md) | Entidades, relacionamentos, enums, schema Oracle |
+| [API REST](docs/03-api-rest.md) | Os 30 endpoints em detalhe, filtros, contratos, erros |
+| [Configuração](docs/04-configuracao.md) | Perfis Spring, propriedades, como rodar |
+| [Deploy](docs/05-deploy.md) | Docker, docker-compose, provisionamento Azure |
+| [Guia de Desenvolvimento](docs/06-guia-de-desenvolvimento.md) | Convenções, como adicionar entidades, testes |
+| [Pendências e Divergências](docs/07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e docs |
+
+---
+
 ## Pré-requisitos
 
 - Java 17+
@@ -296,10 +312,18 @@ POST /pagamentos
 
 ```
 clyvovet-backend-java/
+├── docs/                               # Documentação técnica completa
+│   ├── 01-arquitetura.md
+│   ├── 02-modelo-de-dados.md
+│   ├── 03-api-rest.md
+│   ├── 04-configuracao.md
+│   ├── 05-deploy.md
+│   ├── 06-guia-de-desenvolvimento.md
+│   └── 07-pendencias-e-divergencias.md
 ├── documentos/
 │   ├── Cronograma_CLYVOVET.pdf         # Cronograma de desenvolvimento
-│   ├── DiagramaClasses_CLYVOVET.pdf    # Diagrama de classes UML das entidades
-│   └── clyvovet_insomnia.json          # Coleção Insomnia para testes
+│   ├── Diagrama_De_Classes.pdf         # Diagrama de classes UML das entidades
+│   └── Post_*.png                      # Capturas dos POSTs testados
 ├── src/
 │   └── main/
 │       ├── java/br/com/fiap/clyvovet/

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -33,7 +34,10 @@ public class EventoClinicoController {
         return ResponseEntity.ok(eventoClinicoService.listarTodos(tipoEvento, animalNome, pageable));
     }
 
+    // Escrita ja e restrita a VETERINARIO/ADMIN pela regra de rota; aqui o que
+    // se protege e a leitura: um tutor so pode ver eventos dos proprios pets.
     @GetMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     @Operation(summary = "Buscar evento clínico por ID")
     public ResponseEntity<EventoClinicoResponse> buscarPorId(@PathVariable UUID id) {
         return ResponseEntity.ok(eventoClinicoService.buscarPorId(id));

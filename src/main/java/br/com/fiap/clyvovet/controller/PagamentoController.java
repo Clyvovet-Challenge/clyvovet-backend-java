@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -41,7 +42,9 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService.listarTodos(statusPagamento, formaPagamento, pageable));
     }
 
+    // Um tutor so enxerga a cobranca dos atendimentos dos proprios pets.
     @GetMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
     @Operation(summary = "Buscar pagamento por ID")
     public ResponseEntity<PagamentoResponse> buscarPorId(@PathVariable UUID id) {
         return ResponseEntity.ok(pagamentoService.buscarPorId(id));

@@ -22,7 +22,8 @@ public class ClinicaService {
     private final ClinicaRepository clinicaRepository;
     private final ClinicaMapper clinicaMapper;
 
-    @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    // Ver a nota sobre #pageable na chave em TutorService.
+    @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #pageable")
     public Page<ClinicaResponse> listarTodos(String nome, String cidade, Pageable pageable) {
         return clinicaRepository.buscarPorFiltros(nome, cidade, pageable)
                 .map(clinicaMapper::clinicaToResponse);

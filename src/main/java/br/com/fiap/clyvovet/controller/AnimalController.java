@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,7 +33,11 @@ public class AnimalController {
         return ResponseEntity.ok(animalService.listarTodos(nome, especie, pageable));
     }
 
+    // A regra de rota nao resolve ownership: qualquer tutor autenticado passaria
+    // por ela. @seguranca compara o dono do animal com o tutor do usuario logado
+    // e libera direto para VETERINARIO e ADMIN.
     @GetMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
     @Operation(summary = "Buscar animal por ID")
     public ResponseEntity<AnimalResponse> buscarPorId(@PathVariable UUID id) {
         return ResponseEntity.ok(animalService.buscarPorId(id));
@@ -45,6 +50,7 @@ public class AnimalController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
     @Operation(summary = "Atualizar animal existente")
     public ResponseEntity<AnimalResponse> atualizar(
             @PathVariable UUID id,
@@ -53,6 +59,7 @@ public class AnimalController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
     @Operation(summary = "Remover animal")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         animalService.deletar(id);

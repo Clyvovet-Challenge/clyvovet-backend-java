@@ -1,7 +1,15 @@
 -- ============================================================
 -- CLYVO VET — BANCO DE DADOS ORACLE
--- Script completo: tabelas + seed data
--- Execute no SQL Developer conectado ao Oracle FIAP
+--
+-- ⚠️ SCRIPT HISTORICO — NAO EXECUTE MAIS MANUALMENTE.
+--
+-- O schema passou a ser versionado pelo Flyway em db/migration/.
+-- Este arquivo fica no repositorio apenas como referencia da
+-- entrega da Sprint 1/2 e como origem do baseline: bancos criados
+-- por ele entram no Flyway com baseline-version=2, ou seja, V1 e V2
+-- sao consideradas ja aplicadas e a migracao segue da V3.
+--
+-- Para provisionar um banco novo, basta subir a aplicacao.
 -- ============================================================
 
 -- ------------------------------------------------------------

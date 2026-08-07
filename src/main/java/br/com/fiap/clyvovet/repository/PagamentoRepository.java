@@ -14,11 +14,14 @@ import java.util.UUID;
 public interface PagamentoRepository extends JpaRepository<Pagamento, UUID> {
 
 
+    /** Ver a nota sobre tutorId em {@link AnimalRepository}. */
     @Query("SELECT p FROM Pagamento p WHERE " +
             "(:statusPagamento IS NULL OR p.statusPagamento = :statusPagamento) AND " +
-            "(:formaPagamento IS NULL OR p.formaPagamento = :formaPagamento)")
+            "(:formaPagamento IS NULL OR p.formaPagamento = :formaPagamento) AND " +
+            "(:tutorId IS NULL OR p.eventoClinico.animal.tutor.id = :tutorId)")
     Page<Pagamento> buscarPorFiltros(
             @Param("statusPagamento") StatusPagamento statusPagamento,
             @Param("formaPagamento") FormaPagamento formaPagamento,
+            @Param("tutorId") UUID tutorId,
             Pageable pageable);
 }

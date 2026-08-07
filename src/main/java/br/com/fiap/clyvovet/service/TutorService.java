@@ -24,7 +24,9 @@ public class TutorService {
     private final TutorMapper tutorMapper;
     private final EnderecoMapper enderecoMapper;
 
-    @Cacheable(value = "tutores", key = "#nome + '-' + #cidade + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    // #pageable inclui o sort na chave; com pageNumber e pageSize apenas,
+    // ?sort=nome,asc e ?sort=nome,desc colidiam e devolviam a ordem errada.
+    @Cacheable(value = "tutores", key = "#nome + '-' + #cidade + '-' + #pageable")
     public Page<TutorResponse> listarTodos(String nome, String cidade, Pageable pageable) {
         return tutorRepository.buscarPorFiltros(nome, cidade, pageable)
                 .map(tutorMapper::tutorToResponse);

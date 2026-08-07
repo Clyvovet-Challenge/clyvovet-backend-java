@@ -5,6 +5,7 @@ import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
 import br.com.fiap.clyvovet.model.*;
 import br.com.fiap.clyvovet.repository.*;
+import br.com.fiap.clyvovet.security.SegurancaService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,10 +25,13 @@ public class EventoClinicoService {
     private final VeterinarioRepository veterinarioRepository;
     private final AnimalRepository animalRepository;
     private final ClinicaRepository clinicaRepository;
+    private final SegurancaService seguranca;
 
-    @Cacheable(value = "eventos", key = "#tipoEvento + '-' + #animalNome + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
+    @Cacheable(value = "eventos",
+            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
     public Page<EventoClinicoResponse> listarTodos(TipoEvento tipoEvento, String animalNome, Pageable pageable) {
-        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome, pageable)
+        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome, seguranca.tutorIdParaFiltro(), pageable)
                 .map(eventoClinicoMapper::toResponse);
     }
 

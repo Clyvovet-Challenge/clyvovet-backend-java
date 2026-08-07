@@ -12,11 +12,14 @@ import java.util.UUID;
 
 public interface EventoClinicoRepository extends JpaRepository<EventoClinico, UUID> {
 
+    /** Ver a nota sobre tutorId em {@link AnimalRepository}. */
     @Query("SELECT e FROM EventoClinico e WHERE " +
             "(:tipoEvento IS NULL OR e.tipoEvento = :tipoEvento) AND " +
-            "(:animalNome IS NULL OR LOWER(e.animal.nome) LIKE LOWER(CONCAT('%', :animalNome, '%')))")
+            "(:animalNome IS NULL OR LOWER(e.animal.nome) LIKE LOWER(CONCAT('%', :animalNome, '%'))) AND " +
+            "(:tutorId IS NULL OR e.animal.tutor.id = :tutorId)")
     Page<EventoClinico> buscarPorFiltros(
             @Param("tipoEvento") TipoEvento tipoEvento,
             @Param("animalNome") String animalNome,
+            @Param("tutorId") UUID tutorId,
             Pageable pageable);
 }

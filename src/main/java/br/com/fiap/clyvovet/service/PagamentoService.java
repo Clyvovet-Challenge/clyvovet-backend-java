@@ -9,6 +9,7 @@ import br.com.fiap.clyvovet.model.Pagamento;
 import br.com.fiap.clyvovet.model.StatusPagamento;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.PagamentoRepository;
+import br.com.fiap.clyvovet.security.SegurancaService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,6 +27,7 @@ public class PagamentoService {
     private final PagamentoRepository pagamentoRepository;
     private final EventoClinicoRepository eventoClinicoRepository;
     private final PagamentoMapper pagamentoMapper;
+    private final SegurancaService seguranca;
 
     @CacheEvict(value = "pagamentos", allEntries = true)
     public PagamentoResponse criar(PagamentoRequest request) {
@@ -41,9 +43,11 @@ public class PagamentoService {
     }
 
 
-    @Cacheable(value = "pagamentos", key = "#statusPagamento + '-' + #formaPagamento + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
+    @Cacheable(value = "pagamentos",
+            key = "#statusPagamento + '-' + #formaPagamento + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
     public Page<PagamentoResponse> listarTodos(StatusPagamento statusPagamento, FormaPagamento formaPagamento, Pageable pageable) {
-        return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento, pageable)
+        return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento, seguranca.tutorIdParaFiltro(), pageable)
                 .map(pagamentoMapper::toResponse);
     }
 

@@ -1,0 +1,86 @@
+# Specs — Java Advanced · Challenge FIAP 2026
+
+Requisitos da disciplina **JAVA ADVANCED** extraídos dos documentos oficiais do
+Challenge 2026 — 2º ano ADS, turmas de Fevereiro.
+
+Estas specs cobrem **apenas Java Advanced**. As demais disciplinas (DevOps, Mobile,
+Database, Compliance/QA, Disruptive Architectures) aparecem só onde criam uma
+dependência direta sobre o backend — ver [04-dependencias-externas.md](04-dependencias-externas.md).
+
+---
+
+## Índice
+
+| Documento | Conteúdo |
+|---|---|
+| [01-sprint-1-2.md](01-sprint-1-2.md) | Requisitos da entrega do 1º semestre (Sprints 1 e 2) + status no repositório |
+| [02-sprint-3.md](02-sprint-3.md) | Frontend, Flyway e Spring Security |
+| [03-sprint-4.md](03-sprint-4.md) | Entrega final: consolidação, deploy e apresentação |
+| [04-dependencias-externas.md](04-dependencias-externas.md) | O que outras disciplinas exigem deste backend |
+| [05-plano-de-implementacao.md](05-plano-de-implementacao.md) | Backlog derivado, mapeado ao código atual *(não consta no PDF)* |
+| [06-checklist-pre-sprint-3.md](06-checklist-pre-sprint-3.md) | Auditoria do repositório contra as specs + o que corrigir antes de começar *(não consta no PDF)* |
+
+Documentação técnica do que já existe: [`../docs/`](../docs/).
+
+---
+
+## Cronograma
+
+| Data | Evento | Responsável |
+|---|---|---|
+| 16/04 | Abertura do Challenge (kickoff) | Clyvo |
+| XX/05 | Mentoria online | Clyvo |
+| **24/05** | **Entrega Sprints 1 e 2** | Aluno |
+| até 07/06 | Feedback Sprints 1 e 2 | Professores |
+| 21/08/2026 | Mentoria Clyvo — presencial | Clyvo |
+| **12/09/2026** | **Entrega Sprint 3** | Aluno |
+| 26/09/2026 | Feedback Sprint 3 | Professores |
+| Setembro/2026* | Pré-banca de professores — seleção dos projetos | Professores |
+| Setembro/2026* | Apresentação banca final | Clyvo |
+| 24/10/2026 | NEXT | FIAP |
+| **04/11/2026** | **Entrega Sprint 4** | Aluno |
+| 11/11/2026 | Feedback Sprint 4 | Professores |
+
+\* Datas a divulgar pelo Teams.
+
+Entrega fora do prazo ou fora do portal na Sprint 4: **−100 pontos**.
+
+---
+
+## Status por sprint
+
+| Sprint | Entrega | Peso Java | Status |
+|---|---|---|---|
+| 1 e 2 | 24/05 | 100 pts | Entregue — API REST com 6 entidades |
+| 3 | 12/09/2026 | 100 pts | **Não iniciado** |
+| 4 | 04/11/2026 | 100 pts | Não iniciado |
+
+---
+
+## Regra que atravessa todas as sprints
+
+> "A implementação **apenas de operações de CRUD não será considerada suficiente**
+> para resolver de forma eficaz o problema proposto neste Challenge."
+> — Java Advanced, Sprint 1
+
+Esse é o critério mais estruturante da disciplina e vale desde a primeira entrega.
+O estado atual do repositório é CRUD puro sobre seis entidades: seis controllers
+idênticos, nenhum fluxo de negócio. A Sprint 3 formaliza a cobrança ao exigir
+"pelo menos dois fluxos completos do sistema (**exceto CRUD**)".
+
+O tema do Challenge é **continuidade do cuidado e engajamento na jornada de saúde do
+pet** — sair do modelo episódico/reativo para um contínuo, preventivo e integrado.
+Fluxos que atendam a isso são o que diferencia a nota.
+
+---
+
+## Regras gerais do Challenge (aplicáveis ao Java)
+
+| Regra | Detalhe |
+|---|---|
+| Times | Máximo 5 integrantes; desenvolvimento individual não é permitido |
+| Repositório | GitHub **público**, professores com acesso |
+| Histórico Git | Deve refletir construção real e evolução gradual |
+| Avaliação oral | Individual, em sala, a partir da Sprint 3 |
+| Uso de IA | Deve ser declarado na avaliação oral |
+| Plágio | Nota zero |

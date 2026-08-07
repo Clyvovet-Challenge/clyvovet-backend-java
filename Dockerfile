@@ -4,7 +4,9 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+# Os testes rodam no build: eles usam H2 em memoria (perfil dev fixado em
+# src/test/resources) e nao dependem mais de conectividade com o Oracle.
+RUN mvn clean package -B
 
 # Etapa 2: imagem final
 FROM eclipse-temurin:17-jre-jammy

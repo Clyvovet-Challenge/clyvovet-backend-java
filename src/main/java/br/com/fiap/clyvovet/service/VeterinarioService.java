@@ -25,7 +25,8 @@ public class VeterinarioService {
     private final VeterinarioMapper veterinarioMapper;
     private final ClinicaRepository clinicaRepository;
 
-    @Cacheable(value = "veterinarios", key = "#nome + '-' + #especialidade + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    // Ver a nota sobre #pageable na chave em TutorService.
+    @Cacheable(value = "veterinarios", key = "#nome + '-' + #especialidade + '-' + #pageable")
     public Page<VeterinarioResponse> listarTodos(String nome, String especialidade, Pageable pageable) {
         return veterinarioRepository.buscarPorFiltros(nome, especialidade, pageable)
                 .map(veterinarioMapper::veterinarioToResponse);
