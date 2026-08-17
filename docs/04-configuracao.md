@@ -254,9 +254,9 @@ Declaradas em [`pom.xml`](../pom.xml). Parent: `spring-boot-starter-parent:3.5.1
 | `org.projectlombok:lombok` | optional | getters, setters, construtores |
 | `spring-boot-starter-test` | test | JUnit 5, Mockito, AssertJ |
 
-Nenhum provider de cache (Caffeine, Redis, EhCache) é declarado, então o Spring Boot
-cai no `ConcurrentMapCacheManager` — cache em memória, sem TTL, sem limite de tamanho,
-não compartilhado entre instâncias.
+O provider de cache é o **Caffeine**, configurado em `CacheConfig` com expiração de
+10 minutos e limite de 1.000 entradas. Continua em memória e não compartilhado entre
+instâncias — com mais de uma réplica, o caminho seria Redis.
 
 ### Plugins de build
 

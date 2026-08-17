@@ -8,19 +8,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class EnderecoMapper {
 
-    public Endereco requestToEndereco(EnderecoRequest enderecoRequest){
+    public Endereco toEntity(EnderecoRequest request) {
+        if (request == null) {
+            return null;
+        }
         Endereco endereco = new Endereco();
-        endereco.setLogradouro(enderecoRequest.getLogradouro());
-        endereco.setNumero(enderecoRequest.getNumero());
-        endereco.setBairro(enderecoRequest.getBairro());
-        endereco.setCidade(enderecoRequest.getCidade());
-        endereco.setEstado(enderecoRequest.getEstado());
-        endereco.setCep(enderecoRequest.getCep());
-        endereco.setComplemento(enderecoRequest.getComplemento());
+        endereco.setLogradouro(request.getLogradouro());
+        endereco.setNumero(request.getNumero());
+        endereco.setBairro(request.getBairro());
+        endereco.setCidade(request.getCidade());
+        endereco.setEstado(request.getEstado());
+        endereco.setCep(request.getCep());
+        endereco.setComplemento(request.getComplemento());
         return endereco;
     }
 
-    public EnderecoResponse enderecoToResponse(Endereco endereco) {
+    /**
+     * Endereco e um @Embedded opcional: quando todas as colunas estao nulas, o
+     * Hibernate devolve null no lugar do objeto. Sem esta guarda, um cadastro
+     * antigo sem endereco derrubaria a listagem inteira com NullPointerException.
+     */
+    public EnderecoResponse toResponse(Endereco endereco) {
+        if (endereco == null) {
+            return null;
+        }
         return new EnderecoResponse(
                 endereco.getLogradouro(),
                 endereco.getNumero(),

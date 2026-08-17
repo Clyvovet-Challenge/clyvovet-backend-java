@@ -6,13 +6,16 @@ import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.Pagamento;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 public class PagamentoMapper {
 
     public Pagamento toEntity(PagamentoRequest request, EventoClinico eventoClinico) {
         Pagamento pagamento = new Pagamento();
+        atualizar(pagamento, request, eventoClinico);
+        return pagamento;
+    }
+
+    public void atualizar(Pagamento pagamento, PagamentoRequest request, EventoClinico eventoClinico) {
         pagamento.setFormaPagamento(request.getFormaPagamento());
         pagamento.setValor(request.getValor());
         pagamento.setDataPagamento(request.getDataPagamento());
@@ -20,23 +23,18 @@ public class PagamentoMapper {
         pagamento.setObservacao(request.getObservacao());
         pagamento.setStatusPagamento(request.getStatusPagamento());
         pagamento.setEventoClinico(eventoClinico);
-        return pagamento;
     }
 
     public PagamentoResponse toResponse(Pagamento pagamento) {
-        UUID eventoClinicoId = pagamento.getEventoClinico() != null
-                ? pagamento.getEventoClinico().getId()
-                : null;
-
-        PagamentoResponse response = new PagamentoResponse();
-        response.setId(pagamento.getId());
-        response.setFormaPagamento(pagamento.getFormaPagamento());
-        response.setValor(pagamento.getValor());
-        response.setDataPagamento(pagamento.getDataPagamento());
-        response.setDescricao(pagamento.getDescricao());
-        response.setObservacao(pagamento.getObservacao());
-        response.setStatusPagamento(pagamento.getStatusPagamento());
-        response.setEventoClinicoId(eventoClinicoId);
-        return response;
+        return new PagamentoResponse(
+                pagamento.getId(),
+                pagamento.getFormaPagamento(),
+                pagamento.getValor(),
+                pagamento.getDataPagamento(),
+                pagamento.getDescricao(),
+                pagamento.getObservacao(),
+                Referencias.de(pagamento.getEventoClinico(), EventoClinico::getId),
+                pagamento.getStatusPagamento()
+        );
     }
 }

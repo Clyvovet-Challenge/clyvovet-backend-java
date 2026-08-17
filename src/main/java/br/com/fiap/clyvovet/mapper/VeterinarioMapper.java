@@ -7,44 +7,15 @@ import br.com.fiap.clyvovet.model.Veterinario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
 public class VeterinarioMapper {
+
     private final EnderecoMapper enderecoMapper;
 
-    public VeterinarioResponse veterinarioToResponse(Veterinario veterinario) {
-        UUID clinicaId = veterinario.getClinica() != null ? veterinario.getClinica().getId() : null;
-        String clinicaNome = veterinario.getClinica() != null ? veterinario.getClinica().getNome() : null;
-
-        return new VeterinarioResponse(
-                veterinario.getId(),
-                veterinario.getNome(),
-                veterinario.getCpf(),
-                veterinario.getTelefone(),
-                veterinario.getEmail(),
-                veterinario.getCrmv(),
-                veterinario.getEspecialidade(),
-                veterinario.getDataNascimento(),
-                veterinario.getSexo(),
-                enderecoMapper.enderecoToResponse(veterinario.getEndereco()),
-                clinicaId,
-                clinicaNome
-        );
-    }
-
-    public Veterinario toEntity(VeterinarioRequest request) {
+    public Veterinario toEntity(VeterinarioRequest request, Clinica clinica) {
         Veterinario veterinario = new Veterinario();
-        veterinario.setNome(request.getNome());
-        veterinario.setCpf(request.getCpf());
-        veterinario.setCrmv(request.getCrmv());
-        veterinario.setEspecialidade(request.getEspecialidade());
-        veterinario.setTelefone(request.getTelefone());
-        veterinario.setEmail(request.getEmail());
-        veterinario.setDataNascimento(request.getDataNascimento());
-        veterinario.setSexo(request.getSexo());
-        veterinario.setEndereco(enderecoMapper.requestToEndereco(request.getEndereco()));
+        atualizar(veterinario, request, clinica);
         return veterinario;
     }
 
@@ -57,7 +28,24 @@ public class VeterinarioMapper {
         veterinario.setEmail(request.getEmail());
         veterinario.setDataNascimento(request.getDataNascimento());
         veterinario.setSexo(request.getSexo());
-        veterinario.setEndereco(enderecoMapper.requestToEndereco(request.getEndereco()));
+        veterinario.setEndereco(enderecoMapper.toEntity(request.getEndereco()));
         veterinario.setClinica(clinica);
+    }
+
+    public VeterinarioResponse toResponse(Veterinario veterinario) {
+        return new VeterinarioResponse(
+                veterinario.getId(),
+                veterinario.getNome(),
+                veterinario.getCpf(),
+                veterinario.getTelefone(),
+                veterinario.getEmail(),
+                veterinario.getCrmv(),
+                veterinario.getEspecialidade(),
+                veterinario.getDataNascimento(),
+                veterinario.getSexo(),
+                enderecoMapper.toResponse(veterinario.getEndereco()),
+                Referencias.de(veterinario.getClinica(), Clinica::getId),
+                Referencias.de(veterinario.getClinica(), Clinica::getNome)
+        );
     }
 }

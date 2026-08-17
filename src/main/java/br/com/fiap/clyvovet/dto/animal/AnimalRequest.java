@@ -35,6 +35,9 @@ public class AnimalRequest {
     private SexoAnimal sexo;
     @NotNull
     private LocalDate dataNascimento;
+    // Limite igual ao da coluna, VARCHAR2(1000): sem ele um texto maior passa
+    // pela validacao e so falha no INSERT, virando erro de servidor.
+    @Size(max = 1000)
     private String observacao;
     @NotNull
     private UUID tutorId;

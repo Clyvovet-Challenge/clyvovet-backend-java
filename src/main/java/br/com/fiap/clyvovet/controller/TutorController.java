@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,8 +44,8 @@ public class TutorController {
 
     @PostMapping
     @Operation(summary = "Cadastrar novo tutor")
-    public ResponseEntity<TutorResponse> criar(@Valid @RequestBody TutorRequest tutorRequest) {
-        return ResponseEntity.status(201).body(tutorService.salvar(tutorRequest));
+    public ResponseEntity<TutorResponse> criar(@Valid @RequestBody TutorRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(tutorService.criar(request));
     }
 
     @PutMapping("/{id}")
@@ -52,8 +53,8 @@ public class TutorController {
     @Operation(summary = "Atualizar tutor existente")
     public ResponseEntity<TutorResponse> atualizar(
             @PathVariable UUID id,
-            @Valid @RequestBody TutorRequest tutorRequest) {
-        return ResponseEntity.ok(tutorService.atualizar(id, tutorRequest));
+            @Valid @RequestBody TutorRequest request) {
+        return ResponseEntity.ok(tutorService.atualizar(id, request));
     }
 
     @DeleteMapping("/{id}")

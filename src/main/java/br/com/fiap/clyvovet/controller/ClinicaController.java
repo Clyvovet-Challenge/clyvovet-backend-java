@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +42,7 @@ public class ClinicaController {
     @PostMapping
     @Operation(summary = "Cadastrar nova clínica")
     public ResponseEntity<ClinicaResponse> criar(@Valid @RequestBody ClinicaRequest request) {
-        return ResponseEntity.status(201).body(clinicaService.salvar(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(clinicaService.criar(request));
     }
 
     @PutMapping("/{id}")

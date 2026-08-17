@@ -9,32 +9,38 @@ corrigir é do time.
 
 ## Resumo
 
-Os itens marcados ✅ foram resolvidos na Sprint 3 (Flyway + Spring Security).
+Os itens marcados ✅ foram resolvidos na Sprint 3 (Flyway + Spring Security) ou na
+revisão de código que veio depois dela — os itens 16 a 18 foram descobertos nessa
+revisão e já entraram corrigidos e cobertos por teste.
 
 | # | Item | Severidade | Área | Situação |
 |---|---|---|---|---|
 | 1 | `REEMBOLSADO` vs `ESTORNADO` no check constraint | Alta | Banco | ✅ migration `V4` |
 | 2 | Credenciais do Oracle versionadas em texto puro | Alta | Segurança | ✅ `DB_USERNAME`/`DB_PASSWORD` |
 | 3 | Unicidade só existe no banco → 500 em duplicidade | Média | Erros | ✅ 409 no handler |
-| 4 | Exclusão com dependentes → 500 | Média | Erros | aberto |
+| 4 | Exclusão com dependentes → 500 | Média | Erros | ✅ 409 no handler, coberto por `IntegridadeReferencialTest` |
 | 5 | Perfil `h2` não roda fora do Docker | Média | Configuração | ✅ documentado; use `dev` |
-| 6 | `@Size` em `crmv` e `telefone` rejeita o formato do seed | Média | Validação | aberto |
+| 6 | `@Size` em `crmv` e `telefone` rejeita o formato do seed | Média | Validação | ✅ `crmv` alinhado à coluna (30) |
 | 7 | `dataPagamento` obrigatória impede registrar pendente | Média | Validação | aberto |
 | 8 | Chave de cache ignora a ordenação | Média | Cache | ✅ `#pageable` na chave |
 | 9 | Cache não invalida entre entidades relacionadas | Média | Cache | aberto |
-| 10 | NPE em `endereco` ou `sexo` nulos | Média | Mapper | aberto |
-| 11 | Ausência de `@Transactional` nos services | Baixa | Consistência | parcial — só em `AuthService` |
+| 10 | NPE em `endereco` ou `sexo` nulos | Média | Mapper | ✅ null-guard no `EnderecoMapper`; `sexo` virou enum |
+| 11 | Ausência de `@Transactional` nos services | Baixa | Consistência | ✅ escritas e leituras anotadas |
 | 12 | `especie` e `porte` como texto livre | Baixa | Modelo | aberto |
-| 13 | Único teste, que depende do Oracle | Baixa | Testes | ✅ 27 testes, perfil fixo em `dev` |
+| 13 | Único teste, que depende do Oracle | Baixa | Testes | ✅ 98 testes, perfil fixo em `dev` |
 | 14 | README desatualizado na seção de estrutura | Baixa | Documentação | ✅ corrigido |
-| 15 | Inconsistências internas de padrão | Baixa | Código | aberto |
+| 15 | Inconsistências internas de padrão | Baixa | Código | ✅ parcial — resta `PagamentoRequest` com `@Data` |
+| 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito |
+| 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
+| 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
 
 **Novo — introduzido e corrigido na Sprint 3.** A chave de cache das listagens passou
 a precisar do `tutorId`: sem ele, a listagem de um tutor seria servida a outro. Está
 em [08-seguranca.md](08-seguranca.md#ownership) e coberta por
 `OwnershipTest.cacheNaoVazaEntreTutores`.
 
-Restam **8 itens abertos**, todos de severidade média ou baixa.
+Restam **3 itens abertos** (7, 9 e 12) e uma pendência parcial (15), todos de
+severidade média ou baixa.
 
 ---
 
@@ -148,6 +154,11 @@ Animal/Veterinario/Clinica→EventoClinico, EventoClinico→Pagamento.
 tratar `DataIntegrityViolationException` como no item 3. Cascata automática não é
 recomendada aqui — apagar um tutor não deveria apagar o histórico clínico do pet.
 
+**✅ Resolvido pelo caminho do item 3.** O handler devolve 409 com mensagem genérica, e
+`IntegridadeReferencialTest` fixa o comportamento nos três elos (tutor→animal,
+animal→evento, clínica→veterinário), inclusive verificando que o nome da constraint
+não vaza na resposta.
+
 ---
 
 ## 5. Perfil `h2` não roda fora do Docker
@@ -187,6 +198,11 @@ pela API**. Um cliente que leia um veterinário e tente reenviá-lo num `PUT` re
 **Correção:** decidir o formato canônico. Se for só dígitos, ampliar `crmv` para algo
 como 4–20 e normalizar o seed. Se for com máscara, ampliar `telefone` para até 20 e
 `crmv` para até 30. O importante é que API e seed concordem.
+
+**✅ Resolvido para `crmv`**, agora 4–30, igual à coluna;
+`CadastroCrudTest.aceitaCrmvNoFormatoReal` garante que o formato do conselho passa.
+O `telefone` não precisou de mudança: o seed grava só dígitos (`11990010001`), dentro
+do 10–11 já exigido — a máscara citada acima não existe nos dados.
 
 ---
 
@@ -292,6 +308,10 @@ tutor.getSexo().toString()   // NPE se genero estiver nulo no banco
 banco. Não acontece com dados criados pela API (os campos são `@NotNull`), mas
 acontece com registros inseridos direto no SQL Developer.
 
+**✅ Resolvido.** `EnderecoMapper.toResponse` e `toEntity` devolvem `null` para entrada
+nula, e `TutorResponse.sexo` passou a ser o enum — sem `toString()`, não há o que
+estourar.
+
 **Correção:** aplicar o mesmo null-guard já usado para as associações:
 
 ```java
@@ -318,6 +338,11 @@ pagamento associado.
 **Correção:** anotar as escritas com `@Transactional` e as leituras com
 `@Transactional(readOnly = true)`. O `readOnly` também sinaliza otimização ao
 Hibernate, que dispensa dirty checking.
+
+**✅ Aplicado.** Os seis services de CRUD e o `UsuarioService` levam
+`@Transactional(readOnly = true)` na classe e `@Transactional` nas escritas.
+`AuthService.login` segue **sem** transação de propósito — ver a nota na própria
+classe e o item de bloqueio de conta em [08-seguranca](08-seguranca.md).
 
 ---
 
@@ -404,6 +429,108 @@ diferentes em `/tutores` e `/veterinarios` no contrato da API — o que é visí
 cliente. `AnimalRequest.observacao` sem `@Size(max = 1000)` deixa passar textos que o
 Oracle vai truncar ou rejeitar.
 
+**✅ Resolvido em parte.** `PagamentoService.salvar` virou `criar`, `PagamentoResponse`
+virou `record` e `TutorResponse.sexo` passou a ser o enum `Sexo` (o JSON não muda — o
+Jackson já serializava o enum pelo nome). Os mappers uniformizaram
+`toEntity`/`atualizar`/`toResponse`. Continuam abertos: `EventoClinico.hora` como
+`String` (agora ao menos com `@NotBlank`), `PagamentoRequest` com `@Data`,
+`AnimalRequest.observacao` sem `@Size` e a ordem de campos de `Endereco`.
+
+---
+
+## 16. Filtros por texto nunca casavam
+
+**Severidade: alta** — descoberto na revisão de código pós-Sprint 3.
+
+Toda listagem filtrada por texto devolvia lista vazia: `GET /veterinarios?nome=Camila`
+retornava `totalElements: 0` com a Camila cadastrada. Só o filtro vazio funcionava,
+por cair no ramo `:nome IS NULL`.
+
+A causa está no SQL que o Hibernate gera para o `LIKE` do JPQL:
+
+```sql
+lower(v1_0.nome) like lower(('%'||?||'%')) escape ''
+```
+
+O `escape ''` é emitido pelo Hibernate. Sob a semântica do Oracle — que o H2 imita
+com `MODE=Oracle`, usado nos perfis `dev` e `h2` — **string vazia é NULL**. O predicado
+vira `ESCAPE NULL`, avalia como desconhecido e nunca é verdadeiro. O efeito não aparecia
+nos testes porque nenhum deles exercitava os filtros: as listagens são testadas com o
+recorte por tutor, em que o parâmetro de texto vai nulo.
+
+**Correção aplicada:** declarar o escape explicitamente nas cinco queries que usam
+`LIKE`, em `Animal`, `Clinica`, `Tutor`, `Veterinario` e `EventoClinico`:
+
+```java
+"(:nome IS NULL OR LOWER(v.nome) LIKE LOWER(CONCAT('%', :nome, '%')) ESCAPE '\\')"
+```
+
+Verificado no perfil `dev`: `?nome=Camila`, `?nome=camila` (a busca é case-insensitive),
+`?especialidade=Cardio`, `?cidade=Sao` e `?animalNome=Bolinha` passaram a retornar os
+registros esperados. **Ainda não foi verificado no perfil `oracle`**, que é o alvo de
+entrega — vale repetir um filtro simples lá antes de fechar o item.
+
+---
+
+## 17. `tutorId` do corpo não passava por checagem de dono
+
+**Severidade: alta** — descoberto na revisão de código pós-Sprint 3.
+
+O ownership de animal era verificado pelo id da URL, e só por ele:
+
+```java
+@PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
+```
+
+Só que quem define o dono do pet é o campo `tutorId`, que vem no **corpo**. Nenhuma
+regra olhava esse campo, e `POST /animais` não tinha regra nenhuma além de "estar
+autenticado". Um tutor logado, portanto:
+
+- cadastrava pet no nome de outro tutor — o dono legítimo passava a ver na própria
+  listagem um animal que nunca cadastrou;
+- transferia o próprio pet para outro tutor num `PUT`, perdendo o acesso a ele e
+  empurrando o registro para a conta alheia.
+
+**Correção aplicada:** a escrita passou a fazer as duas perguntas, e não só a primeira.
+
+```java
+@PostMapping
+@PreAuthorize("@seguranca.podeAcessarTutor(#request.tutorId)")
+
+@PutMapping("/{id}")
+@PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
+```
+
+`podeAcessarTutor` já liberava `VETERINARIO` e `ADMIN`, então a clínica continua
+cadastrando pet para qualquer tutor. Coberto por
+`OwnershipTest.tutorNaoCadastraPetParaTerceiro`,
+`OwnershipTest.tutorNaoTransfereOProprioPet` e, do lado positivo,
+`AtendimentoCrudTest.tutorCadastraOProprioPet`.
+
+Os outros recursos não tinham a mesma brecha: evento e pagamento só podem ser
+escritos por `VETERINARIO`/`ADMIN`, pela regra de rota.
+
+---
+
+## 18. Validação mais permissiva que a coluna
+
+**Severidade: média** — descoberto na revisão de código pós-Sprint 3.
+
+Mesma família do item 6, na direção contrária: onde o DTO aceitava mais do que a
+coluna comporta, o valor passava pelo Bean Validation e só falhava no INSERT. O
+cliente recebia erro de servidor por um dado que ele mesmo poderia corrigir.
+
+| Campo | Coluna | Validação antes | Agora |
+|---|---|---|---|
+| `EventoClinico.hora` | `VARCHAR2(5)` | `@NotNull` (aceitava `""` e `"14:30:00"`) | `@NotBlank` + `@Pattern` HH:mm |
+| `Animal.observacao` | `VARCHAR2(1000)` | sem limite | `@Size(max = 1000)` |
+| `Endereco.numero` | `VARCHAR2(10)` | sem limite | `@Size(max = 10)` |
+
+**Correção aplicada:** os três passam a responder 400 com o campo indicado, em vez de
+500. `ValidacaoDeEntradaTest` cobre o limite exato (1000 caracteres passa, 1001 não) e
+os horários de borda (`00:00` e `23:59` passam; `25:00`, `9:00`, `14:30:00` e vazio
+não).
+
 ---
 
 ## Melhorias sugeridas (não são defeitos)
@@ -412,10 +539,9 @@ Itens fora do escopo do Challenge, registrados para quem for evoluir o projeto:
 
 | Tema | Sugestão |
 |---|---|
-| Segurança | Spring Security com JWT; hoje a API é totalmente aberta |
-| Cache | Trocar o `ConcurrentMapCacheManager` por Caffeine com TTL, ou Redis se houver mais de uma instância |
+| Cache | Redis no lugar do Caffeine, se houver mais de uma instância — hoje o cache é por processo |
+| Rate limit | Mesma observação: `bucket4j-redis` para o limite valer no conjunto, e não por réplica |
 | Observabilidade | `spring-boot-starter-actuator` para health check e métricas |
-| Migrations | Flyway ou Liquibase no lugar do SQL manual + `ddl-auto` |
 | Consultas | Endpoint de histórico clínico por animal e de totalizadores financeiros por período |
 | Auditoria | `@CreatedDate`/`@LastModifiedDate` via `@EnableJpaAuditing` |
 | Deploy | Reverse proxy com HTTPS na VM Azure; a porta 80 é aberta mas ninguém escuta nela |

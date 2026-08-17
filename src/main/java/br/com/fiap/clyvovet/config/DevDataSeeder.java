@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Cria os usuarios de desenvolvimento.
@@ -68,8 +69,7 @@ public class DevDataSeeder {
                 usuario -> tutorRepository.findById(tutorId).ifPresent(usuario::setTutor));
     }
 
-    private void salvarSeAusente(String email, String senha, Perfil perfil,
-                                 java.util.function.Consumer<Usuario> vincular) {
+    private void salvarSeAusente(String email, String senha, Perfil perfil, Consumer<Usuario> vincular) {
         if (usuarioRepository.existsByEmail(email)) {
             return;
         }

@@ -1,98 +1,93 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.support.SeedV2;
+import br.com.fiap.clyvovet.support.TesteDeApi;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Isolamento entre tutores.
  *
  * Regra de rota nao cobre isto: os dois tutores tem o mesmo perfil e passariam
- * igualmente por ela. A verificacao acontece em duas frentes, e as duas
- * precisam ser testadas — acesso por id (@PreAuthorize) e listagem (filtro na
- * query, incluido tambem na chave do cache).
+ * igualmente por ela. A verificacao acontece em tres frentes, e as tres
+ * precisam ser testadas — acesso por id (@PreAuthorize), listagem (filtro na
+ * query, incluido tambem na chave do cache) e o dono informado no CORPO da
+ * requisicao, que nao aparece na URL.
  *
  * Dados vindos da migration V2: Lucas e dono do Bolinha; Maria, da Mimi e do Rex.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-class OwnershipTest {
+class OwnershipTest extends TesteDeApi {
 
-    private static final String BOLINHA_DO_LUCAS = "44444444-4444-4444-4444-000000000001";
-    private static final String MIMI_DA_MARIA = "44444444-4444-4444-4444-000000000002";
-    private static final String TUTOR_LUCAS = "22222222-2222-2222-2222-000000000001";
-    private static final String TUTOR_MARIA = "22222222-2222-2222-2222-000000000002";
-
-    @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
-
-    private String token(String email) throws Exception {
-        String senha = email.startsWith("camila") ? "vet12345" : "tutor12345";
-        String corpo = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"%s\",\"senha\":\"%s\"}".formatted(email, senha)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(corpo).get("accessToken").asText();
-    }
+    private static final String ANIMAL = """
+            {"nome":"%s","raca":"Siames","especie":"GATO","porte":"PEQUENO","cor":"Bege",
+             "sexo":"FEMEA","dataNascimento":"2021-07-05","tutorId":"%s"}""";
 
     private JsonNode listarAnimais(String token) throws Exception {
-        String corpo = mockMvc.perform(get("/animais").header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(corpo);
+        return corpoDe(buscar("/animais", token).andExpect(status().isOk()));
     }
 
     @Test
     @DisplayName("tutor nao acessa pet de outro tutor pelo id")
     void tutorNaoAcessaPetDeTerceiro() throws Exception {
-        String lucas = token("lucas.santos@email.com");
+        String lucas = tokenTutor(LUCAS);
 
-        mockMvc.perform(get("/animais/" + BOLINHA_DO_LUCAS).header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/animais/" + MIMI_DA_MARIA).header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isForbidden());
+        buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas).andExpect(status().isOk());
+        buscar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("tutor nao altera nem remove pet de outro tutor")
     void tutorNaoEscreveEmPetDeTerceiro() throws Exception {
-        String lucas = token("lucas.santos@email.com");
+        String lucas = tokenTutor(LUCAS);
 
-        mockMvc.perform(delete("/animais/" + MIMI_DA_MARIA).header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isForbidden());
+        remover("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
 
         // Corpo VALIDO de proposito. O binding do @RequestBody acontece antes do
         // @PreAuthorize, entao um corpo invalido pararia em 400 e o teste nao
         // chegaria a exercitar a autorizacao — que e o que se quer provar aqui.
-        String animalValido = """
-                {"nome":"Sequestrado","raca":"Siames","especie":"GATO","porte":"PEQUENO",
-                 "cor":"Bege","sexo":"FEMEA","dataNascimento":"2021-07-05",
-                 "tutorId":"%s"}""".formatted(TUTOR_LUCAS);
-
-        mockMvc.perform(put("/animais/" + MIMI_DA_MARIA).header("Authorization", "Bearer " + lucas)
-                        .contentType(MediaType.APPLICATION_JSON).content(animalValido))
+        atualizar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas,
+                ANIMAL.formatted("Sequestrado", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isForbidden());
+    }
+
+    /**
+     * O tutorId vem do corpo, e nao da URL: a regra que protege o pet pelo id
+     * nao ve esse campo. Sem uma checagem propria, um tutor cadastrava pet no
+     * nome de qualquer outro — e o dono legitimo passava a enxergar na propria
+     * listagem um animal que nunca cadastrou.
+     */
+    @Test
+    @DisplayName("tutor nao cadastra pet no nome de outro tutor")
+    void tutorNaoCadastraPetParaTerceiro() throws Exception {
+        criar("/animais", tokenTutor(LUCAS), ANIMAL.formatted("Pet Alheio", SeedV2.TUTOR_MARIA))
+                .andExpect(status().isForbidden());
+
+        assertThat(listarAnimais(tokenTutor(MARIA)).get("content")).hasSize(2);
+    }
+
+    /** Mesma brecha na direcao contraria: dar o proprio pet a outro tutor. */
+    @Test
+    @DisplayName("tutor nao transfere o proprio pet para outro tutor")
+    void tutorNaoTransfereOProprioPet() throws Exception {
+        String lucas = tokenTutor(LUCAS);
+
+        atualizar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas,
+                ANIMAL.formatted("Bolinha", SeedV2.TUTOR_MARIA))
+                .andExpect(status().isForbidden());
+
+        assertThat(corpoDe(buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas))
+                .get("tutorId").asText()).isEqualTo(SeedV2.TUTOR_LUCAS);
     }
 
     @Test
     @DisplayName("listagem de animais mostra apenas os pets do proprio tutor")
     void listagemDeAnimaisEIsoladaPorTutor() throws Exception {
-        JsonNode doLucas = listarAnimais(token("lucas.santos@email.com"));
-        JsonNode daMaria = listarAnimais(token("maria.oliveira@email.com"));
+        JsonNode doLucas = listarAnimais(tokenTutor(LUCAS));
+        JsonNode daMaria = listarAnimais(tokenTutor(MARIA));
 
         assertThat(doLucas.get("content")).hasSize(1);
         assertThat(doLucas.get("content").get(0).get("nome").asText()).isEqualTo("Bolinha");
@@ -104,8 +99,8 @@ class OwnershipTest {
     @Test
     @DisplayName("cache nao vaza a listagem de um tutor para outro")
     void cacheNaoVazaEntreTutores() throws Exception {
-        String lucas = token("lucas.santos@email.com");
-        String maria = token("maria.oliveira@email.com");
+        String lucas = tokenTutor(LUCAS);
+        String maria = tokenTutor(MARIA);
 
         // Primeira chamada popula o cache; a segunda, com filtros e paginacao
         // identicos, so devolve o resultado certo porque o tutor entra na chave.
@@ -117,38 +112,26 @@ class OwnershipTest {
     @Test
     @DisplayName("veterinario enxerga a base inteira")
     void veterinarioEnxergaTudo() throws Exception {
-        JsonNode todos = listarAnimais(token("camila.ferreira@vetcare.com.br"));
+        String veterinaria = tokenVeterinaria();
 
-        assertThat(todos.get("totalElements").asInt()).isEqualTo(6);
-        mockMvc.perform(get("/animais/" + MIMI_DA_MARIA)
-                        .header("Authorization", "Bearer " + token("camila.ferreira@vetcare.com.br")))
-                .andExpect(status().isOk());
+        assertThat(listarAnimais(veterinaria).get("totalElements").asInt()).isEqualTo(6);
+        buscar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, veterinaria).andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("tutor le o proprio cadastro, mas nao o de terceiros")
     void tutorSoLeOProprioCadastro() throws Exception {
-        String lucas = token("lucas.santos@email.com");
+        String lucas = tokenTutor(LUCAS);
 
-        mockMvc.perform(get("/tutores/" + TUTOR_LUCAS).header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/tutores/" + TUTOR_MARIA).header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isForbidden());
+        buscar("/tutores/" + SeedV2.TUTOR_LUCAS, lucas).andExpect(status().isOk());
+        buscar("/tutores/" + SeedV2.TUTOR_MARIA, lucas).andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("eventos e pagamentos tambem sao isolados por tutor")
     void eventosEPagamentosSaoIsolados() throws Exception {
-        String lucas = token("lucas.santos@email.com");
-        String vet = token("camila.ferreira@vetcare.com.br");
-
-        String eventosLucas = mockMvc.perform(get("/eventos-clinicos").header("Authorization", "Bearer " + lucas))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        String eventosVet = mockMvc.perform(get("/eventos-clinicos").header("Authorization", "Bearer " + vet))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-
-        int totalLucas = objectMapper.readTree(eventosLucas).get("totalElements").asInt();
-        int totalVet = objectMapper.readTree(eventosVet).get("totalElements").asInt();
+        int totalLucas = totalDe(buscar("/eventos-clinicos", tokenTutor(LUCAS)).andExpect(status().isOk()));
+        int totalVet = totalDe(buscar("/eventos-clinicos", tokenVeterinaria()).andExpect(status().isOk()));
 
         assertThat(totalLucas).isEqualTo(6);   // apenas os eventos do Bolinha
         assertThat(totalVet).isEqualTo(11);    // todos

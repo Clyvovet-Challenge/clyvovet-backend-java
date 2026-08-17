@@ -1,14 +1,10 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.support.TesteDeApi;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,33 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * filtros — inclusive o JwtAuthenticationFilter. Usa os usuarios criados pelo
  * DevDataSeeder sobre o seed da migration V2.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-class AutorizacaoTest {
-
-    @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
-
-    private String token(String email, String senha) throws Exception {
-        String corpo = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"%s\",\"senha\":\"%s\"}".formatted(email, senha)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(corpo).get("accessToken").asText();
-    }
-
-    private String tokenAdmin() throws Exception {
-        return token("admin@clyvovet.com", "admin12345");
-    }
-
-    private String tokenVeterinario() throws Exception {
-        return token("camila.ferreira@vetcare.com.br", "vet12345");
-    }
-
-    private String tokenTutor() throws Exception {
-        return token("lucas.santos@email.com", "tutor12345");
-    }
+class AutorizacaoTest extends TesteDeApi {
 
     @Test
     @DisplayName("sem token, qualquer recurso responde 401")
@@ -59,8 +29,7 @@ class AutorizacaoTest {
     @Test
     @DisplayName("token invalido responde 401")
     void tokenInvalidoRetorna401() throws Exception {
-        mockMvc.perform(get("/animais").header("Authorization", "Bearer token.completamente.invalido"))
-                .andExpect(status().isUnauthorized());
+        buscar("/animais", "token.completamente.invalido").andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -72,28 +41,20 @@ class AutorizacaoTest {
     @Test
     @DisplayName("tutor nao lista tutores nem cria evento clinico")
     void tutorNaoAcessaRecursosDoCorpoClinico() throws Exception {
-        String tutor = tokenTutor();
+        String tutor = tokenTutor(LUCAS);
 
-        mockMvc.perform(get("/tutores").header("Authorization", "Bearer " + tutor))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(post("/eventos-clinicos").header("Authorization", "Bearer " + tutor)
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(post("/auth/usuarios").header("Authorization", "Bearer " + tutor)
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isForbidden());
+        buscar("/tutores", tutor).andExpect(status().isForbidden());
+        criar("/eventos-clinicos", tutor, "{}").andExpect(status().isForbidden());
+        criar("/auth/usuarios", tutor, "{}").andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("veterinario lista tutores, mas nao administra clinicas")
     void veterinarioTemEscopoClinicoENaoAdministrativo() throws Exception {
-        String vet = tokenVeterinario();
+        String veterinaria = tokenVeterinaria();
 
-        mockMvc.perform(get("/tutores").header("Authorization", "Bearer " + vet))
-                .andExpect(status().isOk());
-        mockMvc.perform(post("/clinicas").header("Authorization", "Bearer " + vet)
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isForbidden());
+        buscar("/tutores", veterinaria).andExpect(status().isOk());
+        criar("/clinicas", veterinaria, "{}").andExpect(status().isForbidden());
     }
 
     @Test
@@ -101,12 +62,9 @@ class AutorizacaoTest {
     void adminAlcancaRotasAdministrativas() throws Exception {
         String admin = tokenAdmin();
 
-        mockMvc.perform(get("/tutores").header("Authorization", "Bearer " + admin))
-                .andExpect(status().isOk());
+        buscar("/tutores", admin).andExpect(status().isOk());
         // 400 e nao 403: passou pela autorizacao e parou na validacao do corpo.
-        mockMvc.perform(post("/clinicas").header("Authorization", "Bearer " + admin)
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isBadRequest());
+        criar("/clinicas", admin, "{}").andExpect(status().isBadRequest());
     }
 
     @Test
@@ -114,12 +72,11 @@ class AutorizacaoTest {
     void refreshTokenNaoAutenticaApi() throws Exception {
         String corpo = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"lucas.santos@email.com\",\"senha\":\"tutor12345\"}"))
+                        .content("{\"email\":\"%s\",\"senha\":\"tutor12345\"}".formatted(LUCAS)))
                 .andReturn().getResponse().getContentAsString();
         String refresh = objectMapper.readTree(corpo).get("refreshToken").asText();
 
-        mockMvc.perform(get("/animais").header("Authorization", "Bearer " + refresh))
-                .andExpect(status().isUnauthorized());
+        buscar("/animais", refresh).andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -8,53 +8,38 @@ import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.Veterinario;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 public class EventoClinicoMapper {
 
-    public EventoClinicoResponse toResponse(EventoClinico evento) {
-        UUID veterinarioId = evento.getVeterinario() != null ? evento.getVeterinario().getId() : null;
-        String veterinarioNome = evento.getVeterinario() != null ? evento.getVeterinario().getNome() : null;
-        UUID animalId = evento.getAnimal() != null ? evento.getAnimal().getId() : null;
-        String animalNome = evento.getAnimal() != null ? evento.getAnimal().getNome() : null;
-        UUID clinicaId = evento.getClinica() != null ? evento.getClinica().getId() : null;
-        String clinicaNome = evento.getClinica() != null ? evento.getClinica().getNome() : null;
+    public EventoClinico toEntity(EventoClinicoRequest request, RelacionamentosDoEvento relacionamentos) {
+        EventoClinico evento = new EventoClinico();
+        atualizar(evento, request, relacionamentos);
+        return evento;
+    }
 
+    public void atualizar(EventoClinico evento, EventoClinicoRequest request, RelacionamentosDoEvento relacionamentos) {
+        evento.setData(request.getData());
+        evento.setHora(request.getHora());
+        evento.setDescricao(request.getDescricao());
+        evento.setTipoEvento(request.getTipoEvento());
+        evento.setVeterinario(relacionamentos.veterinario());
+        evento.setAnimal(relacionamentos.animal());
+        evento.setClinica(relacionamentos.clinica());
+    }
+
+    public EventoClinicoResponse toResponse(EventoClinico evento) {
         return new EventoClinicoResponse(
                 evento.getId(),
                 evento.getData(),
                 evento.getHora(),
                 evento.getDescricao(),
                 evento.getTipoEvento(),
-                veterinarioId,
-                veterinarioNome,
-                animalId,
-                animalNome,
-                clinicaId,
-                clinicaNome
+                Referencias.de(evento.getVeterinario(), Veterinario::getId),
+                Referencias.de(evento.getVeterinario(), Veterinario::getNome),
+                Referencias.de(evento.getAnimal(), Animal::getId),
+                Referencias.de(evento.getAnimal(), Animal::getNome),
+                Referencias.de(evento.getClinica(), Clinica::getId),
+                Referencias.de(evento.getClinica(), Clinica::getNome)
         );
-    }
-
-    public EventoClinico toEntity(EventoClinicoRequest request, Veterinario veterinario, Animal animal, Clinica clinica) {
-        EventoClinico evento = new EventoClinico();
-        evento.setData(request.getData());
-        evento.setHora(request.getHora());
-        evento.setDescricao(request.getDescricao());
-        evento.setTipoEvento(request.getTipoEvento());
-        evento.setVeterinario(veterinario);
-        evento.setAnimal(animal);
-        evento.setClinica(clinica);
-        return evento;
-    }
-
-    public void atualizar(EventoClinico evento, EventoClinicoRequest request, Veterinario veterinario, Animal animal, Clinica clinica) {
-        evento.setData(request.getData());
-        evento.setHora(request.getHora());
-        evento.setDescricao(request.getDescricao());
-        evento.setTipoEvento(request.getTipoEvento());
-        evento.setVeterinario(veterinario);
-        evento.setAnimal(animal);
-        evento.setClinica(clinica);
     }
 }

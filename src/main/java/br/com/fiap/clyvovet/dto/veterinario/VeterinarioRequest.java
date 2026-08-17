@@ -42,8 +42,13 @@ public class VeterinarioRequest {
     @NotBlank
     @Size(min = 3, max = 100)
     private String especialidade;
+    /**
+     * O limite acompanha a coluna, VARCHAR2(30). Com o antigo max = 6 a API
+     * recusava o formato usado pelo proprio sistema — o seed cadastra
+     * "CRMV-SP 14320", que tem 13 caracteres e nunca passaria por aqui.
+     */
     @NotBlank
-    @Size(min = 4, max = 6)
+    @Size(min = 4, max = 30)
     private String crmv;
     @NotNull
     private UUID clinicaId;

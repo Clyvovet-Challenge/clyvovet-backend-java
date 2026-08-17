@@ -15,6 +15,7 @@ public class EnderecoRequest {
     @Size(min = 3, max = 100)
     private String logradouro;
     @NotBlank
+    @Size(max = 10)   // coluna VARCHAR2(10)
     private String numero;
     @NotBlank
     @Size(min = 3, max = 100)

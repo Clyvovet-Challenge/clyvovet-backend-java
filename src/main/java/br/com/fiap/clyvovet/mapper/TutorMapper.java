@@ -9,23 +9,35 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class TutorMapper {
+
     private final EnderecoMapper enderecoMapper;
-    public TutorResponse tutorToResponse(Tutor tutor) {
-        return new TutorResponse(tutor.getId(), tutor.getNome(), tutor.getEmail(), tutor.getTelefone(), tutor.getSexo().toString(), tutor.getDataNascimento(), tutor.getCpf(), enderecoMapper.enderecoToResponse(tutor.getEndereco()));
-    }
 
-
-
-    public Tutor requestToTutor(TutorRequest request){
+    public Tutor toEntity(TutorRequest request) {
         Tutor tutor = new Tutor();
-        tutor.setCpf(request.getCpf());
-        tutor.setNome(request.getNome());
-        tutor.setDataNascimento(request.getDataNascimento());
-        tutor.setSexo(request.getSexo());
-        tutor.setEmail(request.getEmail());
-        tutor.setTelefone(request.getTelefone());
-        tutor.setEndereco(enderecoMapper.requestToEndereco(request.getEndereco()));
+        atualizar(tutor, request);
         return tutor;
     }
 
+    public void atualizar(Tutor tutor, TutorRequest request) {
+        tutor.setNome(request.getNome());
+        tutor.setCpf(request.getCpf());
+        tutor.setEmail(request.getEmail());
+        tutor.setTelefone(request.getTelefone());
+        tutor.setSexo(request.getSexo());
+        tutor.setDataNascimento(request.getDataNascimento());
+        tutor.setEndereco(enderecoMapper.toEntity(request.getEndereco()));
+    }
+
+    public TutorResponse toResponse(Tutor tutor) {
+        return new TutorResponse(
+                tutor.getId(),
+                tutor.getNome(),
+                tutor.getEmail(),
+                tutor.getTelefone(),
+                tutor.getSexo(),
+                tutor.getDataNascimento(),
+                tutor.getCpf(),
+                enderecoMapper.toResponse(tutor.getEndereco())
+        );
+    }
 }

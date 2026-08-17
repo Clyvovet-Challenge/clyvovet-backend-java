@@ -5,18 +5,19 @@ import br.com.fiap.clyvovet.dto.clinica.ClinicaResponse;
 import br.com.fiap.clyvovet.mapper.ClinicaMapper;
 import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ClinicaService {
 
     private final ClinicaRepository clinicaRepository;
@@ -26,34 +27,31 @@ public class ClinicaService {
     @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #pageable")
     public Page<ClinicaResponse> listarTodos(String nome, String cidade, Pageable pageable) {
         return clinicaRepository.buscarPorFiltros(nome, cidade, pageable)
-                .map(clinicaMapper::clinicaToResponse);
+                .map(clinicaMapper::toResponse);
     }
 
     public ClinicaResponse buscarPorId(UUID id) {
-        return clinicaRepository.findById(id)
-                .map(clinicaMapper::clinicaToResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + id));
+        return clinicaMapper.toResponse(clinicaRepository.obterPorId(id));
     }
 
+    @Transactional
     @CacheEvict(value = "clinicas", allEntries = true)
-    public ClinicaResponse salvar(ClinicaRequest request) {
-        return clinicaMapper.clinicaToResponse(
-                clinicaRepository.save(clinicaMapper.toEntity(request)));
+    public ClinicaResponse criar(ClinicaRequest request) {
+        return clinicaMapper.toResponse(clinicaRepository.save(clinicaMapper.toEntity(request)));
     }
 
+    @Transactional
     @CacheEvict(value = "clinicas", allEntries = true)
     public ClinicaResponse atualizar(UUID id, ClinicaRequest request) {
-        Clinica clinica = clinicaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + id));
+        Clinica clinica = clinicaRepository.obterPorId(id);
         clinicaMapper.atualizar(clinica, request);
-        return clinicaMapper.clinicaToResponse(clinicaRepository.save(clinica));
+        return clinicaMapper.toResponse(clinicaRepository.save(clinica));
     }
 
+    @Transactional
     @CacheEvict(value = "clinicas", allEntries = true)
     public void deletar(UUID id) {
-        if (!clinicaRepository.existsById(id)) {
-            throw new EntityNotFoundException("Clínica não encontrada com ID: " + id);
-        }
+        clinicaRepository.garantirQueExiste(id);
         clinicaRepository.deleteById(id);
     }
 }

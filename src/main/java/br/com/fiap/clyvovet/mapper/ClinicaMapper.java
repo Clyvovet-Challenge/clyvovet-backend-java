@@ -9,19 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ClinicaMapper {
+
     private final EnderecoMapper enderecoMapper;
 
-    public ClinicaResponse clinicaToResponse(Clinica clinica) {
-        return new ClinicaResponse(clinica.getId(),clinica.getNome(), clinica.getCnpj(), clinica.getTelefone(), clinica.getEmail(),enderecoMapper.enderecoToResponse(clinica.getEndereco()));
-    }
-
-    public Clinica toEntity(ClinicaRequest request){
+    public Clinica toEntity(ClinicaRequest request) {
         Clinica clinica = new Clinica();
-        clinica.setNome(request.getNome());
-        clinica.setCnpj(request.getCnpj());
-        clinica.setTelefone(request.getTelefone());
-        clinica.setEmail(request.getEmail());
-        clinica.setEndereco(enderecoMapper.requestToEndereco(request.getEndereco()));
+        atualizar(clinica, request);
         return clinica;
     }
 
@@ -30,6 +23,17 @@ public class ClinicaMapper {
         clinica.setCnpj(request.getCnpj());
         clinica.setTelefone(request.getTelefone());
         clinica.setEmail(request.getEmail());
-        clinica.setEndereco(enderecoMapper.requestToEndereco(request.getEndereco()));
+        clinica.setEndereco(enderecoMapper.toEntity(request.getEndereco()));
+    }
+
+    public ClinicaResponse toResponse(Clinica clinica) {
+        return new ClinicaResponse(
+                clinica.getId(),
+                clinica.getNome(),
+                clinica.getCnpj(),
+                clinica.getTelefone(),
+                clinica.getEmail(),
+                enderecoMapper.toResponse(clinica.getEndereco())
+        );
     }
 }

@@ -8,10 +8,10 @@ import lombok.Setter;
 
 import java.util.UUID;
 
-@Getter          // gera todos os getters
-@Setter          // gera todos os setters
-@NoArgsConstructor   // gera construtor vazio
-@AllArgsConstructor  // gera construtor com todos os campos
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Clinica {
 

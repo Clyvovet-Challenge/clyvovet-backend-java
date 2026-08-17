@@ -4,27 +4,32 @@ import br.com.fiap.clyvovet.dto.animal.AnimalRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalResponse;
 import br.com.fiap.clyvovet.mapper.AnimalMapper;
 import br.com.fiap.clyvovet.model.Animal;
-import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Casos de uso de animal. Orquestra repositorio, mapeamento e cache — a copia
+ * campo a campo entre DTO e entidade fica no {@link AnimalMapper}, e a decisao
+ * de "quem enxerga o que" no {@link SegurancaService}.
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AnimalService {
 
     private final AnimalRepository animalRepository;
-    private final AnimalMapper animalMapper;
     private final TutorRepository tutorRepository;
+    private final AnimalMapper animalMapper;
     private final SegurancaService seguranca;
 
     /**
@@ -40,46 +45,32 @@ public class AnimalService {
             key = "#nome + '-' + #especie + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
     public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pageable) {
         return animalRepository.buscarPorFiltros(nome, especie, seguranca.tutorIdParaFiltro(), pageable)
-                .map(animalMapper::animalToResponse);
+                .map(animalMapper::toResponse);
     }
 
     public AnimalResponse buscarPorId(UUID id) {
-        return animalRepository.findById(id)
-                .map(animalMapper::animalToResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Animal não encontrado com ID: " + id));
+        return animalMapper.toResponse(animalRepository.obterPorId(id));
     }
 
+    @Transactional
     @CacheEvict(value = "animais", allEntries = true)
-    public AnimalResponse salvar(AnimalRequest request) {
-        Tutor tutor = tutorRepository.findById(request.getTutorId())
-                .orElseThrow(() -> new EntityNotFoundException("Tutor não encontrado com ID: " + request.getTutorId()));
-        Animal animal = animalMapper.toEntity(request, tutor);
-        return animalMapper.animalToResponse(animalRepository.save(animal));
+    public AnimalResponse criar(AnimalRequest request) {
+        Animal animal = animalMapper.toEntity(request, tutorRepository.obterPorId(request.getTutorId()));
+        return animalMapper.toResponse(animalRepository.save(animal));
     }
 
+    @Transactional
     @CacheEvict(value = "animais", allEntries = true)
     public AnimalResponse atualizar(UUID id, AnimalRequest request) {
-        Animal animal = animalRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Animal não encontrado com ID: " + id));
-        Tutor tutor = tutorRepository.findById(request.getTutorId())
-                .orElseThrow(() -> new EntityNotFoundException("Tutor não encontrado com ID: " + request.getTutorId()));
-        animal.setNome(request.getNome());
-        animal.setRaca(request.getRaca());
-        animal.setEspecie(request.getEspecie());
-        animal.setPorte(request.getPorte());
-        animal.setCor(request.getCor());
-        animal.setSexo(request.getSexo());
-        animal.setDataNascimento(request.getDataNascimento());
-        animal.setObservacao(request.getObservacao());
-        animal.setTutor(tutor);
-        return animalMapper.animalToResponse(animalRepository.save(animal));
+        Animal animal = animalRepository.obterPorId(id);
+        animalMapper.atualizar(animal, request, tutorRepository.obterPorId(request.getTutorId()));
+        return animalMapper.toResponse(animalRepository.save(animal));
     }
 
+    @Transactional
     @CacheEvict(value = "animais", allEntries = true)
     public void deletar(UUID id) {
-        if (!animalRepository.existsById(id)) {
-            throw new EntityNotFoundException("Animal não encontrado com ID: " + id);
-        }
+        animalRepository.garantirQueExiste(id);
         animalRepository.deleteById(id);
     }
 }

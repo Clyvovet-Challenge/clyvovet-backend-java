@@ -3,28 +3,34 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
-import br.com.fiap.clyvovet.model.*;
-import br.com.fiap.clyvovet.repository.*;
+import br.com.fiap.clyvovet.mapper.RelacionamentosDoEvento;
+import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.TipoEvento;
+import br.com.fiap.clyvovet.repository.AnimalRepository;
+import br.com.fiap.clyvovet.repository.ClinicaRepository;
+import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
+import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EventoClinicoService {
 
     private final EventoClinicoRepository eventoClinicoRepository;
-    private final EventoClinicoMapper eventoClinicoMapper;
     private final VeterinarioRepository veterinarioRepository;
     private final AnimalRepository animalRepository;
     private final ClinicaRepository clinicaRepository;
+    private final EventoClinicoMapper eventoClinicoMapper;
     private final SegurancaService seguranca;
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
@@ -36,43 +42,39 @@ public class EventoClinicoService {
     }
 
     public EventoClinicoResponse buscarPorId(UUID id) {
-        return eventoClinicoRepository.findById(id)
-                .map(eventoClinicoMapper::toResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Evento clínico não encontrado com ID: " + id));
+        return eventoClinicoMapper.toResponse(eventoClinicoRepository.obterPorId(id));
     }
 
+    @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
-    public EventoClinicoResponse salvar(EventoClinicoRequest request) {
-        Veterinario veterinario = veterinarioRepository.findById(request.getVeterinarioId())
-                .orElseThrow(() -> new EntityNotFoundException("Veterinário não encontrado com ID: " + request.getVeterinarioId()));
-        Animal animal = animalRepository.findById(request.getAnimalId())
-                .orElseThrow(() -> new EntityNotFoundException("Animal não encontrado com ID: " + request.getAnimalId()));
-        Clinica clinica = clinicaRepository.findById(request.getClinicaId())
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + request.getClinicaId()));
-        return eventoClinicoMapper.toResponse(
-                eventoClinicoRepository.save(
-                        eventoClinicoMapper.toEntity(request, veterinario, animal, clinica)));
-    }
-
-    @CacheEvict(value = "eventos", allEntries = true)
-    public EventoClinicoResponse atualizar(UUID id, EventoClinicoRequest request) {
-        EventoClinico evento = eventoClinicoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Evento clínico não encontrado com ID: " + id));
-        Veterinario veterinario = veterinarioRepository.findById(request.getVeterinarioId())
-                .orElseThrow(() -> new EntityNotFoundException("Veterinário não encontrado com ID: " + request.getVeterinarioId()));
-        Animal animal = animalRepository.findById(request.getAnimalId())
-                .orElseThrow(() -> new EntityNotFoundException("Animal não encontrado com ID: " + request.getAnimalId()));
-        Clinica clinica = clinicaRepository.findById(request.getClinicaId())
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + request.getClinicaId()));
-        eventoClinicoMapper.atualizar(evento, request, veterinario, animal, clinica);
+    public EventoClinicoResponse criar(EventoClinicoRequest request) {
+        EventoClinico evento = eventoClinicoMapper.toEntity(request, resolverRelacionamentos(request));
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
+    @Transactional
+    @CacheEvict(value = "eventos", allEntries = true)
+    public EventoClinicoResponse atualizar(UUID id, EventoClinicoRequest request) {
+        EventoClinico evento = eventoClinicoRepository.obterPorId(id);
+        eventoClinicoMapper.atualizar(evento, request, resolverRelacionamentos(request));
+        return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
+    }
+
+    @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
     public void deletar(UUID id) {
-        if (!eventoClinicoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Evento clínico não encontrado com ID: " + id);
-        }
+        eventoClinicoRepository.garantirQueExiste(id);
         eventoClinicoRepository.deleteById(id);
+    }
+
+    /**
+     * Criar e atualizar precisam das mesmas tres entidades, com a mesma regra de
+     * "existe ou 404". Estava escrito duas vezes, doze linhas cada.
+     */
+    private RelacionamentosDoEvento resolverRelacionamentos(EventoClinicoRequest request) {
+        return new RelacionamentosDoEvento(
+                veterinarioRepository.obterPorId(request.getVeterinarioId()),
+                animalRepository.obterPorId(request.getAnimalId()),
+                clinicaRepository.obterPorId(request.getClinicaId()));
     }
 }

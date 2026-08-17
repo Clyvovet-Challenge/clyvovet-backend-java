@@ -60,8 +60,9 @@ src/main/java/br/com/fiap/clyvovet/
 ├── ClyvovetApplication.java
 ├── controller/    AnimalController · ClinicaController · EventoClinicoController
 │                  PagamentoController · TutorController · VeterinarioController
-├── service/       (mesmos 6 nomes, sufixo Service)
-├── repository/    (mesmos 6 nomes, sufixo Repository)
+├── service/       (mesmos 6 nomes, sufixo Service) · AuthService · UsuarioService
+├── repository/    (mesmos 6 nomes, sufixo Repository) · UsuarioRepository
+│                  RepositorioBase (obterPorId · garantirQueExiste)
 ├── model/         Animal · Clinica · Endereco · EventoClinico · Pagamento
 │                  Tutor · Veterinario
 │                  FormaPagamento · Sexo · SexoAnimal · StatusPagamento · TipoEvento
@@ -75,8 +76,10 @@ src/main/java/br/com/fiap/clyvovet/
 │   ├── tutor/          TutorRequest · TutorResponse
 │   └── veterinario/    VeterinarioRequest · VeterinarioResponse
 ├── mapper/        AnimalMapper · ClinicaMapper · EnderecoMapper · EventoClinicoMapper
-│                  PagamentoMapper · TutorMapper · VeterinarioMapper
-└── exception/     GlobalExceptionHandler
+│                  PagamentoMapper · TutorMapper · UsuarioMapper · VeterinarioMapper
+│                  Referencias · RelacionamentosDoEvento
+└── exception/     GlobalExceptionHandler · RegraDeNegocioException
+                   RecursoNaoEncontradoException · Recurso
 ```
 
 ---
@@ -205,17 +208,21 @@ cliente de uma segunda chamada.
 
 ## Cache
 
-Configuração: `spring-boot-starter-cache` sem provider explícito → o Spring Boot
-instancia um `ConcurrentMapCacheManager`. Cache **em memória, por instância, sem TTL
-e sem limite de tamanho**.
+Configuração: `spring-boot-starter-cache` com Caffeine, montado em
+[`CacheConfig`](../src/main/java/br/com/fiap/clyvovet/config/CacheConfig.java) —
+**expiração de 10 minutos e teto de 1.000 entradas**, em memória e por instância.
+
+O `ConcurrentMapCacheManager` padrão foi trocado justamente por não ter nenhum dos
+dois limites: com o `tutorId` na chave, o número de combinações possíveis passou a
+crescer junto com a base de usuários.
 
 | Cache | Alimentado por | Invalidado por |
 |---|---|---|
-| `tutores` | `TutorService.listarTodos` | salvar, atualizar, deletar de Tutor |
-| `animais` | `AnimalService.listarTodos` | salvar, atualizar, deletar de Animal |
-| `clinicas` | `ClinicaService.listarTodos` | salvar, atualizar, deletar de Clinica |
-| `veterinarios` | `VeterinarioService.listarTodos` | salvar, atualizar, deletar de Veterinario |
-| `eventos` | `EventoClinicoService.listarTodos` | salvar, atualizar, deletar de EventoClinico |
+| `tutores` | `TutorService.listarTodos` | criar, atualizar, deletar de Tutor |
+| `animais` | `AnimalService.listarTodos` | criar, atualizar, deletar de Animal |
+| `clinicas` | `ClinicaService.listarTodos` | criar, atualizar, deletar de Clinica |
+| `veterinarios` | `VeterinarioService.listarTodos` | criar, atualizar, deletar de Veterinario |
+| `eventos` | `EventoClinicoService.listarTodos` | criar, atualizar, deletar de EventoClinico |
 | `pagamentos` | `PagamentoService.listarTodos` | criar, atualizar, deletar de Pagamento |
 
 **Só as listagens são cacheadas.** `buscarPorId` vai ao banco toda vez.

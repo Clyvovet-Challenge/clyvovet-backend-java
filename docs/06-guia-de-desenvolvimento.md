@@ -66,11 +66,18 @@ public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pa
 | Camada | Métodos |
 |---|---|
 | Controller | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `deletar` |
-| Service | `listarTodos`, `buscarPorId`, `salvar`, `atualizar`, `deletar` |
-| Repository | `buscarPorFiltros` + herdados de `JpaRepository` |
-| Mapper | `toEntity`, `atualizar`, `{entidade}ToResponse` |
+| Service | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `deletar` |
+| Repository | `buscarPorFiltros`, `obterPorId`, `garantirQueExiste` + herdados de `JpaRepository` |
+| Mapper | `toEntity`, `atualizar`, `toResponse` |
 
-Exceção conhecida: `PagamentoService` usa `criar` em vez de `salvar`.
+O verbo do service é o mesmo do controller (`criar`), e o mapper usa `toResponse`
+em todas as entidades — antes cada mapper tinha o próprio nome
+(`animalToResponse`, `requestToTutor`) e só `PagamentoService` dizia `criar`.
+
+`obterPorId` e `garantirQueExiste` vêm de
+[`RepositorioBase`](../src/main/java/br/com/fiap/clyvovet/repository/RepositorioBase.java)
+e já lançam `RecursoNaoEncontradoException` (404) quando o id não existe — é o que
+mantém os services livres de `orElseThrow` repetido.
 
 ### Injeção de dependências
 
@@ -82,8 +89,9 @@ Não há `@Autowired` em campo em lugar nenhum do projeto.
 @RequiredArgsConstructor
 public class AnimalService {
     private final AnimalRepository animalRepository;
-    private final AnimalMapper animalMapper;
     private final TutorRepository tutorRepository;
+    private final AnimalMapper animalMapper;
+    private final SegurancaService seguranca;
 }
 ```
 
@@ -94,8 +102,7 @@ public class AnimalService {
 | Request | classe com `@NoArgsConstructor @AllArgsConstructor @Getter` | Jackson precisa do construtor vazio para desserializar |
 | Response | `record` | imutável, conciso |
 
-Duas exceções: `PagamentoRequest` usa `@Data` e `PagamentoResponse` é `@Data` com
-setters em vez de `record`.
+Uma exceção: `PagamentoRequest` usa `@Data`. Todos os Response são `record`.
 
 Requests **não** têm setters — são preenchidos por reflection pelo Jackson.
 
@@ -219,28 +226,49 @@ Antes de abrir PR, confira:
 
 ## Testes
 
-O projeto tem **um** teste:
-[`ClyvovetApplicationTests`](../src/test/java/br/com/fiap/clyvovet/ClyvovetApplicationTests.java),
-com o `contextLoads()` gerado pelo Spring Initializr.
+São 98 testes, e `./mvnw test` roda todos sem banco externo:
+`src/test/resources/application.properties` fixa o perfil `dev` (H2 em memória) e
+desliga o rate limit, que barraria a rajada de chamadas dos próprios testes.
 
-Ele é um `@SpringBootTest`, o que significa que sobe o contexto inteiro — incluindo o
-DataSource. **Com o perfil `oracle` ativo (o default), o teste falha se não houver
-conectividade com o Oracle da FIAP.** Para rodar isolado:
+| Pacote | Classe | Cobre |
+|---|---|---|
+| `mapper` | um `…MapperTest` por mapper | cópia campo a campo, id preservado no `atualizar`, associação nula |
+| `crud` | `CadastroCrudTest` | ciclo completo de tutor, clínica e veterinário; 409 em documento repetido; 404 por id inexistente |
+| `crud` | `AtendimentoCrudTest` | ciclo de animal → evento → pagamento, com os nomes desnormalizados na resposta |
+| `crud` | `FiltrosDeBuscaTest` | filtros por texto: o que trazem e o que deixam de fora |
+| `crud` | `ValidacaoDeEntradaTest` | limites que precisam bater com a coluna do banco |
+| `crud` | `IntegridadeReferencialTest` | remoção com dependentes responde 409, e não erro de servidor |
+| `security` | ver [08-seguranca](08-seguranca.md#testes) | token, perfil, ownership, bloqueio de conta |
 
-```bash
-./mvnw test -Dspring.profiles.active=dev
+### Como escrever um novo
+
+Os testes de API estendem
+[`TesteDeApi`](../src/test/java/br/com/fiap/clyvovet/support/TesteDeApi.java), que
+resolve login, header `Authorization`, leitura do JSON e limpeza:
+
+```java
+class MeuRecursoCrudTest extends TesteDeApi {
+
+    @Test
+    void criaERemove() throws Exception {
+        String id = corpoDe(criar("/recursos", tokenAdmin(), CORPO)
+                .andExpect(status().isCreated())).get("id").asText();
+        removerDepois("/recursos/" + id);   // sai no fim, mesmo se o teste falhar
+    }
+}
 ```
 
-### Onde começar a cobrir
+Duas regras que evitam teste instável:
 
-Sugestão de ordem, da maior relação custo/benefício para a menor:
+- **Grave de verdade, sem `@Transactional` na classe de teste.** A transação de teste
+  adia os INSERTs para um commit que nunca acontece, e o que se queria verificar —
+  unicidade, chave estrangeira, limite de coluna — deixa de acontecer.
+- **Não reaproveite CPF, CNPJ ou CRMV do seed.** Eles têm constraint de unicidade e o
+  seed segue uma sequência previsível; documentos de teste começam com `9`.
 
-| Alvo | Tipo | Foco |
-|---|---|---|
-| Services | unitário com Mockito | resolução de FK, `EntityNotFoundException`, chamadas ao mapper |
-| Mappers | unitário puro | null-guard das associações, achatamento correto |
-| Controllers | `@WebMvcTest` | status HTTP, corpo do 400, binding dos filtros |
-| Repositories | `@DataJpaTest` | as JPQL com filtros nulos e combinados |
+Ids do seed ficam em
+[`SeedV2`](../src/test/java/br/com/fiap/clyvovet/support/SeedV2.java), com nome em vez
+de UUID solto.
 
 O padrão `:param IS NULL OR ...` das JPQL é o candidato natural a `@DataJpaTest`, já
 que precisa funcionar nas quatro combinações de filtros.

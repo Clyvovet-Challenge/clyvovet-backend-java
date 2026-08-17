@@ -108,7 +108,7 @@ A cadeia termina em `anyRequest().authenticated()`: rota nova nasce protegida.
 
 Regra de rota resolve *"qual perfil acessa qual rota"*, mas não *"este tutor pode ver
 este pet"* — dois tutores têm o mesmo perfil e passam igualmente pela regra. A
-verificação acontece em duas frentes, e ambas são necessárias.
+verificação acontece em três frentes, e todas são necessárias.
 
 ### Acesso por ID
 
@@ -134,6 +134,22 @@ AND (:tutorId IS NULL OR a.tutor.id = :tutorId)
 Mesmo padrão de filtro opcional já usado nos seis repositories. Os services passam
 `null` para `VETERINARIO`/`ADMIN` e o id do tutor logado para `TUTOR`. Filtrar na
 query, e não depois dela, mantém a paginação correta.
+
+### Dono informado no corpo
+
+As duas frentes acima olham a URL. O `tutorId` de `AnimalRequest` vem do **corpo**, e
+por ele passava a mesma decisão sem nenhuma verificação: um tutor autenticado
+cadastrava pet no nome de qualquer outro (`POST /animais`) e podia transferir o
+próprio pet para outro tutor (`PUT /animais/{id}`). A escrita de animal checa as duas
+perguntas separadamente:
+
+```java
+@PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
+```
+
+Coberto por `OwnershipTest.tutorNaoCadastraPetParaTerceiro` e
+`OwnershipTest.tutorNaoTransfereOProprioPet`. Os demais recursos não têm o problema:
+a escrita de evento e de pagamento já é restrita a `VETERINARIO`/`ADMIN` pela rota.
 
 ### ⚠️ Cache e vazamento entre contas
 
@@ -271,14 +287,17 @@ isolamento sem cadastrar nada à mão.
 
 ## Testes
 
-27 testes, todos em `mvn test` — sem necessidade de banco externo.
+98 testes, todos em `mvn test` — sem necessidade de banco externo. Os de segurança:
 
 | Classe | Cobre |
 |---|---|
 | `JwtServiceTest` | claims, distinção access/refresh, assinatura inválida, token adulterado, expiração, segredo fraco |
 | `AutorizacaoTest` | 401 sem token, 403 por perfil, Swagger público, refresh não autentica API, escalação de perfil, 409 em duplicata |
-| `OwnershipTest` | acesso por id, listagens isoladas, **vazamento de cache**, escopo do veterinário |
+| `OwnershipTest` | acesso por id, **dono informado no corpo**, listagens isoladas, **vazamento de cache**, escopo do veterinário |
 | `BloqueioContaTest` | bloqueio após 5 falhas, persistência da contagem, reset no sucesso, isolamento por conta |
+
+Os demais cobrem CRUD, mapeamento, filtros e validação — ver
+[06-guia-de-desenvolvimento](06-guia-de-desenvolvimento.md#testes).
 
 ```bash
 mvn test

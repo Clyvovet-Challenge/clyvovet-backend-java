@@ -3,65 +3,59 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioRequest;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioResponse;
 import br.com.fiap.clyvovet.mapper.VeterinarioMapper;
-import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.Veterinario;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class VeterinarioService {
 
     private final VeterinarioRepository veterinarioRepository;
-    private final VeterinarioMapper veterinarioMapper;
     private final ClinicaRepository clinicaRepository;
+    private final VeterinarioMapper veterinarioMapper;
 
     // Ver a nota sobre #pageable na chave em TutorService.
     @Cacheable(value = "veterinarios", key = "#nome + '-' + #especialidade + '-' + #pageable")
     public Page<VeterinarioResponse> listarTodos(String nome, String especialidade, Pageable pageable) {
         return veterinarioRepository.buscarPorFiltros(nome, especialidade, pageable)
-                .map(veterinarioMapper::veterinarioToResponse);
+                .map(veterinarioMapper::toResponse);
     }
 
     public VeterinarioResponse buscarPorId(UUID id) {
-        return veterinarioRepository.findById(id)
-                .map(veterinarioMapper::veterinarioToResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Veterinário não encontrado com ID: " + id));
+        return veterinarioMapper.toResponse(veterinarioRepository.obterPorId(id));
     }
 
+    @Transactional
     @CacheEvict(value = "veterinarios", allEntries = true)
-    public VeterinarioResponse salvar(VeterinarioRequest request) {
-        Clinica clinica = clinicaRepository.findById(request.getClinicaId())
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + request.getClinicaId()));
-        Veterinario veterinario = veterinarioMapper.toEntity(request);
-        veterinario.setClinica(clinica);
-        return veterinarioMapper.veterinarioToResponse(veterinarioRepository.save(veterinario));
+    public VeterinarioResponse criar(VeterinarioRequest request) {
+        Veterinario veterinario = veterinarioMapper.toEntity(
+                request, clinicaRepository.obterPorId(request.getClinicaId()));
+        return veterinarioMapper.toResponse(veterinarioRepository.save(veterinario));
     }
 
+    @Transactional
     @CacheEvict(value = "veterinarios", allEntries = true)
     public VeterinarioResponse atualizar(UUID id, VeterinarioRequest request) {
-        Veterinario veterinario = veterinarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Veterinário não encontrado com ID: " + id));
-        Clinica clinica = clinicaRepository.findById(request.getClinicaId())
-                .orElseThrow(() -> new EntityNotFoundException("Clínica não encontrada com ID: " + request.getClinicaId()));
-        veterinarioMapper.atualizar(veterinario, request, clinica);
-        return veterinarioMapper.veterinarioToResponse(veterinarioRepository.save(veterinario));
+        Veterinario veterinario = veterinarioRepository.obterPorId(id);
+        veterinarioMapper.atualizar(veterinario, request, clinicaRepository.obterPorId(request.getClinicaId()));
+        return veterinarioMapper.toResponse(veterinarioRepository.save(veterinario));
     }
 
+    @Transactional
     @CacheEvict(value = "veterinarios", allEntries = true)
     public void deletar(UUID id) {
-        if (!veterinarioRepository.existsById(id)) {
-            throw new EntityNotFoundException("Veterinário não encontrado com ID: " + id);
-        }
+        veterinarioRepository.garantirQueExiste(id);
         veterinarioRepository.deleteById(id);
     }
 }

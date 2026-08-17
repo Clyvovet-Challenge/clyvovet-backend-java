@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,14 +44,20 @@ public class AnimalController {
         return ResponseEntity.ok(animalService.buscarPorId(id));
     }
 
+    // O tutorId vem do CORPO, e nao da URL: sem esta checagem um tutor
+    // autenticado cadastrava pet no nome de qualquer outro tutor.
     @PostMapping
+    @PreAuthorize("@seguranca.podeAcessarTutor(#request.tutorId)")
     @Operation(summary = "Cadastrar novo animal")
     public ResponseEntity<AnimalResponse> criar(@Valid @RequestBody AnimalRequest request) {
-        return ResponseEntity.status(201).body(animalService.salvar(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(animalService.criar(request));
     }
 
+    // Duas verificacoes, porque sao duas perguntas diferentes: o pet e meu
+    // (#id) e o dono que estou gravando continua sendo eu (#request.tutorId).
+    // Sem a segunda, um tutor transferia o proprio pet para outro tutor.
     @PutMapping("/{id}")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
+    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
     @Operation(summary = "Atualizar animal existente")
     public ResponseEntity<AnimalResponse> atualizar(
             @PathVariable UUID id,
