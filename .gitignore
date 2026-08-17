@@ -34,3 +34,9 @@ build/
 
 ### Credentials ###
 application-prod.properties
+
+### Graphify ###
+graphify-out/
+
+### Claude Code (local/personal, not shared) ###
+.claude/settings.local.json
