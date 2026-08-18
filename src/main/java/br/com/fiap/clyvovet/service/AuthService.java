@@ -7,6 +7,7 @@ import br.com.fiap.clyvovet.model.Usuario;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
 import br.com.fiap.clyvovet.security.ControleTentativasLogin;
 import br.com.fiap.clyvovet.security.JwtService;
+import br.com.fiap.clyvovet.security.RevogacaoTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final ControleTentativasLogin controleTentativas;
+    private final RevogacaoTokenService revogacaoToken;
 
     /**
      * Sem @Transactional de proposito: o login so le, e o registro da tentativa
@@ -81,11 +83,30 @@ public class AuthService {
             throw new BadCredentialsException("Token informado nao e um refresh token");
         }
 
+        if (revogacaoToken.estaRevogado(jwtService.extrairJti(claims))) {
+            throw new BadCredentialsException(REFRESH_INVALIDO);
+        }
+
         Usuario usuario = usuarioRepository.findById(jwtService.extrairUsuarioId(claims))
                 .filter(this::podeAutenticar)
                 .orElseThrow(() -> new BadCredentialsException(REFRESH_INVALIDO));
 
         return montarResposta(usuario);
+    }
+
+    /**
+     * Revoga o refresh token informado. O access token emitido junto continua
+     * valido ate expirar sozinho (ate 15 min) — e a mesma janela curta que jah
+     * limita o estrago de um access token vazado, descrita no {@link JwtService}.
+     */
+    public void logout(RefreshRequest request) {
+        Claims claims = lerClaimsDoRefresh(request.getRefreshToken());
+
+        if (!jwtService.ehRefreshToken(claims)) {
+            throw new BadCredentialsException("Token informado nao e um refresh token");
+        }
+
+        revogacaoToken.revogar(jwtService.extrairJti(claims));
     }
 
     private Claims lerClaimsDoRefresh(String refreshToken) {

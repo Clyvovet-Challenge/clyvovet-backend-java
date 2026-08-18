@@ -92,7 +92,7 @@ public class SecurityConfig {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry rotas) {
         rotas
             // --- Publico ---
-            .requestMatchers("/auth/login", "/auth/refresh", "/auth/registrar").permitAll()
+            .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout", "/auth/registrar").permitAll()
             // Swagger publico: e por ele que a API e avaliada e testada
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll();
 

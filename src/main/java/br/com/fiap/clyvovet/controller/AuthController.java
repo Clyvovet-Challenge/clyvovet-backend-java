@@ -48,6 +48,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(request));
     }
 
+    @PostMapping("/logout")
+    @Operation(summary = "Revogar o refresh token informado")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+        authService.logout(request);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/registrar")
     @Operation(summary = "Auto-cadastro de tutor. O perfil e sempre TUTOR")
     public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody RegistroRequest request) {

@@ -59,6 +59,7 @@ public class JwtService {
     private String gerar(Usuario usuario, String tipo, Duration validade) {
         Instant agora = Instant.now();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(usuario.getId().toString())
                 .claim(CLAIM_PERFIL, usuario.getPerfil().name())
                 .claim(CLAIM_TIPO, tipo)
@@ -82,6 +83,10 @@ public class JwtService {
 
     public UUID extrairUsuarioId(Claims claims) {
         return UUID.fromString(claims.getSubject());
+    }
+
+    public String extrairJti(Claims claims) {
+        return claims.getId();
     }
 
     public boolean ehAccessToken(Claims claims) {
