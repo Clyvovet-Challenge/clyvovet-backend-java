@@ -33,13 +33,14 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito — falta confirmar no Oracle |
 | 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
+| 19 | Perfil `mysql` nunca executado contra um MySQL real | Média | Configuração | aberto |
 
 **Novo — introduzido e corrigido na Sprint 3.** A chave de cache das listagens passou
 a precisar do `tutorId`: sem ele, a listagem de um tutor seria servida a outro. Está
 em [08-seguranca.md](08-seguranca.md#ownership) e coberta por
 `OwnershipTest.cacheNaoVazaEntreTutores`.
 
-Restam **3 itens abertos** (7, 9 e 12) e uma pendência parcial (15), todos de
+Restam **4 itens abertos** (7, 9, 12 e 19) e uma pendência parcial (15), todos de
 severidade média ou baixa.
 
 ---
@@ -559,6 +560,40 @@ não).
 
 ---
 
+## 19. Perfil `mysql` nunca executado contra um MySQL real
+
+**Severidade:** Média · **Área:** Configuração · **Situação:** aberto
+
+Em agosto de 2026 a infraestrutura mudou de rumo: o Oracle da FIAP passa a ser
+banco de testes e o deploy vai para **Azure Container Apps + Azure Database for
+MySQL**. Ainda em discussão com o time de devops.
+
+O que já está no repositório, feito enquanto a decisão amadurecia:
+
+- migrations separadas por banco em `db/migration/oracle/` e `db/migration/mysql/`;
+- perfil `mysql` em `application-mysql.properties`;
+- `mysql-connector-j` e `flyway-mysql` no `pom.xml`;
+- `MigrationsMySqlTest`, que roda o conjunto `mysql/` num H2 em `MODE=MySQL`.
+
+**O que ainda não foi verificado.** Nenhuma linha disso tocou um MySQL de verdade —
+não havia Docker disponível na máquina onde foi escrito. H2 em `MODE=MySQL` valida
+sintaxe e semântica principal, mas não o comportamento de tipos do servidor real. Os
+pontos que só um MySQL responde:
+
+| O que conferir | Por que pode falhar |
+|---|---|
+| `ddl-auto=validate` sobe | O validate compara o tipo JDBC de cada coluna com o do atributo. `TINYINT` para `ativo` e `INT` para `tentativas_falhas` foram escolhidos com isso em mente, mas não confirmados |
+| `DROP CONSTRAINT` na V4 | Existe a partir do MySQL 8.0.19. O Flexible Server é 8.0.21+, então deve passar — confirmar a versão exata do servidor provisionado |
+| Os `CHECK` são aplicados | Só valem do MySQL 8.0.16 em diante. Abaixo disso o servidor os aceita **em silêncio** e não valida nada |
+| UUID como `VARCHAR(36)` | Sem as duas linhas de `uuid_jdbc_type` no perfil, o Hibernate grava `BINARY(16)` e os ids não casam com o seed |
+
+**Como fechar:** subir um MySQL 8 local (`docker run` ou Testcontainers), rodar a
+aplicação com `SPRING_PROFILES_ACTIVE=mysql` e confirmar que o boot passa do
+`validate`. Depois disso, trocar o `MigrationsMySqlTest` por um teste com
+Testcontainers no CI, que é o único jeito de manter a garantia viva.
+
+---
+
 ## Melhorias sugeridas (não são defeitos)
 
 Itens fora do escopo do Challenge, registrados para quem for evoluir o projeto:
@@ -570,5 +605,5 @@ Itens fora do escopo do Challenge, registrados para quem for evoluir o projeto:
 | Observabilidade | `spring-boot-starter-actuator` para health check e métricas |
 | Consultas | Endpoint de histórico clínico por animal e de totalizadores financeiros por período |
 | Auditoria | `@CreatedDate`/`@LastModifiedDate` via `@EnableJpaAuditing` |
-| Deploy | Reverse proxy com HTTPS na VM Azure; a porta 80 é aberta mas ninguém escuta nela |
+| Deploy | A VM Azure está sendo substituída por Container Apps (item 19). Enquanto ela existir: reverse proxy com HTTPS — a porta 80 é aberta mas ninguém escuta nela |
 | CI | GitHub Actions rodando `mvn verify` a cada push |

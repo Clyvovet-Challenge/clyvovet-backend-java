@@ -98,8 +98,10 @@ Todas as entidades usam a mesma estratégia:
 private UUID id;
 ```
 
-O UUID é gerado pelo Hibernate na aplicação, antes do INSERT. No Oracle a coluna é
-`VARCHAR2(36)`, e a conversão é garantida por duas propriedades no perfil:
+O UUID é gerado pelo Hibernate na aplicação, antes do INSERT. A coluna é
+`VARCHAR2(36)` no Oracle e `VARCHAR(36)` no MySQL — texto nos dois casos, não binário.
+A conversão é garantida por duas propriedades, presentes tanto no perfil `oracle`
+quanto no `mysql`:
 
 ```properties
 spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
@@ -299,6 +301,11 @@ A função `fn_uuid` existe **só para o seed** — as PKs não têm `DEFAULT`, 
 gera os UUIDs em produção é o Hibernate.
 
 ### Tabelas
+
+> Os tipos abaixo são os do **Oracle**, que é a linguagem usada no resto deste
+> documento. O schema equivalente para MySQL está em `db/migration/mysql/`, e as
+> diferenças (todas de tipo, três delas não triviais) estão explicadas em
+> [`db/migration/README.md`](../src/main/resources/db/migration/README.md).
 
 | Tabela | PK | FKs | Uniques | Checks |
 |---|---|---|---|---|

@@ -22,7 +22,16 @@ desconta 20 pontos por "dados sensíveis expostos no código-fonte".
 
 ## Migrations (Flyway)
 
-O schema é versionado em `src/main/resources/db/migration/`:
+O schema é versionado em `src/main/resources/db/migration/`, em **dois conjuntos**
+— um por banco:
+
+```
+db/migration/
+├── oracle/   ← Oracle FIAP, e também H2 (que roda com MODE=Oracle)
+└── mysql/    ← Azure Database for MySQL, alvo do deploy
+```
+
+Cada pasta tem a linha do tempo completa:
 
 | Migration | Conteúdo |
 |---|---|
@@ -31,9 +40,42 @@ O schema é versionado em `src/main/resources/db/migration/`:
 | `V3__usuario_e_perfis.sql` | Tabela `usuario` |
 | `V4__corrige_status_pagamento.sql` | Alinha o check a `REEMBOLSADO` |
 
-Um **único conjunto** serve aos dois bancos: o H2 roda em `MODE=Oracle`, aceitando
-`VARCHAR2`/`NUMBER` e a semântica do Oracle. Os UUIDs do seed são literais fixos, o
-que dispensa PL/SQL e dá dados determinísticos aos testes.
+Até agosto de 2026 havia um conjunto só, porque os dois bancos em uso eram Oracle e
+H2 — e o H2 tem `MODE=Oracle`. Com a entrada do MySQL isso acabou: **MySQL não tem
+modo de compatibilidade com Oracle**. As diferenças são poucas (três decisões em 205
+linhas de SQL), mas não existe grafia comum que sirva às duas.
+
+Os UUIDs do seed são literais fixos, o que dispensa PL/SQL e dá dados
+determinísticos aos testes. O corpo da V2 é idêntico nas duas pastas.
+
+> 📖 O raciocínio completo — por que dois conjuntos em vez de SQL portável, quais são
+> as três diferenças e o que garante que as pastas não divirjam — está em
+> [`db/migration/README.md`](../src/main/resources/db/migration/README.md).
+
+### Onde cada perfil busca
+
+O caminho é escrito por extenso em cada perfil, **não** com o coringa `{vendor}` do
+Flyway: ele resolve pelo banco da conexão, e os perfis `dev`/`h2` conectam num H2 —
+`{vendor}` viraria `h2` e não acharia pasta nenhuma, embora quem os sirva seja a
+pasta `oracle/`.
+
+| perfil | `spring.flyway.locations` |
+|---|---|
+| `oracle` | `classpath:db/migration/oracle` |
+| `dev` | `classpath:db/migration/oracle` |
+| `h2` | `classpath:db/migration/oracle` |
+| `mysql` | `classpath:db/migration/mysql` |
+
+### O que impede as pastas de divergirem
+
+[`MigrationsMySqlTest`](../src/test/java/br/com/fiap/clyvovet/migration/MigrationsMySqlTest.java)
+roda o conjunto `mysql/` do zero num H2 em `MODE=MySQL` e confere que as quatro
+migrations aplicam e que o seed carrega as mesmas contagens. A build quebra se
+alguém adicionar uma migration só de um lado.
+
+Ele **não** substitui um MySQL real: H2 em `MODE=MySQL` valida sintaxe e semântica
+principal, não o comportamento de tipos do servidor. Verde ali é "o SQL está
+coerente", não "validado em produção".
 
 ### Bancos já provisionados
 
@@ -45,6 +87,10 @@ dados.
 Por isso a correção do `status_pagamento` está na V4, e não na V1 — assim ela alcança
 também os bancos que entraram por baseline.
 
+O perfil `mysql` **não** tem baseline, de propósito: um MySQL novo começa vazio e a
+V1 e a V2 precisam rodar de verdade. Ligar baseline ali pularia o schema e o seed, e
+a aplicação subiria contra um banco sem tabela.
+
 ---
 
 ## Arquivos de propriedades
@@ -55,6 +101,7 @@ também os bancos que entraram por baseline.
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — perfil de entrega/produção |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — alvo do deploy. **Ainda não executado contra um MySQL real** |
 
 O arquivo raiz tem apenas duas linhas:
 
@@ -70,19 +117,19 @@ sobrescrever nada faz a aplicação tentar conectar no Oracle da FIAP.
 
 ## Comparativo dos perfis
 
-| Aspecto | `oracle` | `h2` | `dev` |
-|---|---|---|---|
-| Banco | Oracle 19c FIAP | H2 em modo TCP | H2 em memória |
-| URL | `jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl` | `jdbc:h2:tcp://clyvovet-db:1521/clyvovet;MODE=Oracle` | `jdbc:h2:mem:clyvovetdb;MODE=Oracle` |
-| Driver | `oracle.jdbc.OracleDriver` | `org.h2.Driver` | `org.h2.Driver` |
-| `ddl-auto` | `validate` | `none` | `none` |
-| Schema vem de | **Flyway** | **Flyway** | **Flyway** |
-| Dados persistem? | sim | sim (volume Docker) | **não** |
-| Seed inicial | 42 registros (V2) | idem | idem |
-| Console H2 | — | `/h2-console` | `/h2-console` |
-| Porta | 8080 | 8080 | 8080 (default) |
-| Roda fora do Docker? | sim | **não** | sim |
-| Uso pretendido | entrega, avaliação | container, deploy Azure | desenvolvimento local |
+| Aspecto | `oracle` | `mysql` | `h2` | `dev` |
+|---|---|---|---|---|
+| Banco | Oracle 19c FIAP | Azure MySQL Flexible Server | H2 em modo TCP | H2 em memória |
+| Migrations | `db/migration/oracle` | `db/migration/mysql` | `db/migration/oracle` | `db/migration/oracle` |
+| Driver | `oracle.jdbc.OracleDriver` | `com.mysql.cj.jdbc.Driver` | `org.h2.Driver` | `org.h2.Driver` |
+| `ddl-auto` | `validate` | `validate` | `none` | `none` |
+| Baseline do Flyway | `baseline-version=2` | **nenhum** | nenhum | nenhum |
+| Dados persistem? | sim | sim | sim (volume Docker) | **não** |
+| Seed inicial | 42 registros (V2) | idem | idem | idem |
+| Console H2 | — | — | `/h2-console` | `/h2-console` |
+| Roda fora do Docker? | sim | sim | **não** | sim |
+| Uso pretendido | banco de testes / entrega | **deploy** | container | desenvolvimento local |
+| Já rodou de verdade? | sim | **não** | sim | sim |
 
 > ⚠️ O perfil `h2` aponta para o host `clyvovet-db`, que só existe na rede do
 > docker-compose. Para rodar localmente sem Docker, use o perfil **`dev`**.
@@ -125,6 +172,50 @@ Para usar credenciais próprias sem editar o arquivo:
 mvn spring-boot:run \
   -Dspring-boot.run.arguments="--spring.datasource.username=SEU_RM --spring.datasource.password=SUA_SENHA"
 ```
+
+---
+
+## Perfil `mysql`
+
+Alvo do deploy no **Azure Container Apps + Azure Database for MySQL Flexible
+Server**.
+
+> ⚠️ **Este perfil ainda não foi executado contra um MySQL real.** Ele foi escrito
+> junto com as migrations de `db/migration/mysql/` enquanto a infraestrutura era
+> definida com o time de devops, e validado apenas por
+> `MigrationsMySqlTest` (H2 em `MODE=MySQL`). Trate-o como ponto de partida
+> revisado, não como configuração validada em produção.
+
+```properties
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/clyvovet?sslMode=REQUIRED}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.flyway.locations=classpath:db/migration/mysql
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
+spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
+```
+
+Três pontos que não são óbvios:
+
+**`sslMode=REQUIRED` não é enfeite.** O Azure Flexible Server recusa conexão sem TLS
+por padrão. Sem isso a aplicação simplesmente não conecta.
+
+**`serverTimezone` não é definido de propósito.** As colunas temporais são `DATETIME`,
+que não sofre conversão de fuso — foi justamente para evitar essa conversão que o
+`bloqueado_ate` não é `TIMESTAMP` no MySQL. Definir `serverTimezone` reintroduziria a
+classe de bug que a escolha do tipo eliminou.
+
+**As duas linhas de `uuid_jdbc_type` são obrigatórias.** Os ids são `UUID` gravados
+como `VARCHAR(36)`, igual ao Oracle. Sem elas o Hibernate grava UUID como
+`BINARY(16)` no MySQL, e os ids deixariam de casar com o seed da V2 e com qualquer
+dado migrado do Oracle.
+
+### Segredos
+
+`DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` não têm default — a aplicação não sobe
+sem eles. No Azure Container Apps eles entram como **secrets do container** ou
+referência ao Key Vault, nunca como variável de ambiente em texto no manifesto.
 
 ---
 
@@ -251,8 +342,17 @@ Declaradas em [`pom.xml`](../pom.xml). Parent: `spring-boot-starter-parent:3.5.1
 | `springdoc-openapi-starter-webmvc-ui:2.8.16` | compile | Swagger UI + OpenAPI 3 |
 | `com.h2database:h2` | runtime | banco de dev e container |
 | `com.oracle.database.jdbc:ojdbc11` | runtime | driver Oracle |
+| `com.mysql:mysql-connector-j` | runtime | driver MySQL |
+| `org.flywaydb:flyway-database-oracle` | compile | suporte do Flyway ao Oracle |
+| `org.flywaydb:flyway-mysql` | compile | suporte do Flyway ao MySQL |
 | `org.projectlombok:lombok` | optional | getters, setters, construtores |
 | `spring-boot-starter-test` | test | JUnit 5, Mockito, AssertJ |
+
+O Flyway 10+ separa o suporte a cada banco em um módulo próprio, por isso os dois
+`flyway-*` aparecem juntos: o Oracle continua servindo de banco de testes e o MySQL é
+o alvo do deploy. Qual conjunto de migrations roda é decidido pelo perfil, em
+`spring.flyway.locations`. Nenhum dos dois declara versão — todas vêm do BOM do
+Spring Boot.
 
 O provider de cache é o **Caffeine**, configurado em `CacheConfig` com expiração de
 10 minutos e limite de 1.000 entradas. Continua em memória e não compartilhado entre
