@@ -320,7 +320,7 @@ semântica. Ficam de fora só três coisas:
 | `.graphify_labels.json` + `.sig` | sim | os nomes curados e a assinatura que os valida |
 | `cache/semantic/` | sim | caro de refazer — custa chamadas de LLM |
 | `cache/ast/`, `manifest.json` | sim | fazem o primeiro `graphify update .` de um clone não ter trabalho |
-| `graph.html` | sim | a visualização; baixe e abra no navegador — o GitHub não renderiza HTML, mostra o fonte |
+| `graph.html` | sim | a visualização, com a biblioteca de desenho embutida — abre offline |
 | `.graphify_root`, `.graphify_python` | **não** | guardam caminhos absolutos da máquina que gerou; um valor errado aqui já fez o hook rodar em silêncio sem reconstruir nada |
 | `cache/stat-index.json` | **não** | indexado por `mtime`, que muda em todo clone: nunca casa |
 | `graphify-out/<data>/` | **não** | cópia byte a byte da saída anterior, que o git já guarda no histórico |
@@ -353,14 +353,46 @@ O script não confia no número da comunidade, que não é estável entre rebuil
 para a comunidade que herdou a maior parte deles. Depois de renomear comunidades
 à mão, grave a nova referência com `python scripts/label-communities.py --snapshot`.
 
+### Visualização (`graph.html`)
+
+O `graph.html` desenha o grafo inteiro num canvas navegável, com busca e filtro por
+comunidade. Como ele é um arquivo e não um site, há dois detalhes:
+
+**O GitHub não renderiza HTML.** Clicar no arquivo lá mostra o código-fonte. Para ver
+o desenho, baixe e abra no navegador, ou sirva localmente:
+
+```bash
+cd graphify-out && python -m http.server 8899 --bind 127.0.0.1
+# abra http://127.0.0.1:8899/graph.html
+```
+
+**Não use o preview embutido da IDE.** O navegador interno do IntelliJ costuma não
+desenhar a página, e o servidor embutido dele responde 404 quando a pasta está
+marcada como *Excluded* no projeto. Abra num navegador de verdade.
+
+A biblioteca de desenho (`vis-network`, ~690 KB) fica **embutida** no arquivo, então
+ele funciona sem internet. Isso não é automático: o graphify regenera o `graph.html`
+apontando para o CDN `unpkg.com` a cada rebuild que muda o grafo. Depois de um
+rebuild, rode:
+
+```bash
+python scripts/inline-graph-html.py
+```
+
+O script pega a cópia em `scripts/vendor/` e só embute depois de conferir que ela bate
+com o hash SRI que a própria tag do graphify declara — o que entra no HTML é
+exatamente o que o navegador teria baixado. Para atualizar a cópia quando a versão da
+biblioteca mudar: `python scripts/inline-graph-html.py --fetch`.
+
 O aviso pode ser automático:
 
 ```bash
 cp scripts/pre-commit .git/hooks/pre-commit
 ```
 
-Esse hook roda `label-communities.py --check` antes de cada commit e avisa, sem
-bloquear, quando algum nome saiu do lugar. Ele fica no `pre-commit` porque o
+Esse hook roda `label-communities.py --check` e `inline-graph-html.py --check`
+antes de cada commit e avisa, sem bloquear, quando algum nome saiu do lugar ou quando
+o `graph.html` voltou a depender do CDN. Ele fica no `pre-commit` porque o
 rebuild do `post-commit` é assíncrono: quando o rebuild termina, o hook daquele
 commit já saiu há muito tempo.
 

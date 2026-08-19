@@ -2,3 +2,6 @@
 *.cmd text eol=crlf
 graphify-out/graph.json merge=graphify
 scripts/pre-commit text eol=lf
+# Bytes exatos: o inline-graph-html.py confere o hash SRI da biblioteca, e uma
+# conversao de LF para CRLF no checkout quebraria essa verificacao.
+scripts/vendor/** -text

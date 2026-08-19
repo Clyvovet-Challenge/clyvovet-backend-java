@@ -21,5 +21,7 @@ Maintenance:
 - Community names are hand-written and live in `graphify-out/.graphify_labels.json`; a rebuild that
   reshuffles communities replaces the affected ones with hub-derived names. Restore them with
   `python scripts/label-communities.py`, then `graphify cluster-only .`. Do not leave hub names in place.
+- A rebuild also rewrites `graphify-out/graph.html` to load its drawing library from a CDN. Run
+  `python scripts/inline-graph-html.py` afterwards to inline it again so the file keeps working offline.
 - `.graphifyignore` keeps AI-tooling files (skill instructions, `scripts/`) out of the graph so a full
   `graphify update .` reproduces the versioned graph. Do not remove those entries.
