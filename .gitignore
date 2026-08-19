@@ -36,7 +36,15 @@ build/
 application-prod.properties
 
 ### Graphify ###
-graphify-out/
+# O grafo e versionado: graph.json, GRAPH_REPORT.md, wiki/ e manifest.json
+# acompanham o repositorio para que qualquer clone ja tenha o mapa do codebase.
+# Fora do versionamento ficam os artefatos regeneraveis e os caminhos locais:
+graphify-out/graph.html
+graphify-out/cache/ast/
+graphify-out/cache/stat-index.json
+graphify-out/cost.json
+graphify-out/.graphify_python
+graphify-out/.graphify_root
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json

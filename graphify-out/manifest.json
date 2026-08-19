@@ -1,0 +1,872 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1787103190.551361,
+    "seen": 1787104221.554772,
+    "ast_hash": "d88ecf9e9940647a0673b49870768987",
+    "semantic_hash": "d88ecf9e9940647a0673b49870768987"
+  },
+  ".junie/memory/language.json": {
+    "mtime": 1786926933.3352127,
+    "seen": 1787104221.554772,
+    "ast_hash": "d751713988987e9331980363e24189ce",
+    "semantic_hash": "d751713988987e9331980363e24189ce"
+  },
+  "deploy.sh": {
+    "mtime": 1787103190.5840502,
+    "seen": 1787104221.554772,
+    "ast_hash": "c685ecdc1dd00dc96a05a28bb839baff",
+    "semantic_hash": "c685ecdc1dd00dc96a05a28bb839baff"
+  },
+  "mvnw": {
+    "mtime": 1786926933.3728244,
+    "seen": 1787104221.554772,
+    "ast_hash": "ab50dd89da7da2346b28003352eeeeeb",
+    "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
+  },
+  "pom.xml": {
+    "mtime": 1787103190.5880487,
+    "seen": 1787104221.554772,
+    "ast_hash": "a585e0f5c0cc77588f68edbf3f77d1fa",
+    "semantic_hash": "a585e0f5c0cc77588f68edbf3f77d1fa"
+  },
+  "src/main/java/br/com/fiap/clyvovet/ClyvovetApplication.java": {
+    "mtime": 1786926933.3823478,
+    "seen": 1787104221.554772,
+    "ast_hash": "f153c82a37ced6e9c897b38e2ade93ca",
+    "semantic_hash": "f153c82a37ced6e9c897b38e2ade93ca"
+  },
+  "src/main/java/br/com/fiap/clyvovet/config/CacheConfig.java": {
+    "mtime": 1786926933.3833494,
+    "seen": 1787104221.554772,
+    "ast_hash": "cf273a57428238969001ac953b8b96d2",
+    "semantic_hash": "cf273a57428238969001ac953b8b96d2"
+  },
+  "src/main/java/br/com/fiap/clyvovet/config/DevDataSeeder.java": {
+    "mtime": 1786927882.6690557,
+    "seen": 1787104221.554772,
+    "ast_hash": "92e8e9337dd35652193fa794dc138023",
+    "semantic_hash": "92e8e9337dd35652193fa794dc138023"
+  },
+  "src/main/java/br/com/fiap/clyvovet/config/OpenApiConfig.java": {
+    "mtime": 1786926933.3843462,
+    "seen": 1787104221.554772,
+    "ast_hash": "c5aeacc767d3435781fffbea867a2d9d",
+    "semantic_hash": "c5aeacc767d3435781fffbea867a2d9d"
+  },
+  "src/main/java/br/com/fiap/clyvovet/config/SecurityConfig.java": {
+    "mtime": 1787103190.5915596,
+    "seen": 1787104221.554772,
+    "ast_hash": "bfef15d7e39bf2d8b0f67e64cb74e892",
+    "semantic_hash": "bfef15d7e39bf2d8b0f67e64cb74e892"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/AnimalController.java": {
+    "mtime": 1786930062.1848674,
+    "seen": 1787104221.554772,
+    "ast_hash": "f4810376c0a7761369c5245ed140958c",
+    "semantic_hash": "f4810376c0a7761369c5245ed140958c"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/AuthController.java": {
+    "mtime": 1787103190.5946126,
+    "seen": 1787104221.554772,
+    "ast_hash": "f5189b589d50e78f3a67126b06e6e98f",
+    "semantic_hash": "f5189b589d50e78f3a67126b06e6e98f"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/ClinicaController.java": {
+    "mtime": 1786927683.980245,
+    "seen": 1787104221.554772,
+    "ast_hash": "b4ad995f256d2587d3f93f231e68248c",
+    "semantic_hash": "b4ad995f256d2587d3f93f231e68248c"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/EventoClinicoController.java": {
+    "mtime": 1786927704.1051128,
+    "seen": 1787104221.554772,
+    "ast_hash": "5b6760a4e8b3c0afc95e9872f0b18dad",
+    "semantic_hash": "5b6760a4e8b3c0afc95e9872f0b18dad"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/PagamentoController.java": {
+    "mtime": 1786926933.3893476,
+    "seen": 1787104221.554772,
+    "ast_hash": "8913baaf1ecd31931c69d0f7031e8532",
+    "semantic_hash": "8913baaf1ecd31931c69d0f7031e8532"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/TutorController.java": {
+    "mtime": 1786927718.7308362,
+    "seen": 1787104221.554772,
+    "ast_hash": "c189ac9c872d4f41e5177085a3da0390",
+    "semantic_hash": "c189ac9c872d4f41e5177085a3da0390"
+  },
+  "src/main/java/br/com/fiap/clyvovet/controller/VeterinarioController.java": {
+    "mtime": 1786927694.045582,
+    "seen": 1787104221.554772,
+    "ast_hash": "1f929b70e1e398550ad5bef1cb70ffb8",
+    "semantic_hash": "1f929b70e1e398550ad5bef1cb70ffb8"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/animal/AnimalRequest.java": {
+    "mtime": 1786929068.1087782,
+    "seen": 1787104221.554772,
+    "ast_hash": "1962c6a846b1356ff4df1b48eabfdda7",
+    "semantic_hash": "1962c6a846b1356ff4df1b48eabfdda7"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/animal/AnimalResponse.java": {
+    "mtime": 1786926933.3938627,
+    "seen": 1787104221.554772,
+    "ast_hash": "01c3c344184c9fcceca6429968bec460",
+    "semantic_hash": "01c3c344184c9fcceca6429968bec460"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/LoginRequest.java": {
+    "mtime": 1786926933.3948627,
+    "seen": 1787104221.554772,
+    "ast_hash": "73e64c3042829e4d17c7f7bb197e9e47",
+    "semantic_hash": "73e64c3042829e4d17c7f7bb197e9e47"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/LoginResponse.java": {
+    "mtime": 1786926933.3958635,
+    "seen": 1787104221.554772,
+    "ast_hash": "153f50069919a02015f3f2b85c18e8d6",
+    "semantic_hash": "153f50069919a02015f3f2b85c18e8d6"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/RefreshRequest.java": {
+    "mtime": 1786926933.396863,
+    "seen": 1787104221.554772,
+    "ast_hash": "afdf15ea1fe641188df867b5fcb15117",
+    "semantic_hash": "afdf15ea1fe641188df867b5fcb15117"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/RegistroRequest.java": {
+    "mtime": 1786926933.3978639,
+    "seen": 1787104221.554772,
+    "ast_hash": "1ee5250eb22263f71ff0b5b9f6c61abe",
+    "semantic_hash": "1ee5250eb22263f71ff0b5b9f6c61abe"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/UsuarioRequest.java": {
+    "mtime": 1786926933.3988636,
+    "seen": 1787104221.554772,
+    "ast_hash": "2c7a9caff3ed8e692877cf9c92bb52a4",
+    "semantic_hash": "2c7a9caff3ed8e692877cf9c92bb52a4"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/auth/UsuarioResponse.java": {
+    "mtime": 1786926933.3988636,
+    "seen": 1787104221.554772,
+    "ast_hash": "5e5ff914aec3ce615890b48b2d51b6d0",
+    "semantic_hash": "5e5ff914aec3ce615890b48b2d51b6d0"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/clinica/ClinicaRequest.java": {
+    "mtime": 1786926933.399864,
+    "seen": 1787104221.554772,
+    "ast_hash": "20cf59fa53fe88be29fd740de120a256",
+    "semantic_hash": "20cf59fa53fe88be29fd740de120a256"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/clinica/ClinicaResponse.java": {
+    "mtime": 1786926933.4013696,
+    "seen": 1787104221.554772,
+    "ast_hash": "ede0c002b215d24127b526065c0273cc",
+    "semantic_hash": "ede0c002b215d24127b526065c0273cc"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/endereco/EnderecoRequest.java": {
+    "mtime": 1786929073.1550639,
+    "seen": 1787104221.554772,
+    "ast_hash": "88cb81c4a0b005ee7a021d059c2b8067",
+    "semantic_hash": "88cb81c4a0b005ee7a021d059c2b8067"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/endereco/EnderecoResponse.java": {
+    "mtime": 1786926933.402375,
+    "seen": 1787104221.554772,
+    "ast_hash": "e42463ed96c244a2c640704b7fb3f880",
+    "semantic_hash": "e42463ed96c244a2c640704b7fb3f880"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/eventoClinico/EventoClinicoRequest.java": {
+    "mtime": 1786929086.5171623,
+    "seen": 1787104221.554772,
+    "ast_hash": "365dc051f75047b1008abf6ca2ee515a",
+    "semantic_hash": "365dc051f75047b1008abf6ca2ee515a"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/eventoClinico/EventoClinicoResponse.java": {
+    "mtime": 1786926933.4043753,
+    "seen": 1787104221.554772,
+    "ast_hash": "00c544e403ca787e961a9e7caae0db13",
+    "semantic_hash": "00c544e403ca787e961a9e7caae0db13"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/exception/ErroValidacao.java": {
+    "mtime": 1786927362.3843853,
+    "seen": 1787104221.554772,
+    "ast_hash": "009664cc1942a2c059381b8b5f6b86f1",
+    "semantic_hash": "009664cc1942a2c059381b8b5f6b86f1"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/pagamento/PagamentoRequest.java": {
+    "mtime": 1786926933.406376,
+    "seen": 1787104221.554772,
+    "ast_hash": "a936e178254bd67f593088c3f2146a2e",
+    "semantic_hash": "a936e178254bd67f593088c3f2146a2e"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/pagamento/PagamentoResponse.java": {
+    "mtime": 1786927466.2331786,
+    "seen": 1787104221.554772,
+    "ast_hash": "1310fb152313614b2ad2f2fc4f744346",
+    "semantic_hash": "1310fb152313614b2ad2f2fc4f744346"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/tutor/TutorRequest.java": {
+    "mtime": 1786926933.4083772,
+    "seen": 1787104221.554772,
+    "ast_hash": "749b945f884114306574f987a21a5b9a",
+    "semantic_hash": "749b945f884114306574f987a21a5b9a"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/tutor/TutorResponse.java": {
+    "mtime": 1786927444.2602286,
+    "seen": 1787104221.554772,
+    "ast_hash": "579b2d488a6ae61e867cf35bf45f8628",
+    "semantic_hash": "579b2d488a6ae61e867cf35bf45f8628"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/veterinario/VeterinarioRequest.java": {
+    "mtime": 1786929063.0672963,
+    "seen": 1787104221.554772,
+    "ast_hash": "90319fa0209df1e796857c397ab4ece4",
+    "semantic_hash": "90319fa0209df1e796857c397ab4ece4"
+  },
+  "src/main/java/br/com/fiap/clyvovet/dto/veterinario/VeterinarioResponse.java": {
+    "mtime": 1786926933.4103756,
+    "seen": 1787104221.554772,
+    "ast_hash": "038f9029c970dd4865d5a1701e10d349",
+    "semantic_hash": "038f9029c970dd4865d5a1701e10d349"
+  },
+  "src/main/java/br/com/fiap/clyvovet/exception/GlobalExceptionHandler.java": {
+    "mtime": 1786927385.1758418,
+    "seen": 1787104221.554772,
+    "ast_hash": "8b2aa606435a0bd30851fd08547de2d5",
+    "semantic_hash": "8b2aa606435a0bd30851fd08547de2d5"
+  },
+  "src/main/java/br/com/fiap/clyvovet/exception/Recurso.java": {
+    "mtime": 1786927348.7621987,
+    "seen": 1787104221.554772,
+    "ast_hash": "1061e68fe2ddcbb11fca9009e4cc8db4",
+    "semantic_hash": "1061e68fe2ddcbb11fca9009e4cc8db4"
+  },
+  "src/main/java/br/com/fiap/clyvovet/exception/RecursoNaoEncontradoException.java": {
+    "mtime": 1786927355.1047316,
+    "seen": 1787104221.554772,
+    "ast_hash": "d2ab4f48bcc1443afb18451fe12760f5",
+    "semantic_hash": "d2ab4f48bcc1443afb18451fe12760f5"
+  },
+  "src/main/java/br/com/fiap/clyvovet/exception/RegraDeNegocioException.java": {
+    "mtime": 1786926933.4123905,
+    "seen": 1787104221.554772,
+    "ast_hash": "0ee2a1b36d36e48591f94d4045ea37e6",
+    "semantic_hash": "0ee2a1b36d36e48591f94d4045ea37e6"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/AnimalMapper.java": {
+    "mtime": 1786927416.8690095,
+    "seen": 1787104221.554772,
+    "ast_hash": "b06e96faaf43f60f3a23bd9e9e5a6adb",
+    "semantic_hash": "b06e96faaf43f60f3a23bd9e9e5a6adb"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/ClinicaMapper.java": {
+    "mtime": 1786927426.9335463,
+    "seen": 1787104221.554772,
+    "ast_hash": "93e40985786732a914c2d5cd13d8430e",
+    "semantic_hash": "93e40985786732a914c2d5cd13d8430e"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/EnderecoMapper.java": {
+    "mtime": 1786927409.8284912,
+    "seen": 1787104221.554772,
+    "ast_hash": "56e8389c5e07a510086034f75de7bc5f",
+    "semantic_hash": "56e8389c5e07a510086034f75de7bc5f"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/EventoClinicoMapper.java": {
+    "mtime": 1786927455.554839,
+    "seen": 1787104221.554772,
+    "ast_hash": "14bccc6cad98185afd1a518a7a197a45",
+    "semantic_hash": "14bccc6cad98185afd1a518a7a197a45"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/PagamentoMapper.java": {
+    "mtime": 1786927461.201605,
+    "seen": 1787104221.554772,
+    "ast_hash": "17131b9f7f529e64737ed61e83a60f11",
+    "semantic_hash": "17131b9f7f529e64737ed61e83a60f11"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/Referencias.java": {
+    "mtime": 1786927398.466926,
+    "seen": 1787104221.554772,
+    "ast_hash": "c344f6133d2724eb7c7b263e0f4543b8",
+    "semantic_hash": "c344f6133d2724eb7c7b263e0f4543b8"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/RelacionamentosDoEvento.java": {
+    "mtime": 1786927444.2898333,
+    "seen": 1787104221.554772,
+    "ast_hash": "86a6e8c6b1c0768d2536f9f58aa310d6",
+    "semantic_hash": "86a6e8c6b1c0768d2536f9f58aa310d6"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/TutorMapper.java": {
+    "mtime": 1786927421.907188,
+    "seen": 1787104221.554772,
+    "ast_hash": "0146124e7dc04817588341c69cf60a45",
+    "semantic_hash": "0146124e7dc04817588341c69cf60a45"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/UsuarioMapper.java": {
+    "mtime": 1786927626.5331745,
+    "seen": 1787104221.554772,
+    "ast_hash": "03fd0e111dfd9c0fb36a24f85575b2f8",
+    "semantic_hash": "03fd0e111dfd9c0fb36a24f85575b2f8"
+  },
+  "src/main/java/br/com/fiap/clyvovet/mapper/VeterinarioMapper.java": {
+    "mtime": 1786927432.8191252,
+    "seen": 1787104221.554772,
+    "ast_hash": "edaaf5deee9451170cf14672acef5148",
+    "semantic_hash": "edaaf5deee9451170cf14672acef5148"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Animal.java": {
+    "mtime": 1786926933.417395,
+    "seen": 1787104221.554772,
+    "ast_hash": "eb764d72ec142a836bc025d915b3ace9",
+    "semantic_hash": "eb764d72ec142a836bc025d915b3ace9"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Clinica.java": {
+    "mtime": 1786928471.609569,
+    "seen": 1787104221.554772,
+    "ast_hash": "c5ae4d7d81daa31d53195a5649e88822",
+    "semantic_hash": "c5ae4d7d81daa31d53195a5649e88822"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Endereco.java": {
+    "mtime": 1786926933.4183943,
+    "seen": 1787104221.554772,
+    "ast_hash": "cf7b8b54dfef7aaca2929b577868ff51",
+    "semantic_hash": "cf7b8b54dfef7aaca2929b577868ff51"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/EventoClinico.java": {
+    "mtime": 1786926933.4183943,
+    "seen": 1787104221.554772,
+    "ast_hash": "7bd0923b40a9a727612b1d52e00c25ef",
+    "semantic_hash": "7bd0923b40a9a727612b1d52e00c25ef"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/FormaPagamento.java": {
+    "mtime": 1786926933.4193952,
+    "seen": 1787104221.554772,
+    "ast_hash": "47477e660dbc8a4265ecccdaf4766286",
+    "semantic_hash": "47477e660dbc8a4265ecccdaf4766286"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Pagamento.java": {
+    "mtime": 1786926933.4203947,
+    "seen": 1787104221.554772,
+    "ast_hash": "5ded2819e037189f9bd10f5ce4ef701d",
+    "semantic_hash": "5ded2819e037189f9bd10f5ce4ef701d"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Perfil.java": {
+    "mtime": 1786926933.4203947,
+    "seen": 1787104221.554772,
+    "ast_hash": "69ad4064959d7cd129f1f9805fb7dddc",
+    "semantic_hash": "69ad4064959d7cd129f1f9805fb7dddc"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Sexo.java": {
+    "mtime": 1786926933.421395,
+    "seen": 1787104221.554772,
+    "ast_hash": "9e03a7d7dc33b934c9e0a56946f56106",
+    "semantic_hash": "9e03a7d7dc33b934c9e0a56946f56106"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/SexoAnimal.java": {
+    "mtime": 1786926933.421899,
+    "seen": 1787104221.554772,
+    "ast_hash": "716a5036f66370936a5bb2060d40adc3",
+    "semantic_hash": "716a5036f66370936a5bb2060d40adc3"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/StatusPagamento.java": {
+    "mtime": 1786926933.421899,
+    "seen": 1787104221.554772,
+    "ast_hash": "8c6d5bdb558a425ac928ce2d685d804d",
+    "semantic_hash": "8c6d5bdb558a425ac928ce2d685d804d"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/TipoEvento.java": {
+    "mtime": 1786926933.4229043,
+    "seen": 1787104221.554772,
+    "ast_hash": "309523e350abaed553c9552b3eb281fe",
+    "semantic_hash": "309523e350abaed553c9552b3eb281fe"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Tutor.java": {
+    "mtime": 1786926933.4229043,
+    "seen": 1787104221.554772,
+    "ast_hash": "0f4087ce14762fe90f75ff5735181acb",
+    "semantic_hash": "0f4087ce14762fe90f75ff5735181acb"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Usuario.java": {
+    "mtime": 1786926933.423909,
+    "seen": 1787104221.554772,
+    "ast_hash": "3d0a1ceff8d35853e4bddc37e395a433",
+    "semantic_hash": "3d0a1ceff8d35853e4bddc37e395a433"
+  },
+  "src/main/java/br/com/fiap/clyvovet/model/Veterinario.java": {
+    "mtime": 1786926933.423909,
+    "seen": 1787104221.554772,
+    "ast_hash": "31a7eddec281ab792b04e056b4bdec91",
+    "semantic_hash": "31a7eddec281ab792b04e056b4bdec91"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/AnimalRepository.java": {
+    "mtime": 1786928261.1096253,
+    "seen": 1787104221.554772,
+    "ast_hash": "b9f4193824f4b6daf39f78ff6bb08ec3",
+    "semantic_hash": "b9f4193824f4b6daf39f78ff6bb08ec3"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/ClinicaRepository.java": {
+    "mtime": 1786928156.4450793,
+    "seen": 1787104221.554772,
+    "ast_hash": "105051279a71dd6882f8b9c5c73c35c4",
+    "semantic_hash": "105051279a71dd6882f8b9c5c73c35c4"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/EventoClinicoRepository.java": {
+    "mtime": 1786928166.5215063,
+    "seen": 1787104221.554772,
+    "ast_hash": "5ddc39332c6d6b0b539e9b3eec663227",
+    "semantic_hash": "5ddc39332c6d6b0b539e9b3eec663227"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/PagamentoRepository.java": {
+    "mtime": 1786927535.009412,
+    "seen": 1787104221.554772,
+    "ast_hash": "31166132bb70f2ad1fb79d5ea65e16a0",
+    "semantic_hash": "31166132bb70f2ad1fb79d5ea65e16a0"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/RepositorioBase.java": {
+    "mtime": 1786927498.555543,
+    "seen": 1787104221.554772,
+    "ast_hash": "8d143df914b53c2da342934f53e32a56",
+    "semantic_hash": "8d143df914b53c2da342934f53e32a56"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/TutorRepository.java": {
+    "mtime": 1786928151.3930945,
+    "seen": 1787104221.554772,
+    "ast_hash": "a0c52517d0c0f5694b5eaf0fb96d9ec5",
+    "semantic_hash": "a0c52517d0c0f5694b5eaf0fb96d9ec5"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/UsuarioRepository.java": {
+    "mtime": 1786927540.0496316,
+    "seen": 1787104221.554772,
+    "ast_hash": "fe6d02d45b503ed62a6daba1e68778d1",
+    "semantic_hash": "fe6d02d45b503ed62a6daba1e68778d1"
+  },
+  "src/main/java/br/com/fiap/clyvovet/repository/VeterinarioRepository.java": {
+    "mtime": 1786930067.222167,
+    "seen": 1787104221.554772,
+    "ast_hash": "cadf6ed992777ea8484397040cc83d12",
+    "semantic_hash": "cadf6ed992777ea8484397040cc83d12"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/ControleTentativasLogin.java": {
+    "mtime": 1786926933.4299088,
+    "seen": 1787104221.554772,
+    "ast_hash": "ae9b9d3c45bfd2c9574b3d726807c89f",
+    "semantic_hash": "ae9b9d3c45bfd2c9574b3d726807c89f"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/JwtAuthenticationFilter.java": {
+    "mtime": 1786926933.4299088,
+    "seen": 1787104221.554772,
+    "ast_hash": "b20910f28a55e7b9abe9bf3e277cde8e",
+    "semantic_hash": "b20910f28a55e7b9abe9bf3e277cde8e"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/JwtService.java": {
+    "mtime": 1787103190.597609,
+    "seen": 1787104221.554772,
+    "ast_hash": "8f5ccfbdebff41831fa89599c48400f3",
+    "semantic_hash": "8f5ccfbdebff41831fa89599c48400f3"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/RateLimitFilter.java": {
+    "mtime": 1786927805.377549,
+    "seen": 1787104221.554772,
+    "ast_hash": "3643b6bbe940f9245405a47a60d56074",
+    "semantic_hash": "3643b6bbe940f9245405a47a60d56074"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/RespostaErroSeguranca.java": {
+    "mtime": 1786926933.4324179,
+    "seen": 1787104221.554772,
+    "ast_hash": "17f9729658627266b38ba78ca10acb22",
+    "semantic_hash": "17f9729658627266b38ba78ca10acb22"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/RevogacaoTokenService.java": {
+    "mtime": 1787103190.5996091,
+    "seen": 1787104221.554772,
+    "ast_hash": "51831d7848df72ef6f68fbedd36bf3b7",
+    "semantic_hash": "51831d7848df72ef6f68fbedd36bf3b7"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/SegurancaService.java": {
+    "mtime": 1786927772.0203028,
+    "seen": 1787104221.554772,
+    "ast_hash": "6f6dee31a767c49b827ff431d967ce4e",
+    "semantic_hash": "6f6dee31a767c49b827ff431d967ce4e"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/UsuarioAutenticado.java": {
+    "mtime": 1786926933.434422,
+    "seen": 1787104221.554772,
+    "ast_hash": "bea9fbcd1a032d2b6c9b6e5029dcf27d",
+    "semantic_hash": "bea9fbcd1a032d2b6c9b6e5029dcf27d"
+  },
+  "src/main/java/br/com/fiap/clyvovet/security/UsuarioDetailsService.java": {
+    "mtime": 1786926933.4354224,
+    "seen": 1787104221.554772,
+    "ast_hash": "00effbf064f0389662b9f9efc4c7ca94",
+    "semantic_hash": "00effbf064f0389662b9f9efc4c7ca94"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/AnimalService.java": {
+    "mtime": 1786927561.7015164,
+    "seen": 1787104221.554772,
+    "ast_hash": "cbfdd614a4879ec8f7c31372578c31b5",
+    "semantic_hash": "cbfdd614a4879ec8f7c31372578c31b5"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/AuthService.java": {
+    "mtime": 1787103190.6021183,
+    "seen": 1787104221.554772,
+    "ast_hash": "98f024d05eb080fb3a8a1ce3c1d69e72",
+    "semantic_hash": "98f024d05eb080fb3a8a1ce3c1d69e72"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/ClinicaService.java": {
+    "mtime": 1786927577.2339993,
+    "seen": 1787104221.554772,
+    "ast_hash": "d4a7cb2b00298b78c0b611f0fb8b200e",
+    "semantic_hash": "d4a7cb2b00298b78c0b611f0fb8b200e"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/EventoClinicoService.java": {
+    "mtime": 1786927599.1153142,
+    "seen": 1787104221.554772,
+    "ast_hash": "4301a7329e1a6bf25dfbc6885622aac7",
+    "semantic_hash": "4301a7329e1a6bf25dfbc6885622aac7"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/PagamentoService.java": {
+    "mtime": 1786927609.2747805,
+    "seen": 1787104221.554772,
+    "ast_hash": "bb5749c4b223b742fcd5621b0f1ecbaf",
+    "semantic_hash": "bb5749c4b223b742fcd5621b0f1ecbaf"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/TutorService.java": {
+    "mtime": 1786927569.469289,
+    "seen": 1787104221.554772,
+    "ast_hash": "1b01068748d5355c0e1588b5657f3b5b",
+    "semantic_hash": "1b01068748d5355c0e1588b5657f3b5b"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/UsuarioService.java": {
+    "mtime": 1786927656.8306944,
+    "seen": 1787104221.554772,
+    "ast_hash": "0630f29f95b6380a9ceafe4a42e13e4b",
+    "semantic_hash": "0630f29f95b6380a9ceafe4a42e13e4b"
+  },
+  "src/main/java/br/com/fiap/clyvovet/service/VeterinarioService.java": {
+    "mtime": 1786927586.4436393,
+    "seen": 1787104221.554772,
+    "ast_hash": "1b153bee0854f7c6a7b1cb37ac42e2b6",
+    "semantic_hash": "1b153bee0854f7c6a7b1cb37ac42e2b6"
+  },
+  "src/main/resources/db/db-oracle.sql": {
+    "mtime": 1786926933.445937,
+    "seen": 1787104221.554772,
+    "ast_hash": "c93f808825bffda42c18a13a03415e31",
+    "semantic_hash": "c93f808825bffda42c18a13a03415e31"
+  },
+  "src/main/resources/db/migration/V1__schema_inicial.sql": {
+    "mtime": 1786926933.4469368,
+    "seen": 1787104221.554772,
+    "ast_hash": "492c22ae4067a3dc50623105568deacd",
+    "semantic_hash": "492c22ae4067a3dc50623105568deacd"
+  },
+  "src/main/resources/db/migration/V2__seed_inicial.sql": {
+    "mtime": 1786926933.4479368,
+    "seen": 1787104221.554772,
+    "ast_hash": "bd685ece0b6d71225e29621b605ec2c7",
+    "semantic_hash": "bd685ece0b6d71225e29621b605ec2c7"
+  },
+  "src/main/resources/db/migration/V3__usuario_e_perfis.sql": {
+    "mtime": 1786926933.4489367,
+    "seen": 1787104221.554772,
+    "ast_hash": "47e70ae52472d30cf0534223cd3d75d7",
+    "semantic_hash": "47e70ae52472d30cf0534223cd3d75d7"
+  },
+  "src/main/resources/db/migration/V4__corrige_status_pagamento.sql": {
+    "mtime": 1786926933.4489367,
+    "seen": 1787104221.554772,
+    "ast_hash": "b559356853078c61a5e8c49fad093808",
+    "semantic_hash": "b559356853078c61a5e8c49fad093808"
+  },
+  "src/test/java/br/com/fiap/clyvovet/ClyvovetApplicationTests.java": {
+    "mtime": 1786926933.452446,
+    "seen": 1787104221.554772,
+    "ast_hash": "7d1fbc03e9003ab45a5a83d6d933b34f",
+    "semantic_hash": "7d1fbc03e9003ab45a5a83d6d933b34f"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/AtendimentoCrudTest.java": {
+    "mtime": 1786929691.4385965,
+    "seen": 1787104221.554772,
+    "ast_hash": "ca8cb54876f78acf0d5e18f0629af1a8",
+    "semantic_hash": "ca8cb54876f78acf0d5e18f0629af1a8"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/CadastroCrudTest.java": {
+    "mtime": 1786929617.737403,
+    "seen": 1787104221.554772,
+    "ast_hash": "48e6acfa50d15408c2b9ee1c8de573e6",
+    "semantic_hash": "48e6acfa50d15408c2b9ee1c8de573e6"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/EscapeNoOracleTest.java": {
+    "mtime": 1786932769.8352578,
+    "seen": 1787104221.554772,
+    "ast_hash": "76c2b35b7565be196f7185be37e13a91",
+    "semantic_hash": "76c2b35b7565be196f7185be37e13a91"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/FiltrosDeBuscaTest.java": {
+    "mtime": 1786929784.8226438,
+    "seen": 1787104221.554772,
+    "ast_hash": "c93a824d0c5dc23096a12cc0002d4823",
+    "semantic_hash": "c93a824d0c5dc23096a12cc0002d4823"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/IntegridadeReferencialTest.java": {
+    "mtime": 1786929846.442446,
+    "seen": 1787104221.554772,
+    "ast_hash": "18e44f9aae14a5d71d9f00537dd667d7",
+    "semantic_hash": "18e44f9aae14a5d71d9f00537dd667d7"
+  },
+  "src/test/java/br/com/fiap/clyvovet/crud/ValidacaoDeEntradaTest.java": {
+    "mtime": 1786929811.4893534,
+    "seen": 1787104221.554772,
+    "ast_hash": "fb385034c3bafbeffc0205461d9b4e4e",
+    "semantic_hash": "fb385034c3bafbeffc0205461d9b4e4e"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/AnimalMapperTest.java": {
+    "mtime": 1786929184.4379904,
+    "seen": 1787104221.554772,
+    "ast_hash": "a34eb3181a81a55f8c5662e78f4d6590",
+    "semantic_hash": "a34eb3181a81a55f8c5662e78f4d6590"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/ClinicaMapperTest.java": {
+    "mtime": 1786929214.466482,
+    "seen": 1787104221.554772,
+    "ast_hash": "81b51f8026ed05e7cae5c0f4ec2a616f",
+    "semantic_hash": "81b51f8026ed05e7cae5c0f4ec2a616f"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/EnderecoMapperTest.java": {
+    "mtime": 1786929170.3258448,
+    "seen": 1787104221.554772,
+    "ast_hash": "c634d0f9c706067448dfc60f6c823d73",
+    "semantic_hash": "c634d0f9c706067448dfc60f6c823d73"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/EventoClinicoMapperTest.java": {
+    "mtime": 1786929246.3582854,
+    "seen": 1787104221.554772,
+    "ast_hash": "307aad57db54af2badd9569e70ceaa56",
+    "semantic_hash": "307aad57db54af2badd9569e70ceaa56"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/PagamentoMapperTest.java": {
+    "mtime": 1786929261.1842148,
+    "seen": 1787104221.554772,
+    "ast_hash": "eddbb1dfc26d07e13e099dd56d9b388f",
+    "semantic_hash": "eddbb1dfc26d07e13e099dd56d9b388f"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/TutorMapperTest.java": {
+    "mtime": 1786929197.7209487,
+    "seen": 1787104221.554772,
+    "ast_hash": "d3d390e217e5178319771feb15eb373f",
+    "semantic_hash": "d3d390e217e5178319771feb15eb373f"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/UsuarioMapperTest.java": {
+    "mtime": 1786929273.5698128,
+    "seen": 1787104221.554772,
+    "ast_hash": "f1bb2472aca4945f4d69396e7d7d48b1",
+    "semantic_hash": "f1bb2472aca4945f4d69396e7d7d48b1"
+  },
+  "src/test/java/br/com/fiap/clyvovet/mapper/VeterinarioMapperTest.java": {
+    "mtime": 1786929226.4432535,
+    "seen": 1787104221.554772,
+    "ast_hash": "d495878dda0ab4564aed1bdc7c26ef4a",
+    "semantic_hash": "d495878dda0ab4564aed1bdc7c26ef4a"
+  },
+  "src/test/java/br/com/fiap/clyvovet/security/AutorizacaoTest.java": {
+    "mtime": 1786929956.2528882,
+    "seen": 1787104221.554772,
+    "ast_hash": "9d29e2fc7f796b38f663ebd0e7662a95",
+    "semantic_hash": "9d29e2fc7f796b38f663ebd0e7662a95"
+  },
+  "src/test/java/br/com/fiap/clyvovet/security/BloqueioContaTest.java": {
+    "mtime": 1786926933.45445,
+    "seen": 1787104221.554772,
+    "ast_hash": "e607a4fe2cc5450ff00e8bc46ca2f674",
+    "semantic_hash": "e607a4fe2cc5450ff00e8bc46ca2f674"
+  },
+  "src/test/java/br/com/fiap/clyvovet/security/JwtServiceTest.java": {
+    "mtime": 1786926933.45445,
+    "seen": 1787104221.554772,
+    "ast_hash": "dcebbaf8a3699e4b2f5f124b25b4031f",
+    "semantic_hash": "dcebbaf8a3699e4b2f5f124b25b4031f"
+  },
+  "src/test/java/br/com/fiap/clyvovet/security/OwnershipTest.java": {
+    "mtime": 1786929931.915618,
+    "seen": 1787104221.554772,
+    "ast_hash": "1bc6fa80ee98e81c90dc34686d41cb5b",
+    "semantic_hash": "1bc6fa80ee98e81c90dc34686d41cb5b"
+  },
+  "src/test/java/br/com/fiap/clyvovet/support/SeedV2.java": {
+    "mtime": 1786929351.0245082,
+    "seen": 1787104221.554772,
+    "ast_hash": "c32a82794a7fe1a8804b1748acceed96",
+    "semantic_hash": "c32a82794a7fe1a8804b1748acceed96"
+  },
+  "src/test/java/br/com/fiap/clyvovet/support/TesteDeApi.java": {
+    "mtime": 1786929448.3432803,
+    "seen": 1787104221.554772,
+    "ast_hash": "ca644190d77dc7020e139d09345da230",
+    "semantic_hash": "ca644190d77dc7020e139d09345da230"
+  },
+  ".claude/CLAUDE.md": {
+    "mtime": 1787103190.5483477,
+    "seen": 1787104221.554772,
+    "ast_hash": "c232166e6492ba1ed955030b16979b05",
+    "semantic_hash": "c232166e6492ba1ed955030b16979b05"
+  },
+  "CLAUDE.md": {
+    "mtime": 1787103190.5805335,
+    "seen": 1787104221.554772,
+    "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
+    "semantic_hash": "8a6643a420fdad6bfb583523bc6cef16"
+  },
+  "README.md": {
+    "mtime": 1786926933.338212,
+    "seen": 1787104221.554772,
+    "ast_hash": "057bec3f8882b0cf0ec08addeb87bb26",
+    "semantic_hash": "057bec3f8882b0cf0ec08addeb87bb26"
+  },
+  "docker-compose.yml": {
+    "mtime": 1787103190.5860507,
+    "seen": 1787104221.554772,
+    "ast_hash": "918dda2a0118ad7845e40c75628cd8a7",
+    "semantic_hash": "918dda2a0118ad7845e40c75628cd8a7"
+  },
+  "docs/01-arquitetura.md": {
+    "mtime": 1786930099.1085844,
+    "seen": 1787104221.554772,
+    "ast_hash": "15d3df1034a9c563cee830c3f12d1690",
+    "semantic_hash": "15d3df1034a9c563cee830c3f12d1690"
+  },
+  "docs/02-modelo-de-dados.md": {
+    "mtime": 1786926933.3402128,
+    "seen": 1787104221.554772,
+    "ast_hash": "824544a0378c1fdad16cf1036dec108b",
+    "semantic_hash": "824544a0378c1fdad16cf1036dec108b"
+  },
+  "docs/03-api-rest.md": {
+    "mtime": 1786926933.3412104,
+    "seen": 1787104221.554772,
+    "ast_hash": "9432620e7e23deef1ef2fb13e18ece71",
+    "semantic_hash": "9432620e7e23deef1ef2fb13e18ece71"
+  },
+  "docs/04-configuracao.md": {
+    "mtime": 1786930104.1371179,
+    "seen": 1787104221.554772,
+    "ast_hash": "33476e8242a07edad82055b1130f0b8b",
+    "semantic_hash": "33476e8242a07edad82055b1130f0b8b"
+  },
+  "docs/05-deploy.md": {
+    "mtime": 1786926933.342249,
+    "seen": 1787104221.554772,
+    "ast_hash": "c84adaf93f583d393aa78a3cfb8199e8",
+    "semantic_hash": "c84adaf93f583d393aa78a3cfb8199e8"
+  },
+  "docs/06-guia-de-desenvolvimento.md": {
+    "mtime": 1786933739.4487355,
+    "seen": 1787104221.554772,
+    "ast_hash": "4d8a379cfbb73560f5bd6b431d819216",
+    "semantic_hash": "4d8a379cfbb73560f5bd6b431d819216"
+  },
+  "docs/07-pendencias-e-divergencias.md": {
+    "mtime": 1786933744.4763525,
+    "seen": 1787104221.554772,
+    "ast_hash": "64452fa7b00eafdc92a53ff3d09d6b62",
+    "semantic_hash": "64452fa7b00eafdc92a53ff3d09d6b62"
+  },
+  "docs/08-seguranca.md": {
+    "mtime": 1786930131.7302475,
+    "seen": 1787104221.554772,
+    "ast_hash": "aad882d63046c1ca5e6aa72c2c381fa5",
+    "semantic_hash": "aad882d63046c1ca5e6aa72c2c381fa5"
+  },
+  "docs/README.md": {
+    "mtime": 1786926933.3442485,
+    "seen": 1787104221.554772,
+    "ast_hash": "1a1d7e51be9e8b69e6791621ab249e98",
+    "semantic_hash": "1a1d7e51be9e8b69e6791621ab249e98"
+  },
+  "specs/01-sprint-1-2.md": {
+    "mtime": 1786926933.37483,
+    "seen": 1787104221.554772,
+    "ast_hash": "6c8074203541cd193770ebc194c6dce2",
+    "semantic_hash": "6c8074203541cd193770ebc194c6dce2"
+  },
+  "specs/02-sprint-3.md": {
+    "mtime": 1786926933.3758311,
+    "seen": 1787104221.554772,
+    "ast_hash": "5e4a4eb976473c4110d54e39953ccaf0",
+    "semantic_hash": "5e4a4eb976473c4110d54e39953ccaf0"
+  },
+  "specs/03-sprint-4.md": {
+    "mtime": 1786926933.3758311,
+    "seen": 1787104221.554772,
+    "ast_hash": "7af0d62c7d52a5a9d9e302af9806d17d",
+    "semantic_hash": "7af0d62c7d52a5a9d9e302af9806d17d"
+  },
+  "specs/04-dependencias-externas.md": {
+    "mtime": 1786926933.3768308,
+    "seen": 1787104221.554772,
+    "ast_hash": "e0ea3ca15aabac149de0ff171e618ed4",
+    "semantic_hash": "e0ea3ca15aabac149de0ff171e618ed4"
+  },
+  "specs/05-plano-de-implementacao.md": {
+    "mtime": 1786926933.3778296,
+    "seen": 1787104221.554772,
+    "ast_hash": "90c951508d0a3b3b3710d2d61d3f115e",
+    "semantic_hash": "90c951508d0a3b3b3710d2d61d3f115e"
+  },
+  "specs/06-checklist-pre-sprint-3.md": {
+    "mtime": 1786926933.3778296,
+    "seen": 1787104221.554772,
+    "ast_hash": "d8283fd6a1c2f72e88e9853bcfe6b3b3",
+    "semantic_hash": "d8283fd6a1c2f72e88e9853bcfe6b3b3"
+  },
+  "specs/README.md": {
+    "mtime": 1786926933.3788297,
+    "seen": 1787104221.554772,
+    "ast_hash": "098afa6b658f849c8ecadbb439f1d82b",
+    "semantic_hash": "098afa6b658f849c8ecadbb439f1d82b"
+  },
+  "documentos/Cronograma_CLYVOVET.pdf": {
+    "mtime": 1786926933.3643136,
+    "seen": 1787104221.554772,
+    "ast_hash": "4005795a0ac13384524b895e02d2ecb2",
+    "semantic_hash": "4005795a0ac13384524b895e02d2ecb2"
+  },
+  "documentos/Diagrama_De_Classes.pdf": {
+    "mtime": 1786926933.3663135,
+    "seen": 1787104221.554772,
+    "ast_hash": "911ee6489de1ba917ed4f0a9b35b83e5",
+    "semantic_hash": "911ee6489de1ba917ed4f0a9b35b83e5"
+  },
+  "documentos/Post_Animais.png": {
+    "mtime": 1786926933.3673143,
+    "seen": 1787104221.554772,
+    "ast_hash": "19ababeacd1c3ddebe141ebd8540fa61",
+    "semantic_hash": "19ababeacd1c3ddebe141ebd8540fa61"
+  },
+  "documentos/Post_Clinicas.png": {
+    "mtime": 1786926933.3683136,
+    "seen": 1787104221.554772,
+    "ast_hash": "b4c34720d11cb2136b5226c65214bfea",
+    "semantic_hash": "b4c34720d11cb2136b5226c65214bfea"
+  },
+  "documentos/Post_Eventos_Clinicos.png": {
+    "mtime": 1786926933.3693137,
+    "seen": 1787104221.554772,
+    "ast_hash": "cd9afdd30777d09dc35a5fd45719b00f",
+    "semantic_hash": "cd9afdd30777d09dc35a5fd45719b00f"
+  },
+  "documentos/Post_Eventos_Pagamentos.png": {
+    "mtime": 1786926933.3703136,
+    "seen": 1787104221.554772,
+    "ast_hash": "200faa5d5fc6966df5fad0e63766e49c",
+    "semantic_hash": "200faa5d5fc6966df5fad0e63766e49c"
+  },
+  "documentos/Post_Tutores.png": {
+    "mtime": 1786926933.3713133,
+    "seen": 1787104221.554772,
+    "ast_hash": "672a2b960941f19026c87ad0a1da6401",
+    "semantic_hash": "672a2b960941f19026c87ad0a1da6401"
+  },
+  "documentos/Post_Veterinarios.png": {
+    "mtime": 1786926933.3718183,
+    "seen": 1787104221.554772,
+    "ast_hash": "6906c88ecc772017789b3be28c713367",
+    "semantic_hash": "6906c88ecc772017789b3be28c713367"
+  }
+}
