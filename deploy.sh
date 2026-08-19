@@ -58,6 +58,11 @@ az vm run-command invoke \
   "
 
 echo "==> Clonando repositório e subindo aplicação com Docker Compose..."
+# O clone e raso e esparso: a VM so precisa dos arquivos da raiz (Dockerfile,
+# docker-compose.yml, pom.xml) e de src/. Assim o grafo do graphify, os docs e
+# os documentos de entrega nem sao baixados -- "--filter=blob:none" evita puxar
+# o conteudo deles e "sparse-checkout set src" os mantem fora do disco.
+#
 # JWT_SECRET e gerado uma unica vez na VM e persistido em ~/.clyvovet.env:
 # redeploys reaproveitam o mesmo valor (senao cada "docker compose up" novo
 # derrubaria as sessoes ativas ao trocar a chave de assinatura por baixo).
@@ -69,8 +74,9 @@ az vm run-command invoke \
     cd /home/$ADMIN_USER &&
     [ -f .clyvovet.env ] || echo JWT_SECRET=\$(openssl rand -base64 32) > .clyvovet.env &&
     chmod 600 .clyvovet.env &&
-    git clone https://github.com/leojp04/clyvovet-backend-java.git &&
+    git clone --depth 1 --filter=blob:none --sparse https://github.com/leojp04/clyvovet-backend-java.git &&
     cd clyvovet-backend-java &&
+    git sparse-checkout set src &&
     set -a && . ../.clyvovet.env && set +a &&
     docker compose up -d --build
   "
