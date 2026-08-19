@@ -1,13 +1,17 @@
-# Graph Report - clyvovet-backend-java  (2026-08-18)
+# Graph Report - clyvovet-backend-java  (2026-08-19)
 
 ## Corpus Check
-- 157 files · ~67,342 words
-- Verdict: corpus is large enough that graph structure adds value.
+- cluster-only mode — file stats not available
 
 ## Summary
 - 886 nodes · 2937 edges · 41 communities (35 shown, 6 thin omitted)
 - Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 427 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `0915be34`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Testes de CRUD e Integração
@@ -59,8 +63,8 @@
 5. `Veterinario` - 31 edges
 6. `EventoClinico` - 30 edges
 7. `Animal` - 29 edges
-8. `Pagamento` - 23 edges
-9. `JwtService` - 23 edges
+8. `JwtService` - 23 edges
+9. `Pagamento` - 23 edges
 10. `Recurso` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -79,11 +83,11 @@
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Nucleo do Dominio Clinico** — docs_02_modelo_de_dados_modelo_de_dominio, src_main_java_br_com_fiap_clyvovet_model_animal_animal, src_main_java_br_com_fiap_clyvovet_model_veterinario_veterinario, src_main_java_br_com_fiap_clyvovet_model_clinica_clinica, src_main_java_br_com_fiap_clyvovet_model_eventoclinico_eventoclinico, src_main_java_br_com_fiap_clyvovet_model_pagamento_pagamento [EXTRACTED 0.95]
 - **Defesa em Profundidade do Login** — docs_08_seguranca_autenticacao_jwt, docs_08_seguranca_bloqueio_de_conta, docs_08_seguranca_rate_limit_por_ip, docs_08_seguranca_enumeracao_de_usuarios, docs_08_seguranca_requires_new_na_contagem [EXTRACTED 0.90]
+- **Evidencias de Teste dos POSTs** — documentos_post_animais_evidencia_post_animais, documentos_post_tutores_evidencia_post_tutores, documentos_post_clinicas_evidencia_post_clinicas, docs_03_api_rest_api_rest_crud [EXTRACTED 0.90]
+- **Nucleo do Dominio Clinico** — docs_02_modelo_de_dados_modelo_de_dominio, src_main_java_br_com_fiap_clyvovet_model_animal_animal, src_main_java_br_com_fiap_clyvovet_model_veterinario_veterinario, src_main_java_br_com_fiap_clyvovet_model_clinica_clinica, src_main_java_br_com_fiap_clyvovet_model_eventoclinico_eventoclinico, src_main_java_br_com_fiap_clyvovet_model_pagamento_pagamento [EXTRACTED 0.95]
 - **As Tres Frentes do Ownership** — docs_08_seguranca_ownership, docs_08_seguranca_ownership_por_id, docs_08_seguranca_ownership_em_listagens, docs_08_seguranca_ownership_no_corpo, docs_08_seguranca_vazamento_de_cache_entre_contas [EXTRACTED 0.95]
 - **Lacunas Abertas para a Entrega Final** — specs_02_sprint_3_frontend_pendente, specs_02_sprint_3_fluxos_nao_crud, specs_04_dependencias_externas_devops_banco_em_nuvem, specs_04_dependencias_externas_pipeline_azure_devops, specs_03_sprint_4_deploy_online [INFERRED 0.85]
-- **Evidencias de Teste dos POSTs** — documentos_post_animais_evidencia_post_animais, documentos_post_tutores_evidencia_post_tutores, documentos_post_clinicas_evidencia_post_clinicas, docs_03_api_rest_api_rest_crud [EXTRACTED 0.90]
 
 ## Communities (41 total, 6 thin omitted)
 
@@ -224,7 +228,7 @@ Cohesion: 0.50
 Nodes (3): tutor, veterinario, usuario
 
 ## Knowledge Gaps
-- **44 isolated node(s):** `deploy.sh script`, `br.com.fiap:clyvovet`, `ANIMAL`, `CLINICA`, `EVENTO_CLINICO` (+39 more)
+- **44 isolated node(s):** `AUTH`, `GERAL`, `LOGIN`, `ADMIN`, `TUTOR` (+39 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -237,7 +241,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Why does `Tutor` connect `Entidade e Mapper de Tutor` to `Testes de CRUD e Integração`, `Veterinários e Anotações Base`, `Clínicas e Endereço`, `Serviços com Cache e Repositórios`, `Tutores`, `DTOs de Autenticação e Perfis`, `Paginação e Listagens`, `Animais e Autorização de Rota`, `Entidade Usuário`, `Decisões de Arquitetura e Domínio`, `Entidade Animal`, `Testes de Mapper de Animal`?**
   _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **What connects `deploy.sh script`, `br.com.fiap:clyvovet`, `ANIMAL` to the rest of the system?**
+- **What connects `AUTH`, `GERAL`, `LOGIN` to the rest of the system?**
   _44 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Testes de CRUD e Integração` be split into smaller, more focused modules?**
   _Cohesion score 0.077275600505689 - nodes in this community are weakly interconnected._
