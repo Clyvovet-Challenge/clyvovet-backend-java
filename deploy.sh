@@ -74,7 +74,7 @@ az vm run-command invoke \
     cd /home/$ADMIN_USER &&
     [ -f .clyvovet.env ] || echo JWT_SECRET=\$(openssl rand -base64 32) > .clyvovet.env &&
     chmod 600 .clyvovet.env &&
-    git clone --depth 1 --filter=blob:none --sparse https://github.com/leojp04/clyvovet-backend-java.git &&
+    git clone --depth 1 --filter=blob:none --sparse https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git &&
     cd clyvovet-backend-java &&
     git sparse-checkout set src &&
     set -a && . ../.clyvovet.env && set +a &&

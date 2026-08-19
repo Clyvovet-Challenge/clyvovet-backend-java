@@ -82,7 +82,7 @@ A documentação completa do projeto está na pasta [`docs/`](docs/):
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/leojp04/clyvovet-backend-java.git
+git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
 cd clyvovet-backend-java
 ```
 
