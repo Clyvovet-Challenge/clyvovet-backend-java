@@ -50,8 +50,8 @@ Decisões relevantes:
 
 [`.dockerignore`](../.dockerignore) — antes de copiar qualquer coisa, o Docker
 envia o diretório inteiro ao daemon como *build context*. Sem esse arquivo eram
-89 MB a cada `docker compose up --build` — 72 MB de `target/`, 5,9 MB de
-`graphify-out/`, 4,7 MB de `documentos/` — para o Dockerfile usar menos de 1 MB.
+89 MB a cada `docker compose up --build` — 72 MB de `target/`, 4,7 MB de
+`documentos/` — para o Dockerfile usar menos de 1 MB.
 
 Nada disso chegava à imagem: o Dockerfile copia só `pom.xml` e `src/`. O
 desperdício estava no envio, não no resultado.
@@ -178,8 +178,8 @@ git sparse-checkout set src
 
 `--depth 1` traz um único commit em vez do histórico inteiro; `--filter=blob:none`
 faz o conteúdo dos arquivos fora do escopo nem ser baixado; `sparse-checkout set src`
-deixa no disco apenas a raiz e `src/`. Com isso `graphify-out/` (o grafo do
-codebase), `docs/` e `documentos/` não chegam à máquina.
+deixa no disco apenas a raiz e `src/`. Com isso `docs/` e `documentos/` não
+chegam à máquina.
 
 O `git pull` da seção de operação continua funcionando — num clone parcial o git
 busca sob demanda o que faltar.

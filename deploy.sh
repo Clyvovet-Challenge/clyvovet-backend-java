@@ -59,8 +59,8 @@ az vm run-command invoke \
 
 echo "==> Clonando repositório e subindo aplicação com Docker Compose..."
 # O clone e raso e esparso: a VM so precisa dos arquivos da raiz (Dockerfile,
-# docker-compose.yml, pom.xml) e de src/. Assim o grafo do graphify, os docs e
-# os documentos de entrega nem sao baixados -- "--filter=blob:none" evita puxar
+# docker-compose.yml, pom.xml) e de src/. Assim os docs e os documentos de
+# entrega nem sao baixados -- "--filter=blob:none" evita puxar
 # o conteudo deles e "sparse-checkout set src" os mantem fora do disco.
 #
 # JWT_SECRET e gerado uma unica vez na VM e persistido em ~/.clyvovet.env:

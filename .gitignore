@@ -35,35 +35,5 @@ build/
 ### Credentials ###
 application-prod.properties
 
-### Graphify ###
-# Tudo que o graphify produz e versionado, para que um clone ja venha com o mapa
-# do codebase pronto: graph.json, GRAPH_REPORT.md, wiki/, os rotulos curados e a
-# assinatura deles, os caches e o graph.html. Quem clonar nao precisa reconstruir
-# nada -- nem gastar chamadas de LLM para refazer a camada semantica.
-#
-# Fora ficam so tres coisas, e cada uma por um motivo concreto:
-#
-# 1. Arquivos que guardam caminhos absolutos DESTA maquina. Versiona-los quebra
-#    o rebuild de quem clonar -- ja aconteceu: um caminho errado aqui fazia o
-#    hook de post-commit rodar em silencio sem reconstruir nada.
-graphify-out/.graphify_python
-graphify-out/.graphify_root
-#
-# 2. Indices e arquivos intermediarios sem valor fora desta maquina. O
-#    stat-index e indexado por mtime, que muda em todo clone: nunca casa, entao
-#    so pesa. Os demais sao etapas intermediarias ja materializadas no
-#    graph.json e no GRAPH_REPORT.md.
-graphify-out/cache/stat-index.json
-# O last_query_stamp e so a hora da ultima consulta nesta maquina.
-graphify-out/cache/last_query_stamp
-graphify-out/.graphify_extract.json
-graphify-out/.graphify_detect.json
-graphify-out/.graphify_analysis.json
-graphify-out/.graphify_chunk_*.json
-#
-# 3. Os backups datados que cada rebuild deixa: sao copias byte a byte da saida
-#    anterior, que o git ja guarda no historico.
-graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
-
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json

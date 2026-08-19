@@ -67,31 +67,6 @@ A documentação completa do projeto está na pasta [`docs/`](docs/):
 | [Guia de Desenvolvimento](docs/06-guia-de-desenvolvimento.md) | Convenções, como adicionar entidades, testes |
 | [Pendências e Divergências](docs/07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e docs |
 
-### Mapa do codebase
-
-Além dos documentos escritos à mão, o repositório carrega um grafo de conhecimento
-do próprio código em [`graphify-out/`](graphify-out/) — nós, comunidades e relações
-entre arquivos, gerado pelo [graphify](https://pypi.org/project/graphifyy/) e
-versionado junto com o código.
-
-Comece por [`graphify-out/wiki/index.md`](graphify-out/wiki/index.md): é um índice
-das comunidades do grafo com um artigo para cada uma, em markdown puro. Serve tanto
-para você se localizar quanto para dar contexto a uma LLM sem precisar mandar o
-código inteiro. Quem quiser consultar o grafo por pergunta pode instalar o CLI
-(`pip install graphifyy`) e usar `graphify query "<pergunta>"`.
-
-Há também uma visualização navegável do grafo inteiro em
-[`graphify-out/graph.html`](graphify-out/graph.html). O GitHub não renderiza HTML —
-clicar no arquivo aqui mostra o código-fonte. Para ver o desenho, escolha uma:
-
-- **[abrir pelo raw.githack](https://raw.githack.com/Clyvovet-Challenge/clyvovet-backend-java/main/graphify-out/graph.html)**
-  — abre direto do navegador (o serviço mostra uma tela de confirmação antes)
-- baixe o repositório e dê duplo clique no arquivo — a biblioteca de desenho está
-  embutida, então ele funciona sem internet
-
-Detalhes de manutenção do grafo estão no
-[guia de desenvolvimento](docs/06-guia-de-desenvolvimento.md#grafo-do-codebase-graphify).
-
 ---
 
 ## Pré-requisitos

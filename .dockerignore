@@ -3,15 +3,13 @@
 # (~89 MB, quase tudo target/ e documentos/) ao daemon a cada build, so para
 # depois usar meio mega.
 
-# Saidas de build e do grafo do codebase
+# Saidas de build
 target/
-graphify-out/
 
 # Historico e configuracao de ferramentas
 .git/
 .gitignore
 .gitattributes
-.graphifyignore
 .idea/
 .vscode/
 .claude/
@@ -26,4 +24,3 @@ specs/
 # Scripts que rodam fora do container
 deploy.sh
 docker-compose.yml
-scripts/
