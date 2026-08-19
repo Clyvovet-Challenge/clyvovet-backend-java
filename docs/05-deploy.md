@@ -41,10 +41,20 @@ Decisões relevantes:
 |---|---|
 | Multi-stage | A imagem final leva só o JRE e o JAR — sem Maven, sem código-fonte |
 | `dependency:go-offline` antes de copiar `src` | Alterar código não invalida a camada de dependências; rebuild fica rápido |
-| `-DskipTests` | O único teste é `@SpringBootTest`, que precisaria de banco disponível durante o build |
+| Testes rodam no build | Usam H2 em memória (perfil `dev` fixado em `src/test/resources`), sem depender do Oracle — um build que passa é um JAR testado |
 | `eclipse-temurin:17-jre-jammy` | JRE, não JDK — imagem menor |
 | Usuário `appuser` sem privilégios | O processo não roda como root dentro do container |
 | Perfil fixo no `ENTRYPOINT` | A imagem é sempre `h2`; o Oracle da FIAP não é acessível da nuvem |
+
+### .dockerignore
+
+[`.dockerignore`](../.dockerignore) — antes de copiar qualquer coisa, o Docker
+envia o diretório inteiro ao daemon como *build context*. Sem esse arquivo eram
+89 MB a cada `docker compose up --build` — 72 MB de `target/`, 5,9 MB de
+`graphify-out/`, 4,7 MB de `documentos/` — para o Dockerfile usar menos de 1 MB.
+
+Nada disso chegava à imagem: o Dockerfile copia só `pom.xml` e `src/`. O
+desperdício estava no envio, não no resultado.
 
 ### docker-compose.yml
 
@@ -149,7 +159,30 @@ usuário `sa`, senha vazia.
 | 3 | `az vm open-port --port 8080` | Libera a porta da API (prioridade 1001) |
 | 4 | `az vm open-port --port 80` | Libera HTTP (prioridade 1002) |
 | 5 | `az vm run-command invoke` | Instala `git`, `curl`, `nano` e Docker; habilita o serviço; adiciona o usuário ao grupo `docker` |
-| 6 | `az vm run-command invoke` | Clona o repositório e roda `docker compose up -d --build` |
+| 6 | `az vm run-command invoke` | Clona o repositório (raso e esparso, ver abaixo) e roda `docker compose up -d --build` |
+
+### O que chega na VM
+
+O clone é raso e esparso:
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse <url>
+git sparse-checkout set src
+```
+
+| Camada | O que contém |
+|---|---|
+| Disco da VM | arquivos da raiz (`Dockerfile`, `docker-compose.yml`, `pom.xml`, `mvnw`) e `src/` — cerca de 900 KB |
+| Contexto de build | o mesmo, menos o que o `.dockerignore` exclui |
+| Imagem final | JRE e o JAR |
+
+`--depth 1` traz um único commit em vez do histórico inteiro; `--filter=blob:none`
+faz o conteúdo dos arquivos fora do escopo nem ser baixado; `sparse-checkout set src`
+deixa no disco apenas a raiz e `src/`. Com isso `graphify-out/` (o grafo do
+codebase), `docs/` e `documentos/` não chegam à máquina.
+
+O `git pull` da seção de operação continua funcionando — num clone parcial o git
+busca sob demanda o que faltar.
 
 ### Execução
 

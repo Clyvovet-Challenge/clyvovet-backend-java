@@ -294,38 +294,53 @@ target/
 ## Grafo do codebase (graphify)
 
 `graphify-out/` guarda um mapa do projeto gerado pelo [graphify](https://pypi.org/project/graphifyy/)
-e versionado junto com o codigo, de modo que qualquer clone ja venha com ele. O
-hook `post-commit` reconstroi o grafo em segundo plano sempre que um commit toca
+e versionado junto com o código, de modo que qualquer clone já venha com ele. O
+hook `post-commit` reconstrói o grafo em segundo plano sempre que um commit toca
 arquivos fora de `graphify-out/`.
 
-O que fica de fora esta em `.graphifyignore`: as instrucoes das skills de IA, a
-memoria de outros assistentes e o proprio `scripts/`. Sao arquivos que falam de
-ferramentas, nao da aplicacao -- sem eles, um `graphify update .` completo
-reproduz exatamente o grafo versionado.
+O que fica de fora está em `.graphifyignore`: as instruções das skills de IA, a
+memória de outros assistentes e o próprio `scripts/`. São arquivos que falam de
+ferramentas, não da aplicação — sem eles, um `graphify update .` completo somava
+63 nós de documentação do graphify e reagrupava o grafo inteiro; com eles, o
+rebuild reproduz exatamente o grafo versionado.
+
+Dentro de `graphify-out/`, nem tudo entra no git:
+
+| Arquivo | Versionado? | Por quê |
+|---|---|---|
+| `graph.json` | sim | é o grafo |
+| `GRAPH_REPORT.md`, `wiki/` | sim | leitura humana do grafo |
+| `.graphify_labels.json` + `.sig` | sim | os nomes curados e a assinatura que os valida |
+| `cache/semantic/` | sim | caro de regenerar (custa chamadas de LLM) |
+| `manifest.json` | não | reescreve o carimbo `seen` de todo arquivo a cada varredura — eram ~290 linhas de ruído por commit |
+| `cache/ast/`, `graph.html`, `cost.json` | não | regenerados de graça a partir do `graph.json` |
+
+O grafo também não vai para a VM: o `deploy.sh` faz um clone esparso que deixa
+`graphify-out/` de fora. Ver [05-deploy.md](05-deploy.md).
 
 ### Nomes das comunidades
 
-O graphify agrupa os nos em comunidades e nomeia cada uma pelo no mais conectado
+O graphify agrupa os nós em comunidades e nomeia cada uma pelo nó mais conectado
 do grupo, o que produz nomes como `org.junit.jupiter.api.Test`. Os nomes deste
-projeto foram escritos a mao ("Testes de CRUD e Integracao") e ficam em
+projeto foram escritos à mão ("Testes de CRUD e Integração") e ficam em
 `graphify-out/.graphify_labels.json`.
 
-Eles valem enquanto a comunidade tiver exatamente os mesmos membros -- e isso que
+Eles valem enquanto a comunidade tiver exatamente os mesmos membros — é isso que
 `graphify-out/.graphify_labels.json.sig` registra, e por isso os dois arquivos
-sao versionados juntos. Quando o reagrupamento muda de verdade, as comunidades
-afetadas voltam ao nome padrao. Para trazer os nomes de volta:
+são versionados juntos. Quando o reagrupamento muda de verdade, as comunidades
+afetadas voltam ao nome padrão. Para trazer os nomes de volta:
 
 ```bash
 python scripts/label-communities.py    # devolve os nomes curados
 graphify cluster-only .                # regenera GRAPH_REPORT.md e graph.html
 ```
 
-O script nao confia no numero da comunidade, que nao e estavel entre rebuilds:
-`scripts/community-labels.json` guarda quais nos formavam cada grupo e o nome vai
+O script não confia no número da comunidade, que não é estável entre rebuilds:
+`scripts/community-labels.json` guarda quais nós formavam cada grupo e o nome vai
 para a comunidade que herdou a maior parte deles. Depois de renomear comunidades
-a mao, grave a nova referencia com `python scripts/label-communities.py --snapshot`.
+à mão, grave a nova referência com `python scripts/label-communities.py --snapshot`.
 
-O aviso pode ser automatico:
+O aviso pode ser automático:
 
 ```bash
 cp scripts/pre-commit .git/hooks/pre-commit
@@ -333,8 +348,8 @@ cp scripts/pre-commit .git/hooks/pre-commit
 
 Esse hook roda `label-communities.py --check` antes de cada commit e avisa, sem
 bloquear, quando algum nome saiu do lugar. Ele fica no `pre-commit` porque o
-rebuild do `post-commit` e assincrono: quando o rebuild termina, o hook daquele
-commit ja saiu ha muito tempo.
+rebuild do `post-commit` é assíncrono: quando o rebuild termina, o hook daquele
+commit já saiu há muito tempo.
 
 ---
 
