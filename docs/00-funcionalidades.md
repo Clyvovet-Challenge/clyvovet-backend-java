@@ -269,17 +269,22 @@ Registrado para não parecer omissão:
 | Cache e rate limit distribuídos | ambos por processo; com réplicas, precisariam de Redis |
 | Coleção Postman/Insomnia exportada | pendente, e vale 10 pontos na rubrica |
 
-### Coberto por teste, e o que não está
+### Coberto por teste
 
-Os 113 testes cobrem o CRUD dos seis recursos, filtros, mappers, JWT, bloqueio de
-conta, ownership, rate limit e as migrations do MySQL.
+Os 126 testes cobrem o CRUD dos seis recursos, filtros, atualização parcial, mappers,
+JWT, ciclo de sessão, bloqueio de conta, ownership, rate limit e as migrations do
+MySQL.
 
-Fora da suíte automatizada: `/auth/me`, `/auth/refresh`, `/auth/logout` e
-`/auth/usuarios`. Os quatro foram verificados manualmente contra a aplicação em
-19/08/2026 — `me` devolve o usuário autenticado e 401 sem token; `refresh` devolve um
-access novo; `logout` responde 204 e invalida o refresh (reuso dá 401); `usuarios`
-com token de TUTOR dá 403. Vale escrever o teste: hoje uma regressão neles passaria
-despercebida.
+`CicloDeSessaoTest` fecha a lacuna que existia em `/auth/me`, `/auth/refresh`,
+`/auth/logout` e `/auth/usuarios` — os quatro endpoints que ficaram sem cobertura até
+19/08/2026. Além do caminho feliz, ele pina duas propriedades que só apareceriam em
+produção se quebrassem:
+
+- **um access token não é aceito como refresh.** Os dois são JWT assinados pela mesma
+  chave; o que os separa é a claim `tipo`. Se o refresh aceitasse um access, um access
+  vazado viraria sessão renovável por sete dias.
+- **logout repetido responde 204.** Um retry ou uma aba duplicada não deve tomar erro:
+  o efeito desejado — token revogado — já aconteceu.
 
 ---
 
@@ -291,4 +296,4 @@ despercebida.
 | Rotas | 42, todas sob `/api/v1` — 36 de domínio + 6 de autenticação |
 | Perfis de acesso | 3 |
 | Migrations | V1 a V4, em dois conjuntos (Oracle e MySQL) |
-| Testes automatizados | 113 |
+| Testes automatizados | 126 |
