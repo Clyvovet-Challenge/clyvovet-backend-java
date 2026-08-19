@@ -291,6 +291,53 @@ target/
 
 ---
 
+## Grafo do codebase (graphify)
+
+`graphify-out/` guarda um mapa do projeto gerado pelo [graphify](https://pypi.org/project/graphifyy/)
+e versionado junto com o codigo, de modo que qualquer clone ja venha com ele. O
+hook `post-commit` reconstroi o grafo em segundo plano sempre que um commit toca
+arquivos fora de `graphify-out/`.
+
+O que fica de fora esta em `.graphifyignore`: as instrucoes das skills de IA, a
+memoria de outros assistentes e o proprio `scripts/`. Sao arquivos que falam de
+ferramentas, nao da aplicacao -- sem eles, um `graphify update .` completo
+reproduz exatamente o grafo versionado.
+
+### Nomes das comunidades
+
+O graphify agrupa os nos em comunidades e nomeia cada uma pelo no mais conectado
+do grupo, o que produz nomes como `org.junit.jupiter.api.Test`. Os nomes deste
+projeto foram escritos a mao ("Testes de CRUD e Integracao") e ficam em
+`graphify-out/.graphify_labels.json`.
+
+Eles valem enquanto a comunidade tiver exatamente os mesmos membros -- e isso que
+`graphify-out/.graphify_labels.json.sig` registra, e por isso os dois arquivos
+sao versionados juntos. Quando o reagrupamento muda de verdade, as comunidades
+afetadas voltam ao nome padrao. Para trazer os nomes de volta:
+
+```bash
+python scripts/label-communities.py    # devolve os nomes curados
+graphify cluster-only .                # regenera GRAPH_REPORT.md e graph.html
+```
+
+O script nao confia no numero da comunidade, que nao e estavel entre rebuilds:
+`scripts/community-labels.json` guarda quais nos formavam cada grupo e o nome vai
+para a comunidade que herdou a maior parte deles. Depois de renomear comunidades
+a mao, grave a nova referencia com `python scripts/label-communities.py --snapshot`.
+
+O aviso pode ser automatico:
+
+```bash
+cp scripts/pre-commit .git/hooks/pre-commit
+```
+
+Esse hook roda `label-communities.py --check` antes de cada commit e avisa, sem
+bloquear, quando algum nome saiu do lugar. Ele fica no `pre-commit` porque o
+rebuild do `post-commit` e assincrono: quando o rebuild termina, o hook daquele
+commit ja saiu ha muito tempo.
+
+---
+
 ## Fluxo de trabalho
 
 Branch principal: `main`. Os commits do projeto seguem

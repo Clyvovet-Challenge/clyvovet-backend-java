@@ -49,9 +49,11 @@ graphify-out/.graphify_extract.json
 graphify-out/.graphify_detect.json
 graphify-out/.graphify_analysis.json
 graphify-out/.graphify_chunk_*.json
-# Cada rebuild deixa um backup datado e uma assinatura dos rotulos:
+# Cada rebuild deixa um backup datado da saida anterior:
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
-graphify-out/*.sig
+# .graphify_labels.json.sig NAO entra aqui de proposito: e a assinatura de
+# quais nos formam cada comunidade, e sem ela o rebuild descarta todos os
+# rotulos curados assim que o numero de comunidades muda.
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json
