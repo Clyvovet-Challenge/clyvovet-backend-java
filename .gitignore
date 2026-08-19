@@ -36,29 +36,32 @@ build/
 application-prod.properties
 
 ### Graphify ###
-# O grafo e versionado: graph.json, GRAPH_REPORT.md e wiki/ acompanham o
-# repositorio para que qualquer clone ja tenha o mapa do codebase.
-# Fora do versionamento ficam os artefatos regeneraveis e os caminhos locais:
-graphify-out/graph.html
-# O manifest e so um indice de quais arquivos ja foram lidos, e reescreve o
-# carimbo "seen" de todos eles a cada varredura -- versiona-lo enchia cada
-# commit de ~290 linhas de ruido. Sem ele o primeiro `graphify update .` de um
-# clone novo apenas re-extrai o codigo e conclui que nada mudou.
-graphify-out/manifest.json
-graphify-out/cache/ast/
-graphify-out/cache/stat-index.json
-graphify-out/cost.json
+# Tudo que o graphify produz e versionado, para que um clone ja venha com o mapa
+# do codebase pronto: graph.json, GRAPH_REPORT.md, wiki/, os rotulos curados e a
+# assinatura deles, os caches e o graph.html. Quem clonar nao precisa reconstruir
+# nada -- nem gastar chamadas de LLM para refazer a camada semantica.
+#
+# Fora ficam so tres coisas, e cada uma por um motivo concreto:
+#
+# 1. Arquivos que guardam caminhos absolutos DESTA maquina. Versiona-los quebra
+#    o rebuild de quem clonar -- ja aconteceu: um caminho errado aqui fazia o
+#    hook de post-commit rodar em silencio sem reconstruir nada.
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+#
+# 2. Indices e arquivos intermediarios sem valor fora desta maquina. O
+#    stat-index e indexado por mtime, que muda em todo clone: nunca casa, entao
+#    so pesa. Os demais sao etapas intermediarias ja materializadas no
+#    graph.json e no GRAPH_REPORT.md.
+graphify-out/cache/stat-index.json
 graphify-out/.graphify_extract.json
 graphify-out/.graphify_detect.json
 graphify-out/.graphify_analysis.json
 graphify-out/.graphify_chunk_*.json
-# Cada rebuild deixa um backup datado da saida anterior:
+#
+# 3. Os backups datados que cada rebuild deixa: sao copias byte a byte da saida
+#    anterior, que o git ja guarda no historico.
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
-# .graphify_labels.json.sig NAO entra aqui de proposito: e a assinatura de
-# quais nos formam cada comunidade, e sem ela o rebuild descarta todos os
-# rotulos curados assim que o numero de comunidades muda.
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json

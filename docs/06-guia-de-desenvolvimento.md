@@ -296,7 +296,12 @@ target/
 `graphify-out/` guarda um mapa do projeto gerado pelo [graphify](https://pypi.org/project/graphifyy/)
 e versionado junto com o código, de modo que qualquer clone já venha com ele. O
 hook `post-commit` reconstrói o grafo em segundo plano sempre que um commit toca
-arquivos fora de `graphify-out/`.
+arquivos fora de `graphify-out/`. Hooks não vêm no clone; para ativar o seu:
+
+```bash
+pip install graphifyy
+graphify hook install
+```
 
 O que fica de fora está em `.graphifyignore`: as instruções das skills de IA, a
 memória de outros assistentes e o próprio `scripts/`. São arquivos que falam de
@@ -304,16 +309,24 @@ ferramentas, não da aplicação — sem eles, um `graphify update .` completo s
 63 nós de documentação do graphify e reagrupava o grafo inteiro; com eles, o
 rebuild reproduz exatamente o grafo versionado.
 
-Dentro de `graphify-out/`, nem tudo entra no git:
+Tudo que o graphify produz é versionado, para que um clone já venha com o mapa
+pronto — sem reconstruir nada e sem gastar chamadas de LLM para refazer a camada
+semântica. Ficam de fora só três coisas:
 
 | Arquivo | Versionado? | Por quê |
 |---|---|---|
 | `graph.json` | sim | é o grafo |
-| `GRAPH_REPORT.md`, `wiki/` | sim | leitura humana do grafo |
+| `GRAPH_REPORT.md`, `wiki/` | sim | a leitura barata do grafo, para gente e para LLM |
 | `.graphify_labels.json` + `.sig` | sim | os nomes curados e a assinatura que os valida |
-| `cache/semantic/` | sim | caro de regenerar (custa chamadas de LLM) |
-| `manifest.json` | não | reescreve o carimbo `seen` de todo arquivo a cada varredura — eram ~290 linhas de ruído por commit |
-| `cache/ast/`, `graph.html`, `cost.json` | não | regenerados de graça a partir do `graph.json` |
+| `cache/semantic/` | sim | caro de refazer — custa chamadas de LLM |
+| `cache/ast/`, `manifest.json` | sim | fazem o primeiro `graphify update .` de um clone não ter trabalho |
+| `graph.html` | sim | a visualização; baixe e abra no navegador — o GitHub não renderiza HTML, mostra o fonte |
+| `.graphify_root`, `.graphify_python` | **não** | guardam caminhos absolutos da máquina que gerou; um valor errado aqui já fez o hook rodar em silêncio sem reconstruir nada |
+| `cache/stat-index.json` | **não** | indexado por `mtime`, que muda em todo clone: nunca casa |
+| `graphify-out/<data>/` | **não** | cópia byte a byte da saída anterior, que o git já guarda no histórico |
+
+O cache AST fica em `cache/ast/v<versão>/`. Atualizar o graphify cria um diretório
+novo e deixa o antigo órfão — se isso acontecer, apague o diretório da versão velha.
 
 O grafo também não vai para a VM: o `deploy.sh` faz um clone esparso que deixa
 `graphify-out/` de fora. Ver [05-deploy.md](05-deploy.md).
