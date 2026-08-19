@@ -142,16 +142,24 @@ sobrescrever nada faz a aplicação tentar conectar no Oracle da FIAP.
 server.port=8080
 spring.jackson.serialization.write-dates-as-timestamps=false
 
-spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl
+# Credenciais NUNCA versionadas — vêm do ambiente.
+spring.datasource.url=${DB_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl}
 spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
-spring.datasource.username=rm563065
-spring.datasource.password=191298
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
 
-spring.jpa.hibernate.ddl-auto=none
+spring.flyway.locations=classpath:db/migration/oracle
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=2
+
+spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.OracleDialect
 spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
 spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
+
+clyvovet.jwt.secret=${JWT_SECRET}
 ```
 
 Pontos de atenção:

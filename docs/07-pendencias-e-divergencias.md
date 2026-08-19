@@ -16,7 +16,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | # | Item | Severidade | Área | Situação |
 |---|---|---|---|---|
 | 1 | `REEMBOLSADO` vs `ESTORNADO` no check constraint | Alta | Banco | ✅ migration `V4` |
-| 2 | Credenciais do Oracle versionadas em texto puro | Alta | Segurança | ✅ `DB_USERNAME`/`DB_PASSWORD` |
+| 2 | Credenciais do Oracle versionadas em texto puro | **Alta** | Segurança | parcial — código e docs limpos; **falta trocar a senha** |
 | 3 | Unicidade só existe no banco → 500 em duplicidade | Média | Erros | ✅ 409 no handler |
 | 4 | Exclusão com dependentes → 500 | Média | Erros | ✅ 409 no handler, coberto por `IntegridadeReferencialTest` |
 | 5 | Perfil `h2` não roda fora do Docker | Média | Configuração | ✅ documentado; use `dev` |
@@ -40,8 +40,11 @@ a precisar do `tutorId`: sem ele, a listagem de um tutor seria servida a outro. 
 em [08-seguranca.md](08-seguranca.md#ownership) e coberta por
 `OwnershipTest.cacheNaoVazaEntreTutores`.
 
-Restam **4 itens abertos** (7, 9, 12 e 19) e uma pendência parcial (15), todos de
-severidade média ou baixa.
+Restam **4 itens abertos** (7, 9, 12 e 19) e duas pendências parciais (2 e 15).
+
+> ⚠️ O item **2 é o único de severidade alta ainda em aberto**: o código e a
+> documentação já não têm a senha, mas ela continua no histórico do Git de um
+> repositório público. Só trocar a senha no portal da FIAP fecha isso.
 
 ---
 
@@ -75,8 +78,8 @@ Se preferir manter o nome no Java, altere o constraint e o README.
 tem usuário e senha em texto puro, e esse é o perfil ativo por padrão:
 
 ```properties
-spring.datasource.username=rm563065
-spring.datasource.password=191298
+spring.datasource.username=<RM do aluno>
+spring.datasource.password=<senha em texto puro>
 ```
 
 O [`.gitignore`](../.gitignore) protege `application-prod.properties`, mas esse arquivo
@@ -86,15 +89,37 @@ não existe — a proteção não cobre o perfil que está em uso.
 são de conta de aula da FIAP, o risco é limitado, mas o padrão é ruim e a senha
 provavelmente é reutilizada pelo aluno em outros contextos.
 
-**Correção:**
+### O que já foi feito
+
+O perfil passou a ler do ambiente, e a aplicação não sobe sem as variáveis:
 
 ```properties
-spring.datasource.username=${DB_USERNAME:}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
 ```
 
-e passar por variável de ambiente. Trocar a senha no Oracle, já que ela permanece no
-histórico mesmo após a remoção do arquivo.
+A senha também saiu deste documento e do [04-configuracao.md](04-configuracao.md),
+onde ainda aparecia em texto puro dentro de um bloco de exemplo.
+
+### O que continua aberto
+
+**A senha permanece no histórico do Git.** Ela aparece em 3 commits, tendo passado
+por 5 arquivos ao longo do tempo:
+
+| Arquivo | Situação hoje |
+|---|---|
+| `application-oracle.properties` | limpo — lê do ambiente |
+| `application.properties` | limpo |
+| `application-prod.properties` | não existe mais |
+| `docs/04-configuracao.md` | limpo |
+| `docs/07-pendencias-e-divergencias.md` | limpo (este arquivo) |
+
+Qualquer pessoa com acesso ao repositório público consegue recuperá-la com
+`git log -S`. Reescrever o histórico (`git filter-repo`, BFG) exigiria force push e
+invalidaria os clones de todo mundo — desproporcional para uma conta de aula.
+
+**A correção real é trocar a senha no portal da FIAP.** Enquanto isso não acontecer,
+o item continua aberto, por mais limpo que o código esteja.
 
 ---
 
