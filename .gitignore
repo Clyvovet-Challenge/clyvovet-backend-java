@@ -36,10 +36,15 @@ build/
 application-prod.properties
 
 ### Graphify ###
-# O grafo e versionado: graph.json, GRAPH_REPORT.md, wiki/ e manifest.json
-# acompanham o repositorio para que qualquer clone ja tenha o mapa do codebase.
+# O grafo e versionado: graph.json, GRAPH_REPORT.md e wiki/ acompanham o
+# repositorio para que qualquer clone ja tenha o mapa do codebase.
 # Fora do versionamento ficam os artefatos regeneraveis e os caminhos locais:
 graphify-out/graph.html
+# O manifest e so um indice de quais arquivos ja foram lidos, e reescreve o
+# carimbo "seen" de todos eles a cada varredura -- versiona-lo enchia cada
+# commit de ~290 linhas de ruido. Sem ele o primeiro `graphify update .` de um
+# clone novo apenas re-extrai o codigo e conclui que nada mudou.
+graphify-out/manifest.json
 graphify-out/cache/ast/
 graphify-out/cache/stat-index.json
 graphify-out/cost.json
