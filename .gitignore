@@ -15,6 +15,9 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
+# Memoria do assistente Junie. Era versionada e estava vazia (5 arquivos,
+# 5 bytes somados) -- e estado local de ferramenta, nao do projeto.
+.junie/
 *.iws
 *.iml
 *.ipr

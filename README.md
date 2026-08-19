@@ -312,47 +312,89 @@ POST /pagamentos
 
 ```
 clyvovet-backend-java/
-├── docs/                               # Documentação técnica completa
-│   ├── 01-arquitetura.md
-│   ├── 02-modelo-de-dados.md
-│   ├── 03-api-rest.md
-│   ├── 04-configuracao.md
-│   ├── 05-deploy.md
-│   ├── 06-guia-de-desenvolvimento.md
-│   └── 07-pendencias-e-divergencias.md
+│
+│  ── O que o código faz hoje. Acompanha o código e é atualizada com ele.
+├── docs/
+│   ├── README.md                       # Índice desta pasta
+│   ├── 01-arquitetura.md               # Camadas, fluxo de requisição, cache, erros
+│   ├── 02-modelo-de-dados.md           # Entidades JPA, relacionamentos, enums
+│   ├── 03-api-rest.md                  # Endpoints, contratos, status codes
+│   ├── 04-configuracao.md              # Perfis, migrations, variáveis de ambiente
+│   ├── 05-deploy.md                    # Docker, docker-compose, VM Azure
+│   ├── 06-guia-de-desenvolvimento.md   # Convenções, como adicionar entidades
+│   ├── 07-pendencias-e-divergencias.md # Divergências conhecidas e seu status
+│   └── 08-seguranca.md                 # JWT, perfis de acesso, ownership
+│
+│  ── O que o Challenge exige. Registro congelado, extraído dos PDFs oficiais.
+├── specs/
+│   ├── README.md
+│   ├── 01-sprint-1-2.md                # Requisitos do 1º semestre + pontuação
+│   ├── 02-sprint-3.md                  # Frontend, Flyway e Spring Security
+│   ├── 03-sprint-4.md                  # Entrega final
+│   ├── 04-dependencias-externas.md     # O que outras disciplinas exigem daqui
+│   ├── 05-plano-de-implementacao.md    # Backlog derivado
+│   └── 06-checklist-pre-sprint-3.md
+│
+│  ── Artefatos de entrega. O nome da pasta é exigido pela rubrica da FIAP.
 ├── documentos/
-│   ├── Cronograma_CLYVOVET.pdf         # Cronograma de desenvolvimento
-│   ├── Diagrama_De_Classes.pdf         # Diagrama de classes UML das entidades
+│   ├── Cronograma_CLYVOVET.pdf
+│   ├── Diagrama_De_Classes.pdf
 │   └── Post_*.png                      # Capturas dos POSTs testados
+│
 ├── src/
-│   └── main/
-│       ├── java/br/com/fiap/clyvovet/
-│       │   ├── controller/             # Controllers REST (6 entidades)
-│       │   ├── service/                # Regras de negócio + cache
-│       │   ├── repository/             # JPA Repositories com queries JPQL
-│       │   ├── model/                  # Entidades JPA + Enums
-│       │   ├── dto/                    # DTOs de Request e Response
-│       │   ├── mapper/                 # Conversão Entity ↔ DTO
-│       │   ├── exception/              # GlobalExceptionHandler
-│       │   └── ClyvovetApplication.java
-│       └── resources/
-│           ├── db/
-│           │   └── db-oracle.sql       # DDL + seed para Oracle FIAP
-│           ├── application.properties
-│           ├── application-oracle.properties
-│           └── application-h2.properties
+│   ├── main/
+│   │   ├── java/br/com/fiap/clyvovet/
+│   │   │   ├── config/                 # Cache, OpenAPI, seed de desenvolvimento
+│   │   │   ├── controller/             # Controllers REST
+│   │   │   ├── dto/                    # DTOs de Request e Response
+│   │   │   ├── exception/              # GlobalExceptionHandler
+│   │   │   ├── mapper/                 # Conversão Entity ↔ DTO
+│   │   │   ├── model/                  # Entidades JPA + enums
+│   │   │   ├── repository/             # JPA Repositories
+│   │   │   ├── security/               # JWT, filtros, ownership
+│   │   │   ├── service/                # Regras de negócio + cache
+│   │   │   └── ClyvovetApplication.java
+│   │   └── resources/
+│   │       ├── db/
+│   │       │   ├── db-oracle.sql       # DDL original, hoje só referência histórica
+│   │       │   └── migration/          # Schema versionado pelo Flyway
+│   │       │       ├── README.md       # Por que há dois conjuntos
+│   │       │       ├── oracle/         # V1..V4 — Oracle e H2 (MODE=Oracle)
+│   │       │       └── mysql/          # V1..V4 — Azure Database for MySQL
+│   │       ├── application.properties
+│   │       ├── application-oracle.properties
+│   │       ├── application-mysql.properties
+│   │       ├── application-h2.properties
+│   │       └── application-dev.properties
+│   └── test/java/br/com/fiap/clyvovet/
+│       ├── crud/                       # CRUD e integração por entidade
+│       ├── mapper/
+│       ├── migration/                  # Migrations MySQL sobre H2 em MODE=MySQL
+│       ├── security/                   # JWT, bloqueio de conta, ownership
+│       └── support/
+│
 ├── Dockerfile
 ├── docker-compose.yml
-└── deploy.sh                           # Script Azure CLI para deploy em VM Linux
+├── deploy.sh                           # Script Azure CLI para deploy em VM Linux
+├── pom.xml
+└── mvnw / mvnw.cmd / .mvn/             # Maven Wrapper
 ```
+
+As três pastas de documentação existem por motivos diferentes e não devem ser
+fundidas: `specs/` é o que foi **pedido** (congelado), `docs/` é o que foi
+**construído** (vivo, acompanha o código) e `documentos/` são os **artefatos de
+entrega** — cujo nome a rubrica do Challenge fixa.
 
 ---
 
 ## Testando os Endpoints
 
-A coleção completa de requisições está disponível na pasta `documentos/` do repositório (exportação do Insomnia).
+> ⚠️ **A coleção exportada do Insomnia/Postman ainda não está no repositório.** A
+> pasta `documentos/` tem apenas as capturas de tela dos POSTs. A rubrica do
+> Challenge pede o export **na pasta `documentos/`** e vale até 10 pontos — ver
+> [`specs/06-checklist-pre-sprint-3.md`](specs/06-checklist-pre-sprint-3.md).
 
-Você também pode testar diretamente pelo Swagger em:
+Enquanto isso, teste pelo Swagger em:
 
 ```
 http://localhost:8080/swagger-ui.html
