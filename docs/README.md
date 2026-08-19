@@ -14,6 +14,7 @@ silenciosamente corrigido no texto.
 
 | Documento | Conteúdo |
 |---|---|
+| [00-funcionalidades.md](00-funcionalidades.md) | **Comece aqui.** O que o sistema faz: domínio, funcionalidades, fluxo de ponta a ponta e o que ainda não existe |
 | [01-arquitetura.md](01-arquitetura.md) | Camadas, fluxo de uma requisição, responsabilidades, cache, tratamento de erros |
 | [02-modelo-de-dados.md](02-modelo-de-dados.md) | Entidades JPA, relacionamentos, enums, mapeamento objeto↔tabela, DDL Oracle |
 | [03-api-rest.md](03-api-rest.md) | Os 36 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |

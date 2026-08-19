@@ -201,6 +201,7 @@ em [`docs/08-seguranca.md`](docs/08-seguranca.md).
 
 | Documento | Conteúdo |
 |---|---|
+| [Funcionalidades](docs/00-funcionalidades.md) | **Comece aqui.** O que o sistema faz, fluxo de ponta a ponta, o que ainda não existe |
 | [Arquitetura](docs/01-arquitetura.md) | Camadas, fluxo de requisição, cache, tratamento de erros |
 | [Modelo de Dados](docs/02-modelo-de-dados.md) | Entidades, relacionamentos, enums, mapeamento objeto↔tabela |
 | [API REST](docs/03-api-rest.md) | Endpoints em detalhe, filtros, contratos, erros |

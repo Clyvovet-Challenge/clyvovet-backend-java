@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.config.WebConfig;
 import br.com.fiap.clyvovet.dto.exception.ErroValidacao;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -72,12 +73,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
             this.capacidade = capacidade;
         }
 
+        private static final String ROTA_AUTH = WebConfig.PREFIXO_API + "/auth";
+        private static final String ROTA_LOGIN = ROTA_AUTH + "/login";
+
         static Faixa de(HttpServletRequest request) {
+            // Os caminhos saem da mesma constante que o WebConfig usa para
+            // prefixar os controllers. Ja estiveram escritos a mao aqui, e
+            // quando o prefixo /api/v1 entrou eles pararam de casar em
+            // silencio: o login caiu na faixa GERAL, com 100 tentativas por
+            // minuto em vez de 10. Nada quebrou, nada apareceu no log -- so a
+            // protecao contra forca bruta havia sumido.
             String path = request.getRequestURI();
-            if ("POST".equals(request.getMethod()) && "/auth/login".equals(path)) {
+            if ("POST".equals(request.getMethod()) && ROTA_LOGIN.equals(path)) {
                 return LOGIN;
             }
-            return path.startsWith("/auth") ? AUTH : GERAL;
+            return path.startsWith(ROTA_AUTH) ? AUTH : GERAL;
         }
 
         Bucket novoBucket() {
