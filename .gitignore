@@ -54,6 +54,8 @@ graphify-out/.graphify_root
 #    so pesa. Os demais sao etapas intermediarias ja materializadas no
 #    graph.json e no GRAPH_REPORT.md.
 graphify-out/cache/stat-index.json
+# O last_query_stamp e so a hora da ultima consulta nesta maquina.
+graphify-out/cache/last_query_stamp
 graphify-out/.graphify_extract.json
 graphify-out/.graphify_detect.json
 graphify-out/.graphify_analysis.json
