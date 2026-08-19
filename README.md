@@ -1,6 +1,10 @@
 # CLYVO VET — Backend Java
 
-API REST desenvolvida em Spring Boot para o sistema de saúde contínua de pets **CLYVO VET**, como parte do Challenge FIAP 2026 — 1º Semestre.
+API REST em Spring Boot para o CLYVO VET, plataforma de saúde contínua para pets.
+Challenge FIAP 2026 — 2º ano ADS.
+
+**Stack:** Java 17 · Spring Boot 3.5 · Spring Security (JWT) · JPA/Hibernate 6.6 ·
+Flyway · Oracle 19c / MySQL / H2 · OpenAPI 3
 
 ---
 
@@ -15,281 +19,206 @@ API REST desenvolvida em Spring Boot para o sistema de saúde contínua de pets 
 
 ---
 
-## Descrição do Projeto
+## Começando
 
-O CLYVO VET é uma plataforma digital de saúde animal que conecta tutores de pets, veterinários e clínicas parceiras. A solução promove a continuidade do cuidado preventivo, centralizando o histórico clínico dos animais, o agendamento de eventos e o controle de pagamentos.
+Para rodar localmente **não é preciso configurar nada** — o perfil `dev` sobe um H2
+em memória, aplica as migrations e cria usuários de teste:
 
-Este repositório contém o **backend Java/Spring Boot**, responsável por expor uma API REST completa com persistência em banco Oracle (FIAP) ou H2 (desenvolvimento local).
+```bash
+git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
+cd clyvovet-backend-java
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
 
-### Benefícios para o Negócio
+A aplicação sobe em `http://localhost:8080` e o Swagger fica em
+`http://localhost:8080/swagger-ui.html`.
 
-- Centralização do histórico clínico do pet, acessível para tutores e clínicas
-- Redução do gap de continuidade no cuidado preventivo
-- Agendamento e controle de eventos clínicos com rastreabilidade completa
-- Geração de dados longitudinais para decisões clínicas mais assertivas
-- Escalável para múltiplas clínicas e hospitais parceiros
+> ⚠️ O perfil ativo por padrão é `oracle`, não `dev`. Rodar `./mvnw spring-boot:run`
+> sem argumento faz a aplicação tentar conectar no Oracle da FIAP e falhar se as
+> variáveis de ambiente não estiverem definidas.
+
+### A API exige autenticação
+
+Todos os endpoints de domínio pedem um token JWT. O perfil `dev` semeia estes
+usuários — as senhas valem apenas em desenvolvimento:
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| `admin@clyvovet.com` | `admin12345` | ADMIN |
+| `camila.ferreira@vetcare.com.br` | `vet12345` | VETERINARIO |
+| `lucas.santos@email.com` | `tutor12345` | TUTOR |
+| `maria.oliveira@email.com` | `tutor12345` | TUTOR |
+
+Obtenha um token e use-o no cabeçalho `Authorization`:
+
+```bash
+# Devolve {"accessToken": "...", "refreshToken": "...", ...}
+curl -X POST http://localhost:8080/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@clyvovet.com","senha":"admin12345"}'
+
+curl http://localhost:8080/animais \
+  -H 'Authorization: Bearer <accessToken>'
+```
+
+Sem o cabeçalho, a resposta é **401**. Com um token de perfil insuficiente, **403**.
+
+### Outros perfis
+
+| Perfil | Banco | Quando usar |
+|---|---|---|
+| `dev` | H2 em memória | desenvolvimento local — **recomendado** |
+| `h2` | H2 em modo servidor | dentro do docker-compose (o host `clyvovet-db` só existe lá) |
+| `oracle` | Oracle 19c FIAP | entrega e banco de testes |
+| `mysql` | Azure Database for MySQL | alvo do deploy — [ainda não validado](docs/07-pendencias-e-divergencias.md) |
+
+Os perfis `oracle` e `mysql` não têm credenciais no código: elas vêm do ambiente, e a
+aplicação não sobe sem elas.
+
+```bash
+export DB_USERNAME=rm000000
+export DB_PASSWORD=sua-senha
+export JWT_SECRET=$(openssl rand -base64 32)
+
+./mvnw spring-boot:run -Dspring-boot.run.profiles=oracle
+```
+
+O schema é criado e versionado pelo **Flyway** — não é preciso rodar SQL à mão. O
+`src/main/resources/db/db-oracle.sql` é o DDL original e hoje serve só como
+referência histórica. Detalhes em [`docs/04-configuracao.md`](docs/04-configuracao.md).
 
 ---
 
-## Arquitetura Macro
+## Arquitetura
 
 ```
-┌─────────────┐     HTTP/REST      ┌──────────────────────────┐
-│  Front-end  │ ────────────────►  │  Spring Boot API (8080)  │
-│  / Mobile   │                    │                          │
-└─────────────┘                    │  Controller              │
-                                   │  Service (Cache)         │
-                                   │  Repository (JPA)        │
-                                   │  Entity (@Column map)    │
-                                   └────────────┬─────────────┘
-                                                │
-                                   ┌────────────▼─────────────┐
-                                   │   Oracle 19c (FIAP)      │
-                                   │   ou H2 (dev local)      │
-                                   └──────────────────────────┘
+┌─────────────┐    HTTP + Bearer JWT    ┌────────────────────────────────┐
+│  Front-end  │ ──────────────────────► │   Spring Boot API (8080)       │
+│  / Mobile   │                         │                                │
+└─────────────┘                         │   JwtAuthenticationFilter      │
+                                        │   Controller                   │
+                                        │   Service (cache + ownership)  │
+                                        │   Repository (JPA)             │
+                                        │   Entity                       │
+                                        └───────────────┬────────────────┘
+                                                        │  Flyway
+                                        ┌───────────────▼────────────────┐
+                                        │  Oracle 19c · MySQL · H2       │
+                                        └────────────────────────────────┘
 ```
 
-**Stack:** Java 17 · Spring Boot 3.5 · JPA/Hibernate 6.6 · Oracle 19c · H2 · Swagger/OpenAPI · Bean Validation · Spring Cache · Lombok
+Cada requisição passa pelo filtro JWT antes de chegar ao controller. Além do perfil,
+há uma regra de **ownership**: um tutor só enxerga os próprios pets — inclusive no
+cache, cuja chave inclui o `tutorId`.
+
+---
+
+## Endpoints
+
+### Autenticação — `/auth`
+
+| Método | Rota | Acesso |
+|---|---|---|
+| POST | `/auth/login` | público |
+| POST | `/auth/refresh` | público |
+| POST | `/auth/logout` | público |
+| POST | `/auth/registrar` | público |
+| GET | `/auth/usuarios` | ADMIN |
+
+### Recursos de domínio
+
+Os seis recursos expõem o mesmo CRUD — `GET /` (paginado, com filtros),
+`GET /{id}`, `POST /`, `PUT /{id}` e `DELETE /{id}`:
+
+| Recurso | Filtros na listagem |
+|---|---|
+| `/tutores` | `nome`, `cidade` |
+| `/animais` | `nome`, `especie` |
+| `/clinicas` | `nome`, `cidade` |
+| `/veterinarios` | `nome`, `especialidade` |
+| `/eventos-clinicos` | `tipoEvento`, `animalNome` |
+| `/pagamentos` | `statusPagamento`, `formaPagamento` |
+
+```
+GET /animais?page=0&size=5&sort=nome,asc
+GET /tutores?nome=Lucas&page=0&size=10
+GET /pagamentos?statusPagamento=PENDENTE
+```
+
+### Quem pode o quê
+
+| Operação | TUTOR | VETERINARIO | ADMIN |
+|---|:---:|:---:|:---:|
+| Ler animais | só os próprios | ✅ | ✅ |
+| Criar e editar animais | só os próprios | ✅ | ✅ |
+| Listar e criar tutores | — | ✅ | ✅ |
+| Criar e editar eventos e pagamentos | — | ✅ | ✅ |
+| Criar e editar clínicas e veterinários | — | — | ✅ |
+
+Contratos completos, códigos de status e exemplos de payload estão em
+[`docs/03-api-rest.md`](docs/03-api-rest.md). A matriz de autorização detalhada está
+em [`docs/08-seguranca.md`](docs/08-seguranca.md).
+
+### Valores de enum
+
+| Campo | Valores |
+|---|---|
+| `tipoEvento` | `CONSULTA` `RETORNO` `VACINA` `EXAME` `CIRURGIA` `OUTRO` |
+| `statusPagamento` | `PENDENTE` `PAGO` `CANCELADO` `REEMBOLSADO` |
+| `formaPagamento` | `PIX` `CARTAO` `DINHEIRO` `BOLETO` |
+| `sexo` (tutor, veterinário) | `MASCULINO` `FEMININO` `OUTRO` |
+| `sexo` (animal) | `MACHO` `FEMEA` `DESCONHECIDO` |
+| `porte` | `PEQUENO` `MEDIO` `GRANDE` |
 
 ---
 
 ## Documentação Técnica
 
-A documentação completa do projeto está na pasta [`docs/`](docs/):
-
 | Documento | Conteúdo |
 |---|---|
 | [Arquitetura](docs/01-arquitetura.md) | Camadas, fluxo de requisição, cache, tratamento de erros |
-| [Modelo de Dados](docs/02-modelo-de-dados.md) | Entidades, relacionamentos, enums, schema Oracle |
-| [API REST](docs/03-api-rest.md) | Os 30 endpoints em detalhe, filtros, contratos, erros |
-| [Configuração](docs/04-configuracao.md) | Perfis Spring, propriedades, como rodar |
+| [Modelo de Dados](docs/02-modelo-de-dados.md) | Entidades, relacionamentos, enums, mapeamento objeto↔tabela |
+| [API REST](docs/03-api-rest.md) | Endpoints em detalhe, filtros, contratos, erros |
+| [Configuração](docs/04-configuracao.md) | Perfis, migrations, variáveis de ambiente |
 | [Deploy](docs/05-deploy.md) | Docker, docker-compose, provisionamento Azure |
 | [Guia de Desenvolvimento](docs/06-guia-de-desenvolvimento.md) | Convenções, como adicionar entidades, testes |
-| [Pendências e Divergências](docs/07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e docs |
+| [Pendências e Divergências](docs/07-pendencias-e-divergencias.md) | Inconsistências conhecidas e seu status |
+| [Segurança](docs/08-seguranca.md) | JWT, perfis, ownership, bloqueio de conta |
+
+Os requisitos do Challenge que originaram o projeto estão em
+[`specs/`](specs/README.md).
 
 ---
 
-## Pré-requisitos
-
-- Java 17+
-- Maven 3.8+
-- Acesso ao Oracle FIAP **ou** rodar localmente com H2
-
----
-
-## Instalação e Execução
-
-### 1. Clonar o repositório
+## Deploy
 
 ```bash
-git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
-cd clyvovet-backend-java
+# Local, com Docker
+JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
+
+# VM Linux na Azure (requer Azure CLI autenticado)
+bash deploy.sh
 ```
 
-### 2. Configurar o banco de dados
+O `deploy.sh` provisiona a VM, instala Docker, clona o repositório de forma rasa e
+esparsa e sobe o compose. É idempotente: num redeploy ele atualiza o clone em vez de
+falhar. Ver [`docs/05-deploy.md`](docs/05-deploy.md).
 
-#### Opção A — Oracle FIAP (produção)
+---
 
-Antes de iniciar a aplicação, execute o script SQL no SQL Developer:
-
-```
-src/main/resources/db/db-oracle.sql
-```
-
-Este script cria as tabelas, índices, views, procedures e dados de seed. Execute com **Run Script (F5)** conectado ao Oracle da FIAP com suas credenciais.
-
-Ative o perfil Oracle:
-
-```properties
-# application.properties
-spring.profiles.active=oracle
-```
-
-Configure suas credenciais em `application-oracle.properties`:
-
-```properties
-spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL
-spring.datasource.username=SEU_RM
-spring.datasource.password=SUA_SENHA
-```
-
-#### Opção B — H2 (desenvolvimento local, sem Oracle)
-
-Ative o perfil H2:
-
-```properties
-# application.properties
-spring.profiles.active=h2
-```
-
-### 3. Executar
+## Testes
 
 ```bash
-mvn spring-boot:run
+./mvnw test
 ```
 
-A aplicação sobe em `http://localhost:8080`
+São 105 testes cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
+ownership e as migrations do MySQL.
 
-### 4. Acessar o Swagger
-
-```
-http://localhost:8080/swagger-ui.html
-```
-
----
-
-## Endpoints da API
-
-### Tutores — `/tutores`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/tutores` | Lista todos (paginado). Filtros: nome, cidade |
-| GET | `/tutores/{id}` | Busca por ID |
-| POST | `/tutores` | Cadastra novo tutor |
-| PUT | `/tutores/{id}` | Atualiza tutor |
-| DELETE | `/tutores/{id}` | Remove tutor |
-
-### Animais — `/animais`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/animais` | Lista todos (paginado). Filtros: nome, especie |
-| GET | `/animais/{id}` | Busca por ID |
-| POST | `/animais` | Cadastra novo animal |
-| PUT | `/animais/{id}` | Atualiza animal |
-| DELETE | `/animais/{id}` | Remove animal |
-
-### Clínicas — `/clinicas`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/clinicas` | Lista todas (paginado). Filtros: nome, cidade |
-| GET | `/clinicas/{id}` | Busca por ID |
-| POST | `/clinicas` | Cadastra nova clínica |
-| PUT | `/clinicas/{id}` | Atualiza clínica |
-| DELETE | `/clinicas/{id}` | Remove clínica |
-
-### Veterinários — `/veterinarios`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/veterinarios` | Lista todos (paginado). Filtros: nome, especialidade |
-| GET | `/veterinarios/{id}` | Busca por ID |
-| POST | `/veterinarios` | Cadastra novo veterinário |
-| PUT | `/veterinarios/{id}` | Atualiza veterinário |
-| DELETE | `/veterinarios/{id}` | Remove veterinário |
-
-### Eventos Clínicos — `/eventos-clinicos`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/eventos-clinicos` | Lista todos (paginado). Filtros: tipoEvento, animalNome |
-| GET | `/eventos-clinicos/{id}` | Busca por ID |
-| POST | `/eventos-clinicos` | Cadastra novo evento |
-| PUT | `/eventos-clinicos/{id}` | Atualiza evento |
-| DELETE | `/eventos-clinicos/{id}` | Remove evento |
-
-Valores válidos para `tipoEvento`: `CONSULTA` `RETORNO` `VACINA` `EXAME` `CIRURGIA` `OUTRO`
-
-### Pagamentos — `/pagamentos`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/pagamentos` | Lista todos (paginado). Filtros: statusPagamento, formaPagamento |
-| GET | `/pagamentos/{id}` | Busca por ID |
-| POST | `/pagamentos` | Registra novo pagamento |
-| PUT | `/pagamentos/{id}` | Atualiza pagamento |
-| DELETE | `/pagamentos/{id}` | Remove pagamento |
-
-Valores válidos para `statusPagamento`: `PENDENTE` `PAGO` `CANCELADO` `REEMBOLSADO`
-
-Valores válidos para `formaPagamento`: `PIX` `CARTAO` `DINHEIRO` `BOLETO`
-
----
-
-## Exemplos de Uso
-
-### Paginação, ordenação e filtros
-
-```
-GET /animais?page=0&size=5&sort=nome,asc
-GET /tutores?nome=Lucas&page=0&size=10
-GET /veterinarios?especialidade=Cardiologia
-GET /eventos-clinicos?tipoEvento=VACINA
-GET /pagamentos?statusPagamento=PENDENTE
-GET /pagamentos?formaPagamento=PIX
-```
-
-### Exemplo de POST — Criar Tutor
-
-```json
-POST /tutores
-{
-  "nome": "João Silva",
-  "cpf": "12345678989",
-  "email": "silva@email.com",
-  "telefone": "11999999990",
-  "sexo": "MASCULINO",
-  "dataNascimento": "1990-01-15",
-  "endereco": {
-    "logradouro": "Av. Paulista",
-    "numero": "1000",
-    "bairro": "Bela Vista",
-    "cidade": "São Paulo",
-    "estado": "SP",
-    "cep": "01310100"
-  }
-}
-```
-
-### Exemplo de POST — Criar Animal
-
-```json
-POST /animais
-{
-  "nome": "Thor",
-  "raca": "Golden Retriever",
-  "especie": "CACHORRO",
-  "porte": "GRANDE",
-  "cor": "Dourado",
-  "sexo": "MACHO",
-  "dataNascimento": "2021-03-10",
-  "observacao": "Animal saudável",
-  "tutorId": "uuid-do-tutor"
-}
-```
-
-Valores válidos para `sexo` (animal): `MACHO` `FEMEA` `DESCONHECIDO`
-
-### Exemplo de POST — Criar Evento Clínico
-
-```json
-POST /eventos-clinicos
-{
-  "data": "2025-05-20",
-  "hora": "10:00",
-  "descricao": "Consulta de rotina",
-  "tipoEvento": "CONSULTA",
-  "veterinarioId": "uuid-do-veterinario",
-  "animalId": "uuid-do-animal",
-  "clinicaId": "uuid-da-clinica"
-}
-```
-
-### Exemplo de POST — Criar Pagamento
-
-```json
-POST /pagamentos
-{
-  "formaPagamento": "PIX",
-  "valor": 150.00,
-  "dataPagamento": "2025-05-20",
-  "descricao": "Pagamento consulta de rotina",
-  "statusPagamento": "PAGO",
-  "eventoClinicoId": "uuid-do-evento"
-}
-```
+> ⚠️ **A coleção exportada do Insomnia/Postman ainda não está no repositório.** A
+> pasta `documentos/` tem apenas as capturas de tela dos POSTs. A rubrica do
+> Challenge pede o export **na pasta `documentos/`** e vale até 10 pontos — ver
+> [`specs/06-checklist-pre-sprint-3.md`](specs/06-checklist-pre-sprint-3.md).
 
 ---
 
@@ -302,9 +231,11 @@ POST /pagamentos
 | Ordenação de resultados | ✅ todas as 6 entidades |
 | Busca com parâmetros | ✅ todas as 6 entidades |
 | Cache para otimizar requisições | ✅ todas as 6 entidades |
-| Tratamento de erros/exceções | ✅ GlobalExceptionHandler + EntityNotFoundException |
+| Tratamento de erros/exceções | ✅ `GlobalExceptionHandler` |
 | DTOs (Request/Response) | ✅ todas as 6 entidades |
-| Documentação com Swagger | ✅ /swagger-ui.html |
+| Documentação com Swagger | ✅ `/swagger-ui.html` |
+| Autenticação e autorização | ✅ JWT + perfis + ownership |
+| Schema versionado | ✅ Flyway, um conjunto por banco |
 
 ---
 
@@ -384,34 +315,3 @@ As três pastas de documentação existem por motivos diferentes e não devem se
 fundidas: `specs/` é o que foi **pedido** (congelado), `docs/` é o que foi
 **construído** (vivo, acompanha o código) e `documentos/` são os **artefatos de
 entrega** — cujo nome a rubrica do Challenge fixa.
-
----
-
-## Testando os Endpoints
-
-> ⚠️ **A coleção exportada do Insomnia/Postman ainda não está no repositório.** A
-> pasta `documentos/` tem apenas as capturas de tela dos POSTs. A rubrica do
-> Challenge pede o export **na pasta `documentos/`** e vale até 10 pontos — ver
-> [`specs/06-checklist-pre-sprint-3.md`](specs/06-checklist-pre-sprint-3.md).
-
-Enquanto isso, teste pelo Swagger em:
-
-```
-http://localhost:8080/swagger-ui.html
-```
-
----
-
-## Deploy em Nuvem (DevOps)
-
-O projeto inclui suporte completo para containerização e deploy na Azure:
-
-```bash
-# Build e execução local com Docker
-docker-compose up --build
-
-# Deploy em VM Linux na Azure (Azure CLI necessário)
-bash deploy.sh
-```
-
-O `deploy.sh` provisiona automaticamente uma VM Linux na Azure, instala Docker e Git, e sobe a aplicação via `docker-compose`.
