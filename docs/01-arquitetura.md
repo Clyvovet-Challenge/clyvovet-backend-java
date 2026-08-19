@@ -54,6 +54,8 @@ Raiz: `br.com.fiap.clyvovet`
 | `dto` | Contratos de entrada e saída da API | 7 subpacotes |
 | `mapper` | Conversão Entity ↔ DTO | 7 componentes |
 | `exception` | Tratamento global de erros | `GlobalExceptionHandler` |
+| `security` | JWT, filtros, ownership | `JwtService` · `SegurancaService` · filtros |
+| `config` | Convenções transversais | `WebConfig` · `SecurityConfig` · `CacheConfig` · `OpenApiConfig` |
 
 ```
 src/main/java/br/com/fiap/clyvovet/
@@ -183,13 +185,19 @@ que evita precisar de Specifications ou Criteria API.
 ### Mapper
 
 Componentes Spring escritos à mão — **não** MapStruct, apesar do nome do pacote.
-Três métodos por mapper, quando aplicável:
+Quatro métodos por mapper, quando aplicável:
 
 | Método | Uso |
 |---|---|
 | `toEntity(request, ...)` | Criação: monta entidade nova |
-| `atualizar(entidade, request, ...)` | Atualização: sobrescreve campos in-place |
-| `xToResponse(entidade)` | Saída: converte para DTO |
+| `atualizar(entidade, request, ...)` | PUT: sobrescreve todos os campos in-place |
+| `aplicarPatch(entidade, patch, ...)` | PATCH: sobrescreve **só os campos presentes** |
+| `toResponse(entidade)` | Saída: converte para DTO |
+
+O `aplicarPatch` usa o `aplicarSePresente` de `AtualizacaoParcial`, que aplica o valor
+só quando ele veio na requisição — uma linha por campo, em vez de um `if (x != null)`
+repetido dezenas de vezes, que é onde costuma passar despercebido o campo que ninguém
+lembrou de copiar.
 
 `EnderecoMapper` é compartilhado por Tutor, Clinica e Veterinario, já que os três
 embutem o mesmo `@Embeddable`.

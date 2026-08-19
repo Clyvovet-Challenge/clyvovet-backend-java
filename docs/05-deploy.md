@@ -124,7 +124,7 @@ Depois de subir:
 
 | Recurso | URL |
 |---|---|
-| API | http://localhost:8080 |
+| API | http://localhost:8080/api/v1 |
 | Swagger | http://localhost:8080/swagger-ui.html |
 | Console H2 do container `clyvovet-db` | http://localhost:81 |
 | Console H2 embarcado na API | http://localhost:8080/h2-console |

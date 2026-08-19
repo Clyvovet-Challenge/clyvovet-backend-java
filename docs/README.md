@@ -16,7 +16,7 @@ silenciosamente corrigido no texto.
 |---|---|
 | [01-arquitetura.md](01-arquitetura.md) | Camadas, fluxo de uma requisição, responsabilidades, cache, tratamento de erros |
 | [02-modelo-de-dados.md](02-modelo-de-dados.md) | Entidades JPA, relacionamentos, enums, mapeamento objeto↔tabela, DDL Oracle |
-| [03-api-rest.md](03-api-rest.md) | Os 30 endpoints, filtros, paginação, contratos de request/response, códigos de erro |
+| [03-api-rest.md](03-api-rest.md) | Os 36 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
 | [04-configuracao.md](04-configuracao.md) | Perfis Spring (`oracle`, `h2`, `dev`), propriedades, como rodar localmente |
 | [05-deploy.md](05-deploy.md) | Dockerfile, docker-compose, provisionamento Azure via `deploy.sh`, o que chega na VM |
 | [06-guia-de-desenvolvimento.md](06-guia-de-desenvolvimento.md) | Convenções do código, como adicionar uma entidade nova, build, testes e o grafo do codebase |

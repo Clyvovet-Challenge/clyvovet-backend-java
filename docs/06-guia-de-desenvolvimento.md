@@ -65,10 +65,10 @@ public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pa
 
 | Camada | Métodos |
 |---|---|
-| Controller | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `deletar` |
-| Service | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `deletar` |
+| Controller | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `atualizarParcialmente`, `deletar` |
+| Service | `listarTodos`, `buscarPorId`, `criar`, `atualizar`, `atualizarParcialmente`, `deletar` |
 | Repository | `buscarPorFiltros`, `obterPorId`, `garantirQueExiste` + herdados de `JpaRepository` |
-| Mapper | `toEntity`, `atualizar`, `toResponse` |
+| Mapper | `toEntity`, `atualizar`, `aplicarPatch`, `toResponse` |
 
 O verbo do service é o mesmo do controller (`criar`), e o mapper usa `toResponse`
 em todas as entidades — antes cada mapper tinha o próprio nome
@@ -100,11 +100,19 @@ public class AnimalService {
 | Tipo | Estilo | Motivo |
 |---|---|---|
 | Request | classe com `@NoArgsConstructor @AllArgsConstructor @Getter` | Jackson precisa do construtor vazio para desserializar |
+| PatchRequest | idem, mas **sem** `@NotNull`/`@NotBlank` | no PATCH o campo ausente significa "não mexa nele" |
 | Response | `record` | imutável, conciso |
 
-Uma exceção: `PagamentoRequest` usa `@Data`. Todos os Response são `record`.
+Requests **não** têm setters — são preenchidos por reflection pelo Jackson. Todos os
+Response são `record`; o único que ainda foge disso é `PagamentoResponse`, com
+`@Data` (item 15 de [pendências](07-pendencias-e-divergencias.md)).
 
-Requests **não** têm setters — são preenchidos por reflection pelo Jackson.
+**Request e PatchRequest são DTOs separados de propósito.** As duas operações validam
+coisas diferentes: no POST/PUT o corpo descreve o recurso inteiro, no PATCH descreve
+só o que muda. O PatchRequest mantém as restrições de **formato** (`@Size`, `@Email`,
+`@Pattern`) e abre mão das de **presença**. Grupos de validação sobre um DTO único
+foram descartados: exigiriam anotar campo a campo dos Request já existentes, e um
+grupo esquecido enfraqueceria em silêncio a validação do POST.
 
 ### Entidades
 
@@ -148,8 +156,9 @@ Se o nome da coluna diferir do campo, anote com `@Column`. Enums levam
 
 ### 2. DTOs — `dto/vacina/`
 
-`VacinaRequest` com Bean Validation, `VacinaResponse` como `record`. Achate as
-associações em `{assoc}Id` + `{assoc}Nome`.
+Três: `VacinaRequest` com Bean Validation, `VacinaPatchRequest` com as mesmas
+restrições **menos** `@NotNull`/`@NotBlank`, e `VacinaResponse` como `record`. Achate
+as associações em `{assoc}Id` + `{assoc}Nome`.
 
 ### 3. Mapper — `mapper/VacinaMapper.java`
 
@@ -159,8 +168,18 @@ associações em `{assoc}Id` + `{assoc}Nome`.
 public class VacinaMapper {
     public Vacina toEntity(VacinaRequest request, Animal animal) { ... }
     public void atualizar(Vacina vacina, VacinaRequest request, Animal animal) { ... }
-    public VacinaResponse vacinaToResponse(Vacina vacina) { ... }  // com null-guard
+    public void aplicarPatch(Vacina vacina, VacinaPatchRequest patch, Animal animal) { ... }
+    public VacinaResponse toResponse(Vacina vacina) { ... }  // com null-guard
 }
+```
+
+No `aplicarPatch`, use o `aplicarSePresente` de
+[`AtualizacaoParcial`](../src/main/java/br/com/fiap/clyvovet/mapper/AtualizacaoParcial.java)
+— uma linha por campo, em vez de um `if (x != null)` repetido:
+
+```java
+aplicarSePresente(patch.getNome(), vacina::setNome);
+aplicarSePresente(animal, vacina::setAnimal);   // null = não mexe no vínculo
 ```
 
 ### 4. Repository — `repository/VacinaRepository.java`
@@ -178,32 +197,62 @@ public interface VacinaRepository extends JpaRepository<Vacina, UUID> {
 
 ### 5. Service — `service/VacinaService.java`
 
-Cinco métodos, com `@Cacheable` na listagem e `@CacheEvict(allEntries = true)` nas
+Seis métodos, com `@Cacheable` na listagem e `@CacheEvict(allEntries = true)` nas
 escritas. Resolva as FKs lançando `EntityNotFoundException` com mensagem específica.
+
+No `atualizarParcialmente`, resolva a FK **só quando o id vier no patch** — buscar
+mesmo assim custaria uma consulta à toa e transformaria um id omitido num 404:
+
+```java
+Animal animal = patch.getAnimalId() == null ? null : animalRepository.obterPorId(patch.getAnimalId());
+```
 
 ### 6. Controller — `controller/VacinaController.java`
 
 ```java
 @RestController
-@RequestMapping("/vacinas")
+@RequestMapping("/vacinas")   // sem /api/v1: o prefixo é aplicado pelo WebConfig
 @RequiredArgsConstructor
 @Tag(name = "Vacinas", description = "Gerenciamento de vacinas")
 public class VacinaController { ... }
 ```
 
-Cinco métodos com `@Operation(summary = ...)`, `@Valid` nos bodies e
-`@PageableDefault(size = 10, sort = "nome")` na listagem.
+Seis métodos com `@Operation(summary = ...)`, `@Valid` nos bodies e
+`@PageableDefault(size = 10, sort = "nome")` na listagem. O `@RequestMapping` declara
+só o recurso — o `/api/v1` entra por
+[`WebConfig`](../src/main/java/br/com/fiap/clyvovet/config/WebConfig.java), que
+prefixa tudo o que estiver no pacote `controller`.
 
-### 7. DDL — `resources/db/db-oracle.sql`
+Se a rota precisar de regra de autorização, acrescente o matcher em `SecurityConfig`
+usando o helper `api(...)`, que aplica a mesma constante de prefixo. Sem isso a rota
+cai no `anyRequest().authenticated()` — protegida, mas sem a regra de perfil.
 
-Adicione o `CREATE TABLE` com PK `VARCHAR2(36)`, FKs, uniques e checks alinhados com
-os enums. Se houver seed, use `fn_uuid()` e resolva FKs por chave natural em bloco
-`DECLARE/BEGIN/END`.
+### 7. Migration — `resources/db/migration/`
+
+**Não edite o `db-oracle.sql`.** Ele é o DDL original e hoje serve só como referência
+histórica; quem cria o schema é o Flyway.
+
+Escreva a migration nos **dois** conjuntos, com o mesmo número de versão:
+
+```
+db/migration/oracle/V5__vacinas.sql     # VARCHAR2, NUMBER, TIMESTAMP
+db/migration/mysql/V5__vacinas.sql      # VARCHAR, DECIMAL, DATETIME
+```
+
+PK `VARCHAR2(36)` no Oracle e `VARCHAR(36)` no MySQL, com FKs, uniques e checks
+alinhados aos enums. As diferenças entre os dois dialetos e o que garante que não
+divirjam estão em
+[`db/migration/README.md`](../src/main/resources/db/migration/README.md).
+
+Rode `./mvnw test -Dtest=MigrationsMySqlTest` — ele pega erro de sintaxe no conjunto
+MySQL antes do deploy.
 
 ### 8. Documentação
 
 Atualize [02-modelo-de-dados.md](02-modelo-de-dados.md),
-[03-api-rest.md](03-api-rest.md) e o [README](../README.md) da raiz.
+[03-api-rest.md](03-api-rest.md) (índice de endpoints e contrato),
+[08-seguranca.md](08-seguranca.md) se houver regra de perfil, e o
+[README](../README.md) da raiz.
 
 ---
 

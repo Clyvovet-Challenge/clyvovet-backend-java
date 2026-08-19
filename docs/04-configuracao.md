@@ -362,6 +362,31 @@ o alvo do deploy. Qual conjunto de migrations roda é decidido pelo perfil, em
 `spring.flyway.locations`. Nenhum dos dois declara versão — todas vêm do BOM do
 Spring Boot.
 
+### Convenções da API — `WebConfig`
+
+[`WebConfig`](../src/main/java/br/com/fiap/clyvovet/config/WebConfig.java) concentra
+duas decisões que valem para toda a API:
+
+| O quê | Efeito |
+|---|---|
+| `addPathPrefix("/api/v1", ...)` | prefixa os controllers da aplicação. Swagger, `/v3/api-docs` e `/h2-console` seguem na raiz |
+| `@EnableSpringDataWebSupport(VIA_DTO)` | listagens respondem `content` + `page`, em vez do `PageImpl` do Spring serializado como está |
+
+Sem o segundo, o Spring avisava a cada listagem que o JSON não tinha estabilidade
+garantida entre versões do framework.
+
+### `open-in-view` desligado
+
+`spring.jpa.open-in-view=false` está explícito em `application.properties`. Ligado —
+que é o padrão do Spring e rende um WARN no boot — a sessão do Hibernate fica aberta
+durante a serialização da resposta, segurando a conexão por mais tempo e permitindo
+que uma consulta dispare fora da camada de serviço. Nenhum relacionamento do projeto
+é `LAZY`, então nada depende disso.
+
+---
+
+## Dependências e cache
+
 O provider de cache é o **Caffeine**, configurado em `CacheConfig` com expiração de
 10 minutos e limite de 1.000 entradas. Continua em memória e não compartilhado entre
 instâncias — com mais de uma réplica, o caminho seria Redis.

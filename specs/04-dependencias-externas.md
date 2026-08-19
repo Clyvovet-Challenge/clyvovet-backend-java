@@ -103,3 +103,54 @@ existentes.
 | 5 | Seed com menos de 5 registros em `tutor` e `animal` | Database S3 | 12/09/2026 |
 | 6 | Backend não chama procedures | Database S4 | 04/11/2026 |
 | 7 | Sem autenticação para o app mobile consumir | Mobile S3 | 12/09/2026 |
+| 8 | **Contrato da API mudou** (`/api/v1` + formato da paginação) | Backend, 19/08/2026 | avisar Mobile e Frontend |
+
+---
+
+## 8. Mudança de contrato da API — 19/08/2026
+
+Em 19/08/2026 o backend passou por uma revisão de convenções REST que **quebra os
+consumidores**. Quem integra com esta API precisa de dois ajustes:
+
+### Prefixo de versão
+
+Todas as rotas ganharam `/api/v1`:
+
+```
+antes:  GET  http://<host>:8080/animais
+depois: GET  http://<host>:8080/api/v1/animais
+
+antes:  POST http://<host>:8080/auth/login
+depois: POST http://<host>:8080/api/v1/auth/login
+```
+
+O Swagger e o `/v3/api-docs` **não** mudaram de lugar — seguem na raiz.
+
+### Formato das listagens
+
+O total de registros saiu da raiz e foi para dentro de `page`:
+
+```jsonc
+// antes — PageImpl do Spring, ~20 campos na raiz
+{ "content": [...], "totalElements": 27, "totalPages": 3, "last": false, ... }
+
+// depois
+{ "content": [...], "page": { "size": 10, "number": 0, "totalElements": 27, "totalPages": 3 } }
+```
+
+Quem lia `totalElements` na raiz passa a ler `page.totalElements`.
+
+**Por que a mudança.** O Spring avisava a cada listagem que serializar o `PageImpl`
+como está não garante estabilidade do JSON entre versões do framework — ou seja, o
+contrato podia mudar sozinho num upgrade. O formato novo é o suportado.
+
+### O que NÃO mudou
+
+Corpos de request e response dos recursos, nomes de campo, códigos de status, regras
+de autorização e o fluxo de login. Só o caminho e o envelope da listagem.
+
+### Novidade aditiva
+
+Cada recurso ganhou `PATCH /{id}` para atualização parcial — envia só os campos que
+mudam. Nada quebra por causa dele; o `PUT` continua igual. Ver
+[03-api-rest.md](../docs/03-api-rest.md#atualização-parcial-patch).
