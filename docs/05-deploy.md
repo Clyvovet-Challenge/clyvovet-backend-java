@@ -159,7 +159,7 @@ usuário `sa`, senha vazia.
 | 3 | `az vm open-port --port 8080` | Libera a porta da API (prioridade 1001) |
 | 4 | `az vm open-port --port 80` | Libera HTTP (prioridade 1002) |
 | 5 | `az vm run-command invoke` | Instala `git`, `curl`, `nano` e Docker; habilita o serviço; adiciona o usuário ao grupo `docker` |
-| 6 | `az vm run-command invoke` | Clona o repositório (raso e esparso, ver abaixo) e roda `docker compose up -d --build` |
+| 6 | `az vm run-command invoke` | Clona ou atualiza o repositório (raso e esparso, ver abaixo) e roda `docker compose up -d --build` |
 
 ### O que chega na VM
 
@@ -183,6 +183,27 @@ chegam à máquina.
 
 O `git pull` da seção de operação continua funcionando — num clone parcial o git
 busca sob demanda o que faltar.
+
+### Primeiro deploy e redeploy
+
+O passo 6 distingue os dois casos:
+
+```bash
+if [ -d $REPO_DIR/.git ]; then
+  cd $REPO_DIR && git fetch --depth 1 origin main && git reset --hard FETCH_HEAD
+else
+  git clone --depth 1 --filter=blob:none --sparse $REPO_URL $REPO_DIR && cd $REPO_DIR
+fi
+```
+
+Antes o script só clonava. Num redeploy o diretório já existia, o `git clone`
+falhava com saída 128 e — como a cadeia é toda `&&` — o `docker compose up` nem
+chegava a rodar. O script terminava sem erro visível e sem atualizar nada.
+
+O redeploy usa `fetch` + `reset --hard` em vez de `pull` de propósito: a VM é alvo
+de deploy, não cópia de trabalho. O reset a deixa idêntica a `origin/main` mesmo
+que alguém tenha editado algo lá dentro, e não trava num conflito de merge como o
+`pull` travaria.
 
 ### Execução
 

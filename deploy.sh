@@ -12,6 +12,8 @@ VM_IMAGE="Ubuntu2204"
 VM_SIZE="Standard_B2s_v2"
 ADMIN_USER="clyvovet"
 DNS_LABEL="clyvovet-api"
+REPO_URL="https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git"
+REPO_DIR="clyvovet-backend-java"
 
 echo "==> Criando Resource Group..."
 az group create \
@@ -66,6 +68,16 @@ echo "==> Clonando repositório e subindo aplicação com Docker Compose..."
 # JWT_SECRET e gerado uma unica vez na VM e persistido em ~/.clyvovet.env:
 # redeploys reaproveitam o mesmo valor (senao cada "docker compose up" novo
 # derrubaria as sessoes ativas ao trocar a chave de assinatura por baixo).
+#
+# O bloco distingue primeiro deploy de redeploy. Antes ele so clonava, e num
+# redeploy o diretorio ja existia: o "git clone" falhava, a cadeia de "&&"
+# abortava e o "docker compose up" nem chegava a rodar -- o script terminava
+# sem erro visivel e sem atualizar nada.
+#
+# No redeploy vai "fetch + reset --hard" em vez de "pull" de proposito: a VM e
+# alvo de deploy, nao copia de trabalho. O reset garante que ela fique
+# identica a origin/main mesmo que alguem tenha editado algo la dentro, e
+# nao trava num conflito de merge como o pull travaria.
 az vm run-command invoke \
   --resource-group $RESOURCE_GROUP \
   --name $VM_NAME \
@@ -74,8 +86,14 @@ az vm run-command invoke \
     cd /home/$ADMIN_USER &&
     [ -f .clyvovet.env ] || echo JWT_SECRET=\$(openssl rand -base64 32) > .clyvovet.env &&
     chmod 600 .clyvovet.env &&
-    git clone --depth 1 --filter=blob:none --sparse https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git &&
-    cd clyvovet-backend-java &&
+    if [ -d $REPO_DIR/.git ]; then
+      cd $REPO_DIR &&
+      git fetch --depth 1 origin main &&
+      git reset --hard FETCH_HEAD
+    else
+      git clone --depth 1 --filter=blob:none --sparse $REPO_URL $REPO_DIR &&
+      cd $REPO_DIR
+    fi &&
     git sparse-checkout set src &&
     set -a && . ../.clyvovet.env && set +a &&
     docker compose up -d --build
