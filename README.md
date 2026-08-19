@@ -80,6 +80,15 @@ para você se localizar quanto para dar contexto a uma LLM sem precisar mandar o
 código inteiro. Quem quiser consultar o grafo por pergunta pode instalar o CLI
 (`pip install graphifyy`) e usar `graphify query "<pergunta>"`.
 
+Há também uma visualização navegável do grafo inteiro em
+[`graphify-out/graph.html`](graphify-out/graph.html). O GitHub não renderiza HTML —
+clicar no arquivo aqui mostra o código-fonte. Para ver o desenho, escolha uma:
+
+- **[abrir pelo raw.githack](https://raw.githack.com/Clyvovet-Challenge/clyvovet-backend-java/main/graphify-out/graph.html)**
+  — abre direto do navegador (o serviço mostra uma tela de confirmação antes)
+- baixe o repositório e dê duplo clique no arquivo — a biblioteca de desenho está
+  embutida, então ele funciona sem internet
+
 Detalhes de manutenção do grafo estão no
 [guia de desenvolvimento](docs/06-guia-de-desenvolvimento.md#grafo-do-codebase-graphify).
 
