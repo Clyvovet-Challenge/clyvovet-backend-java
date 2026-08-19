@@ -30,7 +30,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 13 | Único teste, que depende do Oracle | Baixa | Testes | ✅ 98 testes, perfil fixo em `dev` |
 | 14 | README desatualizado na seção de estrutura | Baixa | Documentação | ✅ corrigido |
 | 15 | Inconsistências internas de padrão | Baixa | Código | ✅ parcial — resta `PagamentoRequest` com `@Data` |
-| 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito |
+| 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito — falta confirmar no Oracle |
 | 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
 
@@ -467,8 +467,34 @@ recorte por tutor, em que o parâmetro de texto vai nulo.
 
 Verificado no perfil `dev`: `?nome=Camila`, `?nome=camila` (a busca é case-insensitive),
 `?especialidade=Cardio`, `?cidade=Sao` e `?animalNome=Bolinha` passaram a retornar os
-registros esperados. **Ainda não foi verificado no perfil `oracle`**, que é o alvo de
-entrega — vale repetir um filtro simples lá antes de fechar o item.
+registros esperados. Cobertura de regressão em `FiltrosDeBuscaTest` — sem o `ESCAPE`,
+três testes de lá falham.
+
+### ⏳ Falta confirmar no Oracle
+
+O H2 com `MODE=Oracle` **imita** a semântica de string vazia, mas o alvo de entrega é o
+Oracle da FIAP, e lá isso ainda não foi conferido. Há duas saídas possíveis, e ambas
+confirmam o diagnóstico: ou o `LIKE` não casa nada (mesmo comportamento do H2), ou o
+banco recusa a consulta com `ORA-01425: escape character must be string of length 1`.
+
+[`EscapeNoOracleTest`](../src/test/java/br/com/fiap/clyvovet/crud/EscapeNoOracleTest.java)
+existe para isso. Roda por JDBC puro sobre `dual` — não lê nem grava nenhuma tabela do
+projeto, não sobe o contexto e portanto não dispara Flyway nem `ddl-auto=validate` num
+banco compartilhado. Fica **pulado** enquanto `DB_USERNAME` não estiver no ambiente,
+então não interfere no `mvn test` de ninguém:
+
+```bash
+DB_USERNAME=seu_rm DB_PASSWORD=sua_senha ./mvnw test -Dtest=EscapeNoOracleTest
+```
+
+Quatro checagens: `ESCAPE '\'` casa; `ESCAPE ''` não casa (a causa); sem cláusula
+`ESCAPE` casa (isola a causa no escape vazio, e não no `LIKE`); e o escape continua
+escapando — `%` literal não vira curinga.
+
+**Nota sobre rodar a suíte inteira no perfil `oracle`:** não é o caminho para esta
+verificação. Ela grava cadastros de teste num banco compartilhado e depende do
+`DevDataSeeder`, que só existe nos perfis `dev` e `h2` — sem os usuários dele não há
+login, e quase tudo falharia com 401 por um motivo alheio ao `ESCAPE`.
 
 ---
 

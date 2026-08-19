@@ -238,6 +238,7 @@ desliga o rate limit, que barraria a rajada de chamadas dos próprios testes.
 | `crud` | `FiltrosDeBuscaTest` | filtros por texto: o que trazem e o que deixam de fora |
 | `crud` | `ValidacaoDeEntradaTest` | limites que precisam bater com a coluna do banco |
 | `crud` | `IntegridadeReferencialTest` | remoção com dependentes responde 409, e não erro de servidor |
+| `crud` | `EscapeNoOracleTest` | semântica do `LIKE ... ESCAPE` no Oracle real — **pulado** sem `DB_USERNAME` |
 | `security` | ver [08-seguranca](08-seguranca.md#testes) | token, perfil, ownership, bloqueio de conta |
 
 ### Como escrever um novo
