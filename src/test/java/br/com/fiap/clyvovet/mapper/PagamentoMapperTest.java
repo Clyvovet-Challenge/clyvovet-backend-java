@@ -20,15 +20,14 @@ class PagamentoMapperTest {
     private final PagamentoMapper mapper = new PagamentoMapper();
 
     private static PagamentoRequest request(FormaPagamento forma, StatusPagamento status, String valor) {
-        PagamentoRequest request = new PagamentoRequest();
-        request.setFormaPagamento(forma);
-        request.setValor(new BigDecimal(valor));
-        request.setDataPagamento(LocalDate.of(2026, 3, 10));
-        request.setDescricao("Consulta");
-        request.setObservacao("pago na recepcao");
-        request.setStatusPagamento(status);
-        request.setEventoClinicoId(UUID.randomUUID());
-        return request;
+        return new PagamentoRequest(
+                forma,
+                new BigDecimal(valor),
+                LocalDate.of(2026, 3, 10),
+                "Consulta",
+                "pago na recepcao",
+                UUID.randomUUID(),
+                status);
     }
 
     private static EventoClinico evento() {

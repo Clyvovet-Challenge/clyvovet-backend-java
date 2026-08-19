@@ -1,9 +1,11 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.animal.AnimalPatchRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalResponse;
 import br.com.fiap.clyvovet.mapper.AnimalMapper;
 import br.com.fiap.clyvovet.model.Animal;
+import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
@@ -64,6 +66,17 @@ public class AnimalService {
     public AnimalResponse atualizar(UUID id, AnimalRequest request) {
         Animal animal = animalRepository.obterPorId(id);
         animalMapper.atualizar(animal, request, tutorRepository.obterPorId(request.getTutorId()));
+        return animalMapper.toResponse(animalRepository.save(animal));
+    }
+
+    @Transactional
+    @CacheEvict(value = "animais", allEntries = true)
+    public AnimalResponse atualizarParcialmente(UUID id, AnimalPatchRequest patch) {
+        Animal animal = animalRepository.obterPorId(id);
+        // O tutor so e buscado quando o patch pede troca de dono; null diz ao
+        // mapper para deixar o vinculo como esta.
+        Tutor tutor = patch.getTutorId() == null ? null : tutorRepository.obterPorId(patch.getTutorId());
+        animalMapper.aplicarPatch(animal, patch, tutor);
         return animalMapper.toResponse(animalRepository.save(animal));
     }
 

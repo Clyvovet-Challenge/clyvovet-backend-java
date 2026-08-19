@@ -1,10 +1,13 @@
 package br.com.fiap.clyvovet.mapper;
 
+import br.com.fiap.clyvovet.dto.pagamento.PagamentoPatchRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoResponse;
 import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.Pagamento;
 import org.springframework.stereotype.Component;
+
+import static br.com.fiap.clyvovet.mapper.AtualizacaoParcial.aplicarSePresente;
 
 @Component
 public class PagamentoMapper {
@@ -23,6 +26,17 @@ public class PagamentoMapper {
         pagamento.setObservacao(request.getObservacao());
         pagamento.setStatusPagamento(request.getStatusPagamento());
         pagamento.setEventoClinico(eventoClinico);
+    }
+
+    /** Aplica so os campos presentes no corpo do PATCH. */
+    public void aplicarPatch(Pagamento pagamento, PagamentoPatchRequest patch, EventoClinico eventoClinico) {
+        aplicarSePresente(patch.getFormaPagamento(), pagamento::setFormaPagamento);
+        aplicarSePresente(patch.getValor(), pagamento::setValor);
+        aplicarSePresente(patch.getDataPagamento(), pagamento::setDataPagamento);
+        aplicarSePresente(patch.getDescricao(), pagamento::setDescricao);
+        aplicarSePresente(patch.getObservacao(), pagamento::setObservacao);
+        aplicarSePresente(patch.getStatusPagamento(), pagamento::setStatusPagamento);
+        aplicarSePresente(eventoClinico, pagamento::setEventoClinico);
     }
 
     public PagamentoResponse toResponse(Pagamento pagamento) {

@@ -92,8 +92,10 @@ public class SecurityConfig {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry rotas) {
         rotas
             // --- Publico ---
-            .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout", "/auth/registrar").permitAll()
-            // Swagger publico: e por ele que a API e avaliada e testada
+            .requestMatchers(api("/auth/login", "/auth/refresh", "/auth/logout", "/auth/registrar")).permitAll()
+            // Swagger publico: e por ele que a API e avaliada e testada.
+            // Fica fora do api(): o WebConfig so prefixa os @RestController da
+            // aplicacao, entao as rotas do springdoc seguem na raiz.
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll();
 
         if (h2ConsoleHabilitado) {
@@ -102,27 +104,43 @@ public class SecurityConfig {
 
         rotas
             // --- Somente ADMIN ---
-            .requestMatchers("/auth/usuarios").hasRole(ADMIN)
-            .requestMatchers(HttpMethod.POST,   "/clinicas", "/veterinarios").hasRole(ADMIN)
-            .requestMatchers(HttpMethod.PUT,    "/clinicas/**", "/veterinarios/**").hasRole(ADMIN)
-            .requestMatchers(HttpMethod.DELETE, "/clinicas/**", "/veterinarios/**").hasRole(ADMIN)
+            .requestMatchers(api("/auth/usuarios")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.POST,   api("/clinicas", "/veterinarios")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.PUT,    api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.PATCH,  api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
 
             // --- Corpo clinico: quem registra atendimento e cobranca ---
-            .requestMatchers(HttpMethod.POST,   "/eventos-clinicos", "/pagamentos").hasAnyRole(VETERINARIO, ADMIN)
-            .requestMatchers(HttpMethod.PUT,    "/eventos-clinicos/**", "/pagamentos/**").hasAnyRole(VETERINARIO, ADMIN)
-            .requestMatchers(HttpMethod.DELETE, "/eventos-clinicos/**", "/pagamentos/**").hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.POST,   api("/eventos-clinicos", "/pagamentos")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.PUT,    api("/eventos-clinicos/**", "/pagamentos/**")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.PATCH,  api("/eventos-clinicos/**", "/pagamentos/**")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/eventos-clinicos/**", "/pagamentos/**")).hasAnyRole(VETERINARIO, ADMIN)
 
             // Listar tutores expoe CPF e e-mail de terceiros: nao e para tutor.
-            .requestMatchers(HttpMethod.GET,    "/tutores").hasAnyRole(VETERINARIO, ADMIN)
-            .requestMatchers(HttpMethod.POST,   "/tutores").hasAnyRole(VETERINARIO, ADMIN)
-            .requestMatchers(HttpMethod.DELETE, "/tutores/**").hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.GET,    api("/tutores")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.POST,   api("/tutores")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/tutores/**")).hasAnyRole(VETERINARIO, ADMIN)
 
             // Animal: tutor cria e edita os proprios; o ownership em si e
             // verificado por @PreAuthorize no controller.
-            .requestMatchers("/animais/**").authenticated()
+            .requestMatchers(api("/animais/**")).authenticated()
 
             // Fecha por padrao: rota nova nasce protegida, nao aberta.
             .anyRequest().authenticated();
+    }
+
+    /**
+     * Prefixa rotas da aplicacao com a versao da API.
+     *
+     * O prefixo e aplicado aos controllers pelo {@link WebConfig}, entao os
+     * matchers precisam enxergar o caminho ja prefixado. Concentrar isso aqui
+     * evita repetir "/api/v1" em cada linha e garante que os dois lados usem a
+     * mesma constante -- se divergissem, uma rota ficaria aberta em silencio.
+     */
+    private static String[] api(String... rotas) {
+        return Arrays.stream(rotas)
+                .map(rota -> WebConfig.PREFIXO_API + rota)
+                .toArray(String[]::new);
     }
 
     private void configurarHeaders(HeadersConfigurer<HttpSecurity> headers) {

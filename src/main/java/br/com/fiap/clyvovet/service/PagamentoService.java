@@ -1,10 +1,12 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.pagamento.PagamentoPatchRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoResponse;
 import br.com.fiap.clyvovet.mapper.PagamentoMapper;
 import br.com.fiap.clyvovet.model.FormaPagamento;
 import br.com.fiap.clyvovet.model.Pagamento;
+import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.StatusPagamento;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.PagamentoRepository;
@@ -55,6 +57,17 @@ public class PagamentoService {
         Pagamento pagamento = pagamentoRepository.obterPorId(id);
         pagamentoMapper.atualizar(pagamento, request,
                 eventoClinicoRepository.obterPorId(request.getEventoClinicoId()));
+        return pagamentoMapper.toResponse(pagamentoRepository.save(pagamento));
+    }
+
+    @Transactional
+    @CacheEvict(value = "pagamentos", allEntries = true)
+    public PagamentoResponse atualizarParcialmente(UUID id, PagamentoPatchRequest patch) {
+        Pagamento pagamento = pagamentoRepository.obterPorId(id);
+        EventoClinico evento = patch.getEventoClinicoId() == null
+                ? null
+                : eventoClinicoRepository.obterPorId(patch.getEventoClinicoId());
+        pagamentoMapper.aplicarPatch(pagamento, patch, evento);
         return pagamentoMapper.toResponse(pagamentoRepository.save(pagamento));
     }
 

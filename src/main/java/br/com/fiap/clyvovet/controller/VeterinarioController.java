@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.veterinario.VeterinarioPatchRequest;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioRequest;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioResponse;
 import br.com.fiap.clyvovet.service.VeterinarioService;
@@ -51,6 +52,14 @@ public class VeterinarioController {
             @PathVariable UUID id,
             @Valid @RequestBody VeterinarioRequest request) {
         return ResponseEntity.ok(veterinarioService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Atualizar parcialmente um veterinário: envie apenas os campos que mudam")
+    public ResponseEntity<VeterinarioResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody VeterinarioPatchRequest patch) {
+        return ResponseEntity.ok(veterinarioService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

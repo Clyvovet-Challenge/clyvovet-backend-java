@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.pagamento.PagamentoPatchRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoResponse;
 import br.com.fiap.clyvovet.model.FormaPagamento;
@@ -56,6 +57,15 @@ public class PagamentoController {
             @PathVariable UUID id,
             @Valid @RequestBody PagamentoRequest request) {
         return ResponseEntity.ok(pagamentoService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
+    @Operation(summary = "Atualizar parcialmente um pagamento: envie apenas os campos que mudam")
+    public ResponseEntity<PagamentoResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody PagamentoPatchRequest patch) {
+        return ResponseEntity.ok(pagamentoService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

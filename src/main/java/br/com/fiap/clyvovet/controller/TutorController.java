@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.tutor.TutorPatchRequest;
 import br.com.fiap.clyvovet.dto.tutor.TutorRequest;
 import br.com.fiap.clyvovet.dto.tutor.TutorResponse;
 import br.com.fiap.clyvovet.service.TutorService;
@@ -55,6 +56,15 @@ public class TutorController {
             @PathVariable UUID id,
             @Valid @RequestBody TutorRequest request) {
         return ResponseEntity.ok(tutorService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarTutor(#id)")
+    @Operation(summary = "Atualizar parcialmente um tutor: envie apenas os campos que mudam")
+    public ResponseEntity<TutorResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody TutorPatchRequest patch) {
+        return ResponseEntity.ok(tutorService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

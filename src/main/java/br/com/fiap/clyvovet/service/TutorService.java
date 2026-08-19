@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.tutor.TutorPatchRequest;
 import br.com.fiap.clyvovet.dto.tutor.TutorRequest;
 import br.com.fiap.clyvovet.dto.tutor.TutorResponse;
 import br.com.fiap.clyvovet.mapper.TutorMapper;
@@ -46,6 +47,14 @@ public class TutorService {
     public TutorResponse atualizar(UUID id, TutorRequest request) {
         Tutor tutor = tutorRepository.obterPorId(id);
         tutorMapper.atualizar(tutor, request);
+        return tutorMapper.toResponse(tutorRepository.save(tutor));
+    }
+
+    @Transactional
+    @CacheEvict(value = "tutores", allEntries = true)
+    public TutorResponse atualizarParcialmente(UUID id, TutorPatchRequest patch) {
+        Tutor tutor = tutorRepository.obterPorId(id);
+        tutorMapper.aplicarPatch(tutor, patch);
         return tutorMapper.toResponse(tutorRepository.save(tutor));
     }
 

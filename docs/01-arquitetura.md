@@ -105,7 +105,7 @@ auto-configuração do Spring Boot mais os arquivos `.properties`.
 
 ## Fluxo de uma requisição
 
-### Leitura — `GET /animais?nome=Thor&page=0&size=10`
+### Leitura — `GET /api/v1/animais?nome=Thor&page=0&size=10`
 
 | # | Camada | O que acontece |
 |---|---|---|
@@ -115,7 +115,7 @@ auto-configuração do Spring Boot mais os arquivos `.properties`.
 | 4 | Mapper | `Page.map(...)` converte cada entidade em `AnimalResponse`, achatando as associações |
 | 5 | Controller | `ResponseEntity.ok(...)` → 200 com o JSON de `Page` |
 
-### Escrita — `POST /animais`
+### Escrita — `POST /api/v1/animais`
 
 | # | Camada | O que acontece |
 |---|---|---|

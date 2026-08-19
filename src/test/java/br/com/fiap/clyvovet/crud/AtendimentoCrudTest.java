@@ -35,18 +35,18 @@ class AtendimentoCrudTest extends TesteDeApi {
 
     /** Cria um animal do Lucas e ja agenda a remocao. Devolve o id. */
     private String animalDeTeste(String token) throws Exception {
-        String id = corpoDe(criar("/animais", token, ANIMAL.formatted("Pipoca", "MEDIO", SeedV2.TUTOR_LUCAS))
+        String id = corpoDe(criar("/api/v1/animais", token, ANIMAL.formatted("Pipoca", "MEDIO", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/animais/" + id);
+        removerDepois("/api/v1/animais/" + id);
         return id;
     }
 
     private String eventoDeTeste(String token, String animalId) throws Exception {
-        String id = corpoDe(criar("/eventos-clinicos", token,
+        String id = corpoDe(criar("/api/v1/eventos-clinicos", token,
                 EVENTO.formatted("14:30", "Consulta de rotina", "CONSULTA",
                         SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_PETMED))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/eventos-clinicos/" + id);
+        removerDepois("/api/v1/eventos-clinicos/" + id);
         return id;
     }
 
@@ -57,11 +57,11 @@ class AtendimentoCrudTest extends TesteDeApi {
     void cicloDeVidaDoAnimal() throws Exception {
         String admin = tokenAdmin();
 
-        JsonNode criado = corpoDe(criar("/animais", admin,
+        JsonNode criado = corpoDe(criar("/api/v1/animais", admin,
                 ANIMAL.formatted("Pipoca", "MEDIO", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
-        removerDepois("/animais/" + id);
+        removerDepois("/api/v1/animais/" + id);
 
         assertThat(criado.get("nome").asText()).isEqualTo("Pipoca");
         assertThat(criado.get("porte").asText()).isEqualTo("MEDIO");
@@ -69,26 +69,26 @@ class AtendimentoCrudTest extends TesteDeApi {
         assertThat(criado.get("tutorId").asText()).isEqualTo(SeedV2.TUTOR_LUCAS);
         assertThat(criado.get("tutorNome").asText()).isEqualTo("Lucas M. Santos");
 
-        assertThat(corpoDe(buscar("/animais/" + id, admin).andExpect(status().isOk())))
+        assertThat(corpoDe(buscar("/api/v1/animais/" + id, admin).andExpect(status().isOk())))
                 .isEqualTo(criado);
 
-        JsonNode alterado = corpoDe(atualizar("/animais/" + id, admin,
+        JsonNode alterado = corpoDe(atualizar("/api/v1/animais/" + id, admin,
                 ANIMAL.formatted("Pipoca Grande", "GRANDE", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("id").asText()).isEqualTo(id);
         assertThat(alterado.get("nome").asText()).isEqualTo("Pipoca Grande");
         assertThat(alterado.get("porte").asText()).isEqualTo("GRANDE");
 
-        assertThat(corpoDe(buscar("/animais/" + id, admin)).get("porte").asText()).isEqualTo("GRANDE");
+        assertThat(corpoDe(buscar("/api/v1/animais/" + id, admin)).get("porte").asText()).isEqualTo("GRANDE");
 
-        remover("/animais/" + id, admin).andExpect(status().isNoContent());
-        buscar("/animais/" + id, admin).andExpect(status().isNotFound());
+        remover("/api/v1/animais/" + id, admin).andExpect(status().isNoContent());
+        buscar("/api/v1/animais/" + id, admin).andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("animal: tutor inexistente responde 404")
     void animalComTutorInexistenteResponde404() throws Exception {
-        criar("/animais", tokenAdmin(), ANIMAL.formatted("Orfao", "PEQUENO", SeedV2.ID_INEXISTENTE))
+        criar("/api/v1/animais", tokenAdmin(), ANIMAL.formatted("Orfao", "PEQUENO", SeedV2.ID_INEXISTENTE))
                 .andExpect(status().isNotFound());
     }
 
@@ -98,12 +98,12 @@ class AtendimentoCrudTest extends TesteDeApi {
     void tutorCadastraOProprioPet() throws Exception {
         String lucas = tokenTutor(LUCAS);
 
-        String id = corpoDe(criar("/animais", lucas, ANIMAL.formatted("Meu Pet", "PEQUENO", SeedV2.TUTOR_LUCAS))
+        String id = corpoDe(criar("/api/v1/animais", lucas, ANIMAL.formatted("Meu Pet", "PEQUENO", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/animais/" + id);
+        removerDepois("/api/v1/animais/" + id);
 
-        buscar("/animais/" + id, lucas).andExpect(status().isOk());
-        remover("/animais/" + id, lucas).andExpect(status().isNoContent());
+        buscar("/api/v1/animais/" + id, lucas).andExpect(status().isOk());
+        remover("/api/v1/animais/" + id, lucas).andExpect(status().isNoContent());
     }
 
     // -------------------------------------------------------------- evento
@@ -114,12 +114,12 @@ class AtendimentoCrudTest extends TesteDeApi {
         String vet = tokenVeterinaria();
         String animalId = animalDeTeste(tokenAdmin());
 
-        JsonNode criado = corpoDe(criar("/eventos-clinicos", vet,
+        JsonNode criado = corpoDe(criar("/api/v1/eventos-clinicos", vet,
                 EVENTO.formatted("14:30", "Consulta de rotina", "CONSULTA",
                         SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_PETMED))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
-        removerDepois("/eventos-clinicos/" + id);
+        removerDepois("/api/v1/eventos-clinicos/" + id);
 
         assertThat(criado.get("hora").asText()).isEqualTo("14:30");
         assertThat(criado.get("tipoEvento").asText()).isEqualTo("CONSULTA");
@@ -127,9 +127,9 @@ class AtendimentoCrudTest extends TesteDeApi {
         assertThat(criado.get("veterinarioNome").asText()).isEqualTo("Camila Ferreira");
         assertThat(criado.get("clinicaNome").asText()).isEqualTo("PetMed Centro");
 
-        buscar("/eventos-clinicos/" + id, vet).andExpect(status().isOk());
+        buscar("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isOk());
 
-        JsonNode alterado = corpoDe(atualizar("/eventos-clinicos/" + id, vet,
+        JsonNode alterado = corpoDe(atualizar("/api/v1/eventos-clinicos/" + id, vet,
                 EVENTO.formatted("09:00", "Retorno pos-consulta", "RETORNO",
                         SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isOk()));
@@ -138,14 +138,14 @@ class AtendimentoCrudTest extends TesteDeApi {
         assertThat(alterado.get("tipoEvento").asText()).isEqualTo("RETORNO");
         assertThat(alterado.get("clinicaNome").asText()).isEqualTo("VetCare Prime");
 
-        remover("/eventos-clinicos/" + id, vet).andExpect(status().isNoContent());
-        buscar("/eventos-clinicos/" + id, vet).andExpect(status().isNotFound());
+        remover("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isNoContent());
+        buscar("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("evento clinico: animal inexistente responde 404")
     void eventoComAnimalInexistenteResponde404() throws Exception {
-        criar("/eventos-clinicos", tokenVeterinaria(),
+        criar("/api/v1/eventos-clinicos", tokenVeterinaria(),
                 EVENTO.formatted("14:30", "Consulta", "CONSULTA",
                         SeedV2.VET_CAMILA, SeedV2.ID_INEXISTENTE, SeedV2.CLINICA_PETMED))
                 .andExpect(status().isNotFound());
@@ -159,20 +159,20 @@ class AtendimentoCrudTest extends TesteDeApi {
         String vet = tokenVeterinaria();
         String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
 
-        JsonNode criado = corpoDe(criar("/pagamentos", vet,
+        JsonNode criado = corpoDe(criar("/api/v1/pagamentos", vet,
                 PAGAMENTO.formatted("PIX", "250.75", "PAGO", eventoId))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
-        removerDepois("/pagamentos/" + id);
+        removerDepois("/api/v1/pagamentos/" + id);
 
         assertThat(criado.get("formaPagamento").asText()).isEqualTo("PIX");
         assertThat(criado.get("valor").decimalValue()).isEqualByComparingTo("250.75");
         assertThat(criado.get("statusPagamento").asText()).isEqualTo("PAGO");
         assertThat(criado.get("eventoClinicoId").asText()).isEqualTo(eventoId);
 
-        buscar("/pagamentos/" + id, vet).andExpect(status().isOk());
+        buscar("/api/v1/pagamentos/" + id, vet).andExpect(status().isOk());
 
-        JsonNode alterado = corpoDe(atualizar("/pagamentos/" + id, vet,
+        JsonNode alterado = corpoDe(atualizar("/api/v1/pagamentos/" + id, vet,
                 PAGAMENTO.formatted("BOLETO", "300.00", "PENDENTE", eventoId))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("id").asText()).isEqualTo(id);
@@ -180,8 +180,8 @@ class AtendimentoCrudTest extends TesteDeApi {
         assertThat(alterado.get("valor").decimalValue()).isEqualByComparingTo("300.00");
         assertThat(alterado.get("statusPagamento").asText()).isEqualTo("PENDENTE");
 
-        remover("/pagamentos/" + id, vet).andExpect(status().isNoContent());
-        buscar("/pagamentos/" + id, vet).andExpect(status().isNotFound());
+        remover("/api/v1/pagamentos/" + id, vet).andExpect(status().isNoContent());
+        buscar("/api/v1/pagamentos/" + id, vet).andExpect(status().isNotFound());
     }
 
     /**
@@ -195,19 +195,19 @@ class AtendimentoCrudTest extends TesteDeApi {
         String vet = tokenVeterinaria();
         String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
 
-        String id = corpoDe(criar("/pagamentos", vet,
+        String id = corpoDe(criar("/api/v1/pagamentos", vet,
                 PAGAMENTO.formatted("CARTAO", "120.00", "REEMBOLSADO", eventoId))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/pagamentos/" + id);
+        removerDepois("/api/v1/pagamentos/" + id);
 
-        assertThat(corpoDe(buscar("/pagamentos/" + id, vet)).get("statusPagamento").asText())
+        assertThat(corpoDe(buscar("/api/v1/pagamentos/" + id, vet)).get("statusPagamento").asText())
                 .isEqualTo("REEMBOLSADO");
     }
 
     @Test
     @DisplayName("pagamento: evento clinico inexistente responde 404")
     void pagamentoComEventoInexistenteResponde404() throws Exception {
-        criar("/pagamentos", tokenVeterinaria(),
+        criar("/api/v1/pagamentos", tokenVeterinaria(),
                 PAGAMENTO.formatted("PIX", "10.00", "PAGO", SeedV2.ID_INEXISTENTE))
                 .andExpect(status().isNotFound());
     }

@@ -2,7 +2,10 @@ package br.com.fiap.clyvovet.dto.pagamento;
 
 import br.com.fiap.clyvovet.model.FormaPagamento;
 import br.com.fiap.clyvovet.model.StatusPagamento;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,23 +14,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-// Mesmo padrao dos demais Request: so leitura. O @Data anterior gerava
-// setters -- deixando o DTO mutavel depois da validacao -- e um toString
-// com valor e forma de pagamento, que acabaria em log.
+/**
+ * Corpo do PATCH: so os campos que mudam.
+ *
+ * Mantem as restricoes de FORMATO e abre mao das de PRESENCA. O raciocinio
+ * completo -- por que nao reaproveitar o Request nem usar grupos de validacao,
+ * e por que um campo nao pode ser APAGADO via PATCH -- esta em
+ * {@link br.com.fiap.clyvovet.dto.tutor.TutorPatchRequest}.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class PagamentoRequest {
+public class PagamentoPatchRequest {
 
-    @NotNull(message = "Forma de pagamento é obrigatória")
     private FormaPagamento formaPagamento;
 
-    @NotNull(message = "Valor é obrigatório")
     @Positive(message = "Valor deve ser positivo")
     @Digits(integer = 9, fraction = 2, message = "Valor inválido: máximo 9 dígitos inteiros e 2 decimais")
     private BigDecimal valor;
 
-    @NotNull(message = "Data de pagamento é obrigatória")
     @PastOrPresent(message = "Data de pagamento não pode ser futura")
     private LocalDate dataPagamento;
 
@@ -37,9 +42,7 @@ public class PagamentoRequest {
     @Size(max = 500, message = "Observação deve ter no máximo 500 caracteres")
     private String observacao;
 
-    @NotNull(message = "ID do evento clínico é obrigatório")
     private UUID eventoClinicoId;
 
-    @NotNull(message = "Status de pagamento é obrigatório")
     private StatusPagamento statusPagamento;
 }

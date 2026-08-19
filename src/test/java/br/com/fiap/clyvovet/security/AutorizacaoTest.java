@@ -21,15 +21,15 @@ class AutorizacaoTest extends TesteDeApi {
     @Test
     @DisplayName("sem token, qualquer recurso responde 401")
     void semTokenRetorna401() throws Exception {
-        mockMvc.perform(get("/animais")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/tutores")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/pagamentos")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/animais")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/tutores")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/pagamentos")).andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("token invalido responde 401")
     void tokenInvalidoRetorna401() throws Exception {
-        buscar("/animais", "token.completamente.invalido").andExpect(status().isUnauthorized());
+        buscar("/api/v1/animais", "token.completamente.invalido").andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -43,9 +43,9 @@ class AutorizacaoTest extends TesteDeApi {
     void tutorNaoAcessaRecursosDoCorpoClinico() throws Exception {
         String tutor = tokenTutor(LUCAS);
 
-        buscar("/tutores", tutor).andExpect(status().isForbidden());
-        criar("/eventos-clinicos", tutor, "{}").andExpect(status().isForbidden());
-        criar("/auth/usuarios", tutor, "{}").andExpect(status().isForbidden());
+        buscar("/api/v1/tutores", tutor).andExpect(status().isForbidden());
+        criar("/api/v1/eventos-clinicos", tutor, "{}").andExpect(status().isForbidden());
+        criar("/api/v1/auth/usuarios", tutor, "{}").andExpect(status().isForbidden());
     }
 
     @Test
@@ -53,8 +53,8 @@ class AutorizacaoTest extends TesteDeApi {
     void veterinarioTemEscopoClinicoENaoAdministrativo() throws Exception {
         String veterinaria = tokenVeterinaria();
 
-        buscar("/tutores", veterinaria).andExpect(status().isOk());
-        criar("/clinicas", veterinaria, "{}").andExpect(status().isForbidden());
+        buscar("/api/v1/tutores", veterinaria).andExpect(status().isOk());
+        criar("/api/v1/clinicas", veterinaria, "{}").andExpect(status().isForbidden());
     }
 
     @Test
@@ -62,21 +62,21 @@ class AutorizacaoTest extends TesteDeApi {
     void adminAlcancaRotasAdministrativas() throws Exception {
         String admin = tokenAdmin();
 
-        buscar("/tutores", admin).andExpect(status().isOk());
+        buscar("/api/v1/tutores", admin).andExpect(status().isOk());
         // 400 e nao 403: passou pela autorizacao e parou na validacao do corpo.
-        criar("/clinicas", admin, "{}").andExpect(status().isBadRequest());
+        criar("/api/v1/clinicas", admin, "{}").andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("refresh token nao autentica chamadas da API")
     void refreshTokenNaoAutenticaApi() throws Exception {
-        String corpo = mockMvc.perform(post("/auth/login")
+        String corpo = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"senha\":\"tutor12345\"}".formatted(LUCAS)))
                 .andReturn().getResponse().getContentAsString();
         String refresh = objectMapper.readTree(corpo).get("refreshToken").asText();
 
-        buscar("/animais", refresh).andExpect(status().isUnauthorized());
+        buscar("/api/v1/animais", refresh).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -84,7 +84,7 @@ class AutorizacaoTest extends TesteDeApi {
     void autoCadastroNaoPermiteEscolherPerfil() throws Exception {
         // Mesmo enviando perfil ADMIN no corpo, o campo nao existe no DTO e e
         // descartado: e a defesa contra escalacao por mass assignment.
-        String corpo = mockMvc.perform(post("/auth/registrar")
+        String corpo = mockMvc.perform(post("/api/v1/auth/registrar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"email":"invasor@teste.com","senha":"senha12345","perfil":"ADMIN"}"""))
@@ -102,9 +102,9 @@ class AutorizacaoTest extends TesteDeApi {
         String payload = """
                 {"email":"duplicado@teste.com","senha":"senha12345"}""";
 
-        mockMvc.perform(post("/auth/registrar").contentType(MediaType.APPLICATION_JSON).content(payload))
+        mockMvc.perform(post("/api/v1/auth/registrar").contentType(MediaType.APPLICATION_JSON).content(payload))
                 .andExpect(status().isCreated());
-        mockMvc.perform(post("/auth/registrar").contentType(MediaType.APPLICATION_JSON).content(payload))
+        mockMvc.perform(post("/api/v1/auth/registrar").contentType(MediaType.APPLICATION_JSON).content(payload))
                 .andExpect(status().isConflict());
     }
 }

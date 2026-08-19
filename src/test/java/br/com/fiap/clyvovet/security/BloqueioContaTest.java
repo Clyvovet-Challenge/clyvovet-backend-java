@@ -47,7 +47,7 @@ class BloqueioContaTest {
     }
 
     private int tentarLogin(String senha) throws Exception {
-        return mockMvc.perform(post("/auth/login")
+        return mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"senha\":\"%s\"}".formatted(EMAIL, senha)))
                 .andReturn().getResponse().getStatus();
@@ -92,7 +92,7 @@ class BloqueioContaTest {
             tentarLogin("senhaErrada999");
         }
 
-        int status = mockMvc.perform(post("/auth/login")
+        int status = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"lucas.santos@email.com\",\"senha\":\"tutor12345\"}"))
                 .andReturn().getResponse().getStatus();

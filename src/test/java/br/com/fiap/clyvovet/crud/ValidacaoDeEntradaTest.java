@@ -45,7 +45,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
     @Test
     @DisplayName("observacao do animal maior que a coluna responde 400, e nao erro de servidor")
     void observacaoAcimaDoLimiteResponde400() throws Exception {
-        String corpo = criar("/animais", tokenAdmin(),
+        String corpo = criar("/api/v1/animais", tokenAdmin(),
                 ANIMAL.formatted(repetir("a", 1001), SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isBadRequest())
                 .andReturn().getResponse().getContentAsString();
@@ -56,11 +56,11 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
     @Test
     @DisplayName("observacao no limite exato da coluna e aceita")
     void observacaoNoLimiteEAceita() throws Exception {
-        String id = corpoDe(criar("/animais", tokenAdmin(),
+        String id = corpoDe(criar("/api/v1/animais", tokenAdmin(),
                 ANIMAL.formatted(repetir("a", 1000), SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isCreated())).get("id").asText();
 
-        removerDepois("/animais/" + id);
+        removerDepois("/api/v1/animais/" + id);
     }
 
     /** A coluna hora_evento e VARCHAR2(5): so cabe HH:mm. */
@@ -70,7 +70,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
         String vet = tokenVeterinaria();
 
         for (String horaInvalida : new String[]{"14:30:00", "", "25:00", "9:00", "manha"}) {
-            criar("/eventos-clinicos", vet,
+            criar("/api/v1/eventos-clinicos", vet,
                     EVENTO.formatted(horaInvalida, SeedV2.VET_CAMILA,
                             SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_PETMED))
                     .andExpect(status().isBadRequest());
@@ -83,18 +83,18 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
         String vet = tokenVeterinaria();
 
         for (String horaValida : new String[]{"00:00", "23:59"}) {
-            String id = corpoDe(criar("/eventos-clinicos", vet,
+            String id = corpoDe(criar("/api/v1/eventos-clinicos", vet,
                     EVENTO.formatted(horaValida, SeedV2.VET_CAMILA,
                             SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_PETMED))
                     .andExpect(status().isCreated())).get("id").asText();
-            removerDepois("/eventos-clinicos/" + id);
+            removerDepois("/api/v1/eventos-clinicos/" + id);
         }
     }
 
     @Test
     @DisplayName("numero do endereco maior que a coluna responde 400")
     void numeroDeEnderecoAcimaDoLimiteResponde400() throws Exception {
-        String corpo = criar("/tutores", tokenAdmin(), TUTOR_COM_NUMERO.formatted(repetir("9", 11)))
+        String corpo = criar("/api/v1/tutores", tokenAdmin(), TUTOR_COM_NUMERO.formatted(repetir("9", 11)))
                 .andExpect(status().isBadRequest())
                 .andReturn().getResponse().getContentAsString();
 
@@ -104,7 +104,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
     @Test
     @DisplayName("valor de pagamento negativo responde 400")
     void valorNegativoResponde400() throws Exception {
-        criar("/pagamentos", tokenVeterinaria(), """
+        criar("/api/v1/pagamentos", tokenVeterinaria(), """
                 {"formaPagamento":"PIX","valor":-10.00,"dataPagamento":"2026-03-10",
                  "statusPagamento":"PAGO","eventoClinicoId":"%s"}""".formatted(SeedV2.ID_INEXISTENTE))
                 .andExpect(status().isBadRequest());
@@ -113,7 +113,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
     @Test
     @DisplayName("corpo vazio lista todos os campos obrigatorios")
     void corpoVazioListaCamposObrigatorios() throws Exception {
-        String corpo = criar("/animais", tokenAdmin(), "{}")
+        String corpo = criar("/api/v1/animais", tokenAdmin(), "{}")
                 .andExpect(status().isBadRequest())
                 .andReturn().getResponse().getContentAsString();
 

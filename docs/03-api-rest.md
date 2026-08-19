@@ -3,14 +3,14 @@
 Base URL local: `http://localhost:8080` — não há context-path configurado.
 Todos os endpoints consomem e produzem `application/json`.
 
-**Todos os endpoints exigem autenticação**, exceto `/auth/login`, `/auth/refresh`,
-`/auth/registrar` e o Swagger. Envie o access token no header:
+**Todos os endpoints exigem autenticação**, exceto `/api/v1/auth/login`, `/api/v1/auth/refresh`,
+`/api/v1/auth/registrar` e o Swagger. Envie o access token no header:
 
 ```
 Authorization: Bearer <access-token>
 ```
 
-Obtenha-o em `POST /auth/login`. Os cinco endpoints de `/auth`, a matriz de
+Obtenha-o em `POST /api/v1/auth/login`. Os cinco endpoints de `/api/v1/auth`, a matriz de
 autorização por perfil e as regras de ownership estão em
 [08-seguranca.md](08-seguranca.md).
 
@@ -18,40 +18,49 @@ autorização por perfil e as regras de ownership estão em
 
 ## Índice de endpoints
 
-Trinta rotas, cinco por entidade, todas no mesmo padrão CRUD.
+Trinta e seis rotas, seis por entidade, todas no mesmo padrão CRUD. Todas ficam
+sob o prefixo **`/api/v1`** — ver [Versionamento](#versionamento) no fim deste
+documento. A numeração da coluna `#` segue a ordem original de cinco rotas; os
+PATCH entraram depois e por isso aparecem sem número.
 
 | # | Verbo | Rota | Descrição | Status de sucesso |
 |---|---|---|---|---|
-| 1 | GET | `/tutores` | Lista tutores paginados | 200 |
-| 2 | GET | `/tutores/{id}` | Busca tutor por UUID | 200 |
-| 3 | POST | `/tutores` | Cadastra tutor | 201 |
-| 4 | PUT | `/tutores/{id}` | Atualiza tutor | 200 |
-| 5 | DELETE | `/tutores/{id}` | Remove tutor | 204 |
-| 6 | GET | `/animais` | Lista animais paginados | 200 |
-| 7 | GET | `/animais/{id}` | Busca animal por UUID | 200 |
-| 8 | POST | `/animais` | Cadastra animal | 201 |
-| 9 | PUT | `/animais/{id}` | Atualiza animal | 200 |
-| 10 | DELETE | `/animais/{id}` | Remove animal | 204 |
-| 11 | GET | `/clinicas` | Lista clínicas paginadas | 200 |
-| 12 | GET | `/clinicas/{id}` | Busca clínica por UUID | 200 |
-| 13 | POST | `/clinicas` | Cadastra clínica | 201 |
-| 14 | PUT | `/clinicas/{id}` | Atualiza clínica | 200 |
-| 15 | DELETE | `/clinicas/{id}` | Remove clínica | 204 |
-| 16 | GET | `/veterinarios` | Lista veterinários paginados | 200 |
-| 17 | GET | `/veterinarios/{id}` | Busca veterinário por UUID | 200 |
-| 18 | POST | `/veterinarios` | Cadastra veterinário | 201 |
-| 19 | PUT | `/veterinarios/{id}` | Atualiza veterinário | 200 |
-| 20 | DELETE | `/veterinarios/{id}` | Remove veterinário | 204 |
-| 21 | GET | `/eventos-clinicos` | Lista eventos paginados | 200 |
-| 22 | GET | `/eventos-clinicos/{id}` | Busca evento por UUID | 200 |
-| 23 | POST | `/eventos-clinicos` | Registra evento clínico | 201 |
-| 24 | PUT | `/eventos-clinicos/{id}` | Atualiza evento | 200 |
-| 25 | DELETE | `/eventos-clinicos/{id}` | Remove evento | 204 |
-| 26 | GET | `/pagamentos` | Lista pagamentos paginados | 200 |
-| 27 | GET | `/pagamentos/{id}` | Busca pagamento por UUID | 200 |
-| 28 | POST | `/pagamentos` | Registra pagamento | 201 |
-| 29 | PUT | `/pagamentos/{id}` | Atualiza pagamento | 200 |
-| 30 | DELETE | `/pagamentos/{id}` | Remove pagamento | 204 |
+| 1 | GET | `/api/v1/tutores` | Lista tutores paginados | 200 |
+| 2 | GET | `/api/v1/tutores/{id}` | Busca tutor por UUID | 200 |
+| 3 | POST | `/api/v1/tutores` | Cadastra tutor | 201 |
+| 4 | PUT | `/api/v1/tutores/{id}` | Atualiza tutor | 200 |
+| — | PATCH | `/api/v1/tutores/{id}` | Atualiza parcialmente tutor | 200 |
+| 5 | DELETE | `/api/v1/tutores/{id}` | Remove tutor | 204 |
+| 6 | GET | `/api/v1/animais` | Lista animais paginados | 200 |
+| 7 | GET | `/api/v1/animais/{id}` | Busca animal por UUID | 200 |
+| 8 | POST | `/api/v1/animais` | Cadastra animal | 201 |
+| 9 | PUT | `/api/v1/animais/{id}` | Atualiza animal | 200 |
+| — | PATCH | `/api/v1/animais/{id}` | Atualiza parcialmente animal | 200 |
+| 10 | DELETE | `/api/v1/animais/{id}` | Remove animal | 204 |
+| 11 | GET | `/api/v1/clinicas` | Lista clínicas paginadas | 200 |
+| 12 | GET | `/api/v1/clinicas/{id}` | Busca clínica por UUID | 200 |
+| 13 | POST | `/api/v1/clinicas` | Cadastra clínica | 201 |
+| 14 | PUT | `/api/v1/clinicas/{id}` | Atualiza clínica | 200 |
+| — | PATCH | `/api/v1/clinicas/{id}` | Atualiza parcialmente clínica | 200 |
+| 15 | DELETE | `/api/v1/clinicas/{id}` | Remove clínica | 204 |
+| 16 | GET | `/api/v1/veterinarios` | Lista veterinários paginados | 200 |
+| 17 | GET | `/api/v1/veterinarios/{id}` | Busca veterinário por UUID | 200 |
+| 18 | POST | `/api/v1/veterinarios` | Cadastra veterinário | 201 |
+| 19 | PUT | `/api/v1/veterinarios/{id}` | Atualiza veterinário | 200 |
+| — | PATCH | `/api/v1/veterinarios/{id}` | Atualiza parcialmente veterinário | 200 |
+| 20 | DELETE | `/api/v1/veterinarios/{id}` | Remove veterinário | 204 |
+| 21 | GET | `/api/v1/eventos-clinicos` | Lista eventos paginados | 200 |
+| 22 | GET | `/api/v1/eventos-clinicos/{id}` | Busca evento por UUID | 200 |
+| 23 | POST | `/api/v1/eventos-clinicos` | Registra evento clínico | 201 |
+| 24 | PUT | `/api/v1/eventos-clinicos/{id}` | Atualiza evento | 200 |
+| — | PATCH | `/api/v1/eventos-clinicos/{id}` | Atualiza parcialmente evento | 200 |
+| 25 | DELETE | `/api/v1/eventos-clinicos/{id}` | Remove evento | 204 |
+| 26 | GET | `/api/v1/pagamentos` | Lista pagamentos paginados | 200 |
+| 27 | GET | `/api/v1/pagamentos/{id}` | Busca pagamento por UUID | 200 |
+| 28 | POST | `/api/v1/pagamentos` | Registra pagamento | 201 |
+| 29 | PUT | `/api/v1/pagamentos/{id}` | Atualiza pagamento | 200 |
+| — | PATCH | `/api/v1/pagamentos/{id}` | Atualiza parcialmente pagamento | 200 |
+| 30 | DELETE | `/api/v1/pagamentos/{id}` | Remove pagamento | 204 |
 
 ### Endpoints de infraestrutura
 
@@ -77,12 +86,12 @@ Além deles, cada recurso expõe dois filtros opcionais:
 
 | Recurso | Filtro 1 | Filtro 2 | Tipo de comparação | Sort default |
 |---|---|---|---|---|
-| `/tutores` | `nome` | `cidade` | parcial, case-insensitive | `nome` |
-| `/animais` | `nome` | `especie` | parcial, case-insensitive | `nome` |
-| `/clinicas` | `nome` | `cidade` | parcial, case-insensitive | `nome` |
-| `/veterinarios` | `nome` | `especialidade` | parcial, case-insensitive | `nome` |
-| `/eventos-clinicos` | `tipoEvento` | `animalNome` | enum exato / parcial | `data` |
-| `/pagamentos` | `statusPagamento` | `formaPagamento` | enum exato / enum exato | `dataPagamento` |
+| `/api/v1/tutores` | `nome` | `cidade` | parcial, case-insensitive | `nome` |
+| `/api/v1/animais` | `nome` | `especie` | parcial, case-insensitive | `nome` |
+| `/api/v1/clinicas` | `nome` | `cidade` | parcial, case-insensitive | `nome` |
+| `/api/v1/veterinarios` | `nome` | `especialidade` | parcial, case-insensitive | `nome` |
+| `/api/v1/eventos-clinicos` | `tipoEvento` | `animalNome` | enum exato / parcial | `data` |
+| `/api/v1/pagamentos` | `statusPagamento` | `formaPagamento` | enum exato / enum exato | `dataPagamento` |
 
 Regras de combinação:
 
@@ -98,27 +107,34 @@ Regras de combinação:
 ```json
 {
   "content": [ /* array de Response */ ],
-  "pageable": { "pageNumber": 0, "pageSize": 10, "sort": { "sorted": true } },
-  "totalPages": 3,
-  "totalElements": 27,
-  "last": false,
-  "first": true,
-  "numberOfElements": 10,
-  "size": 10,
-  "number": 0,
-  "empty": false
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 27,
+    "totalPages": 3
+  }
 }
 ```
+
+> ⚠️ **Este formato mudou.** Antes a resposta era o `PageImpl` do Spring serializado
+> como estava: mais de vinte campos (`pageable`, `last`, `first`, `numberOfElements`,
+> `empty`…) espalhados na raiz. O próprio Spring avisava no boot que *"there is no
+> guarantee about the stability of the resulting JSON structure"* — ou seja, um
+> upgrade do framework podia mudar o contrato sem uma linha de código mudar.
+>
+> A aplicação passou a usar o `PagedModel` (`@EnableSpringDataWebSupport(VIA_DTO)` em
+> `WebConfig`), que é o formato estável e suportado. Quem lia `totalElements` na raiz
+> agora lê em `page.totalElements`.
 
 ### Exemplos
 
 ```http
-GET /animais?page=0&size=5&sort=nome,asc
-GET /tutores?nome=Lucas&cidade=Sao Paulo
-GET /veterinarios?especialidade=Cardiologia&sort=nome,desc
-GET /eventos-clinicos?tipoEvento=VACINA&animalNome=Bolinha
-GET /pagamentos?statusPagamento=PENDENTE
-GET /pagamentos?formaPagamento=PIX&sort=dataPagamento,desc
+GET /api/v1/animais?page=0&size=5&sort=nome,asc
+GET /api/v1/tutores?nome=Lucas&cidade=Sao Paulo
+GET /api/v1/veterinarios?especialidade=Cardiologia&sort=nome,desc
+GET /api/v1/eventos-clinicos?tipoEvento=VACINA&animalNome=Bolinha
+GET /api/v1/pagamentos?statusPagamento=PENDENTE
+GET /api/v1/pagamentos?formaPagamento=PIX&sort=dataPagamento,desc
 ```
 
 ---
@@ -129,15 +145,15 @@ Cada nível depende do UUID do anterior. Tentar criar fora de ordem devolve 404.
 
 | Passo | Recurso | Precisa de |
 |---|---|---|
-| 1 | `POST /tutores` · `POST /clinicas` | nada |
-| 2 | `POST /animais` | `tutorId` |
-| 2 | `POST /veterinarios` | `clinicaId` |
-| 3 | `POST /eventos-clinicos` | `veterinarioId` + `animalId` + `clinicaId` |
-| 4 | `POST /pagamentos` | `eventoClinicoId` |
+| 1 | `POST /api/v1/tutores` · `POST /api/v1/clinicas` | nada |
+| 2 | `POST /api/v1/animais` | `tutorId` |
+| 2 | `POST /api/v1/veterinarios` | `clinicaId` |
+| 3 | `POST /api/v1/eventos-clinicos` | `veterinarioId` + `animalId` + `clinicaId` |
+| 4 | `POST /api/v1/pagamentos` | `eventoClinicoId` |
 
 ---
 
-## Tutores — `/tutores`
+## Tutores — `/api/v1/tutores`
 
 [`TutorController.java`](../src/main/java/br/com/fiap/clyvovet/controller/TutorController.java)
 
@@ -160,7 +176,7 @@ Cada nível depende do UUID do anterior. Tentar criar fora de ordem devolve 404.
 ### Exemplo
 
 ```http
-POST /tutores
+POST /api/v1/tutores
 Content-Type: application/json
 
 {
@@ -183,7 +199,7 @@ Content-Type: application/json
 
 ---
 
-## Animais — `/animais`
+## Animais — `/api/v1/animais`
 
 [`AnimalController.java`](../src/main/java/br/com/fiap/clyvovet/controller/AnimalController.java)
 
@@ -211,7 +227,7 @@ O `tutorNome` vem desnormalizado para poupar uma segunda chamada.
 ### Exemplo
 
 ```http
-POST /animais
+POST /api/v1/animais
 Content-Type: application/json
 
 {
@@ -229,7 +245,7 @@ Content-Type: application/json
 
 ---
 
-## Clínicas — `/clinicas`
+## Clínicas — `/api/v1/clinicas`
 
 [`ClinicaController.java`](../src/main/java/br/com/fiap/clyvovet/controller/ClinicaController.java)
 
@@ -250,7 +266,7 @@ Content-Type: application/json
 ### Exemplo
 
 ```http
-POST /clinicas
+POST /api/v1/clinicas
 Content-Type: application/json
 
 {
@@ -271,7 +287,7 @@ Content-Type: application/json
 
 ---
 
-## Veterinários — `/veterinarios`
+## Veterinários — `/api/v1/veterinarios`
 
 [`VeterinarioController.java`](../src/main/java/br/com/fiap/clyvovet/controller/VeterinarioController.java)
 
@@ -298,7 +314,7 @@ Content-Type: application/json
 ### Exemplo
 
 ```http
-POST /veterinarios
+POST /api/v1/veterinarios
 Content-Type: application/json
 
 {
@@ -327,7 +343,7 @@ Content-Type: application/json
 
 ---
 
-## Eventos Clínicos — `/eventos-clinicos`
+## Eventos Clínicos — `/api/v1/eventos-clinicos`
 
 [`EventoClinicoController.java`](../src/main/java/br/com/fiap/clyvovet/controller/EventoClinicoController.java)
 
@@ -353,7 +369,7 @@ As três FKs são resolvidas **antes** do save, cada uma com sua mensagem de 404
 ### Exemplo
 
 ```http
-POST /eventos-clinicos
+POST /api/v1/eventos-clinicos
 Content-Type: application/json
 
 {
@@ -369,7 +385,7 @@ Content-Type: application/json
 
 ---
 
-## Pagamentos — `/pagamentos`
+## Pagamentos — `/api/v1/pagamentos`
 
 [`PagamentoController.java`](../src/main/java/br/com/fiap/clyvovet/controller/PagamentoController.java)
 
@@ -396,7 +412,7 @@ customizadas em português.
 ### Exemplo
 
 ```http
-POST /pagamentos
+POST /api/v1/pagamentos
 Content-Type: application/json
 
 {
@@ -500,3 +516,89 @@ vinculados falha por violação de FK no banco, resultando em 500.
 | EventoClinico | `Evento clínico não encontrado com ID: {id}` |
 | Pagamento | `Pagamento não encontrado com ID: {id}` |
 | EventoClinico *(como FK em Pagamento)* | `EventoClinico não encontrado com ID: {id}` |
+
+---
+
+## Versionamento
+
+Todos os endpoints da aplicação ficam sob **`/api/v1`**. O prefixo não aparece nos
+`@RequestMapping` dos controllers — cada um declara só o próprio recurso
+(`/tutores`) e o prefixo é aplicado de uma vez em
+[`WebConfig`](../src/main/java/br/com/fiap/clyvovet/config/WebConfig.java):
+
+```java
+public static final String PREFIXO_API = "/api/v1";
+
+configurer.addPathPrefix(PREFIXO_API,
+        HandlerTypePredicate.forBasePackage("br.com.fiap.clyvovet.controller"));
+```
+
+Assim a versão vive num lugar só, e migrar para `/api/v2` é trocar uma constante.
+
+**Por que por pacote e não por `@RestController`.** O springdoc também anota suas
+classes com `@RestController`. Filtrando pela anotação, o `/v3/api-docs` ia junto
+para `/api/v1/v3/api-docs` e o Swagger parava de abrir. Restrito ao pacote de
+controllers da aplicação, as ferramentas seguem onde se espera:
+
+| Rota | Prefixada? |
+|---|---|
+| `/api/v1/**` — endpoints da aplicação | sim |
+| `/swagger-ui.html`, `/v3/api-docs` | não |
+| `/h2-console` | não |
+
+`SecurityConfig` monta seus matchers a partir da mesma constante, por um helper
+`api(...)`. Se os dois lados divergissem, uma rota ficaria aberta em silêncio.
+
+---
+
+## Atualização parcial (PATCH)
+
+`PUT` substitui o recurso inteiro: o corpo precisa trazer todos os campos
+obrigatórios, e o que não vier é sobrescrito. `PATCH` altera **apenas os campos
+enviados**.
+
+```bash
+# Muda só o telefone. Nome, CNPJ, e-mail e endereço ficam como estavam.
+curl -X PATCH http://localhost:8080/api/v1/clinicas/{id} \
+  -H 'Authorization: Bearer <accessToken>' \
+  -H 'Content-Type: application/json' \
+  -d '{"telefone":"1199998888"}'
+```
+
+### O que muda na validação
+
+Cada recurso tem um `XxxPatchRequest` separado do `XxxRequest`. Ele mantém as
+restrições de **formato** e abre mão das de **presença**:
+
+| Restrição | `XxxRequest` (POST/PUT) | `XxxPatchRequest` (PATCH) |
+|---|---|---|
+| `@NotNull`, `@NotBlank` | sim | **não** |
+| `@Size`, `@Email`, `@Pattern`, `@Positive` | sim | sim |
+
+Ou seja: um campo enviado continua validado — e-mail inválido é **400**, não um erro
+de servidor lá no banco — e um campo omitido simplesmente não entra na conta.
+
+DTOs separados em vez de grupos de validação sobre o `Request` existente: com grupos,
+seria preciso anotar campo a campo dos DTOs já em uso, e um grupo esquecido
+enfraqueceria em silêncio a validação do POST — o erro mais caro dos dois.
+
+### Limite conhecido
+
+Campo ausente e campo enviado como `null` chegam iguais à aplicação, então **não há
+como apagar um campo opcional via PATCH** — use `PUT` para isso. Distinguir os dois
+exigiria `Optional` em cada atributo ou JSON Merge Patch (RFC 7386), complexidade que
+nenhum caso de uso deste projeto pede.
+
+### Ownership no PATCH
+
+Num `PUT /api/v1/animais/{id}` o `tutorId` é obrigatório, e o `@PreAuthorize` checa
+duas coisas: o pet é meu **e** o dono que estou gravando continua sendo eu. Num PATCH
+o `tutorId` pode não vir, e aí a segunda pergunta não se aplica.
+
+`SegurancaService.podeAtribuirTutor` cobre isso: `null` significa "não mexa no dono" e
+é sempre permitido a quem já pode editar o animal. Sem essa distinção,
+`podeAcessarTutor(null)` devolveria `false` e um tutor não conseguiria corrigir a cor
+do próprio pet sem reenviar o próprio id no corpo.
+
+Trocar o dono via PATCH continua barrado para tutor — coberto por
+`AtualizacaoParcialTest.tutorNaoTransferePetViaPatch`.

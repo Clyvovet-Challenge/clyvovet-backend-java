@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoPatchRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.model.TipoEvento;
@@ -56,6 +57,15 @@ public class EventoClinicoController {
             @PathVariable UUID id,
             @Valid @RequestBody EventoClinicoRequest request) {
         return ResponseEntity.ok(eventoClinicoService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
+    @Operation(summary = "Atualizar parcialmente um evento clínico: envie apenas os campos que mudam")
+    public ResponseEntity<EventoClinicoResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody EventoClinicoPatchRequest patch) {
+        return ResponseEntity.ok(eventoClinicoService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

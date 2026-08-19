@@ -60,11 +60,11 @@ class CadastroCrudTest extends TesteDeApi {
     void cicloDeVidaDoTutor() throws Exception {
         String admin = tokenAdmin();
 
-        JsonNode criado = corpoDe(criar("/tutores", admin,
+        JsonNode criado = corpoDe(criar("/api/v1/tutores", admin,
                 TUTOR.formatted("Joana Teste", CPF_JOANA, "joana.teste@email.com", "FEMININO"))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
-        removerDepois("/tutores/" + id);
+        removerDepois("/api/v1/tutores/" + id);
 
         assertThat(criado.get("nome").asText()).isEqualTo("Joana Teste");
         assertThat(criado.get("cpf").asText()).isEqualTo(CPF_JOANA);
@@ -72,10 +72,10 @@ class CadastroCrudTest extends TesteDeApi {
         assertThat(criado.get("endereco").get("cidade").asText()).isEqualTo("Campinas");
         assertThat(criado.get("endereco").get("complemento").isNull()).isTrue();
 
-        assertThat(corpoDe(buscar("/tutores/" + id, admin).andExpect(status().isOk())))
+        assertThat(corpoDe(buscar("/api/v1/tutores/" + id, admin).andExpect(status().isOk())))
                 .isEqualTo(criado);
 
-        JsonNode alterado = corpoDe(atualizar("/tutores/" + id, admin,
+        JsonNode alterado = corpoDe(atualizar("/api/v1/tutores/" + id, admin,
                 TUTOR.formatted("Joana Alterada", CPF_JOANA, "joana.nova@email.com", "OUTRO"))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("id").asText()).isEqualTo(id);
@@ -84,11 +84,11 @@ class CadastroCrudTest extends TesteDeApi {
         assertThat(alterado.get("sexo").asText()).isEqualTo("OUTRO");
 
         // A alteracao precisa ter chegado ao banco, e nao so a resposta.
-        assertThat(corpoDe(buscar("/tutores/" + id, admin)).get("nome").asText())
+        assertThat(corpoDe(buscar("/api/v1/tutores/" + id, admin)).get("nome").asText())
                 .isEqualTo("Joana Alterada");
 
-        remover("/tutores/" + id, admin).andExpect(status().isNoContent());
-        buscar("/tutores/" + id, admin).andExpect(status().isNotFound());
+        remover("/api/v1/tutores/" + id, admin).andExpect(status().isNoContent());
+        buscar("/api/v1/tutores/" + id, admin).andExpect(status().isNotFound());
     }
 
     @Test
@@ -96,12 +96,12 @@ class CadastroCrudTest extends TesteDeApi {
     void cpfRepetidoResponde409() throws Exception {
         String admin = tokenAdmin();
 
-        String id = corpoDe(criar("/tutores", admin,
+        String id = corpoDe(criar("/api/v1/tutores", admin,
                 TUTOR.formatted("Primeira", CPF_REPETIDO, "primeira@email.com", "FEMININO"))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/tutores/" + id);
+        removerDepois("/api/v1/tutores/" + id);
 
-        criar("/tutores", admin,
+        criar("/api/v1/tutores", admin,
                 TUTOR.formatted("Segunda", CPF_REPETIDO, "segunda@email.com", "FEMININO"))
                 .andExpect(status().isConflict());
     }
@@ -110,7 +110,7 @@ class CadastroCrudTest extends TesteDeApi {
     @DisplayName("tutor: id inexistente responde 404 no GET, no PUT e no DELETE")
     void tutorInexistenteResponde404() throws Exception {
         String admin = tokenAdmin();
-        String url = "/tutores/" + SeedV2.ID_INEXISTENTE;
+        String url = "/api/v1/tutores/" + SeedV2.ID_INEXISTENTE;
 
         buscar(url, admin).andExpect(status().isNotFound());
         atualizar(url, admin, TUTOR.formatted("Fantasma", "11122233399", "fantasma@email.com", "OUTRO"))
@@ -125,23 +125,23 @@ class CadastroCrudTest extends TesteDeApi {
     void cicloDeVidaDaClinica() throws Exception {
         String admin = tokenAdmin();
 
-        JsonNode criada = corpoDe(criar("/clinicas", admin, CLINICA.formatted("Clinica Nova", CNPJ_NOVA))
+        JsonNode criada = corpoDe(criar("/api/v1/clinicas", admin, CLINICA.formatted("Clinica Nova", CNPJ_NOVA))
                 .andExpect(status().isCreated()));
         String id = criada.get("id").asText();
-        removerDepois("/clinicas/" + id);
+        removerDepois("/api/v1/clinicas/" + id);
 
         assertThat(criada.get("nome").asText()).isEqualTo("Clinica Nova");
         assertThat(criada.get("endereco").get("cidade").asText()).isEqualTo("Santos");
 
-        buscar("/clinicas/" + id, admin).andExpect(status().isOk());
+        buscar("/api/v1/clinicas/" + id, admin).andExpect(status().isOk());
 
-        JsonNode alterada = corpoDe(atualizar("/clinicas/" + id, admin,
+        JsonNode alterada = corpoDe(atualizar("/api/v1/clinicas/" + id, admin,
                 CLINICA.formatted("Clinica Renomeada", CNPJ_NOVA)).andExpect(status().isOk()));
         assertThat(alterada.get("nome").asText()).isEqualTo("Clinica Renomeada");
         assertThat(alterada.get("cnpj").asText()).isEqualTo(CNPJ_NOVA);
 
-        remover("/clinicas/" + id, admin).andExpect(status().isNoContent());
-        buscar("/clinicas/" + id, admin).andExpect(status().isNotFound());
+        remover("/api/v1/clinicas/" + id, admin).andExpect(status().isNoContent());
+        buscar("/api/v1/clinicas/" + id, admin).andExpect(status().isNotFound());
     }
 
     @Test
@@ -149,11 +149,11 @@ class CadastroCrudTest extends TesteDeApi {
     void cnpjRepetidoResponde409() throws Exception {
         String admin = tokenAdmin();
 
-        String id = corpoDe(criar("/clinicas", admin, CLINICA.formatted("Primeira", CNPJ_REPETIDO))
+        String id = corpoDe(criar("/api/v1/clinicas", admin, CLINICA.formatted("Primeira", CNPJ_REPETIDO))
                 .andExpect(status().isCreated())).get("id").asText();
-        removerDepois("/clinicas/" + id);
+        removerDepois("/api/v1/clinicas/" + id);
 
-        criar("/clinicas", admin, CLINICA.formatted("Segunda", CNPJ_REPETIDO))
+        criar("/api/v1/clinicas", admin, CLINICA.formatted("Segunda", CNPJ_REPETIDO))
                 .andExpect(status().isConflict());
     }
 
@@ -164,29 +164,29 @@ class CadastroCrudTest extends TesteDeApi {
     void cicloDeVidaDoVeterinario() throws Exception {
         String admin = tokenAdmin();
 
-        JsonNode criado = corpoDe(criar("/veterinarios", admin,
+        JsonNode criado = corpoDe(criar("/api/v1/veterinarios", admin,
                 VETERINARIO.formatted("Marina Teste", CPF_MARINA, "CRMV-SP 99999",
                         "Dermatologia", SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
-        removerDepois("/veterinarios/" + id);
+        removerDepois("/api/v1/veterinarios/" + id);
 
         assertThat(criado.get("nome").asText()).isEqualTo("Marina Teste");
         assertThat(criado.get("crmv").asText()).isEqualTo("CRMV-SP 99999");
         assertThat(criado.get("clinicaId").asText()).isEqualTo(SeedV2.CLINICA_VETCARE);
         assertThat(criado.get("clinicaNome").asText()).isEqualTo("VetCare Prime");
 
-        buscar("/veterinarios/" + id, admin).andExpect(status().isOk());
+        buscar("/api/v1/veterinarios/" + id, admin).andExpect(status().isOk());
 
-        JsonNode alterado = corpoDe(atualizar("/veterinarios/" + id, admin,
+        JsonNode alterado = corpoDe(atualizar("/api/v1/veterinarios/" + id, admin,
                 VETERINARIO.formatted("Marina Teste", CPF_MARINA, "CRMV-SP 99999",
                         "Oncologia", SeedV2.CLINICA_PETMED))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("especialidade").asText()).isEqualTo("Oncologia");
         assertThat(alterado.get("clinicaNome").asText()).isEqualTo("PetMed Centro");
 
-        remover("/veterinarios/" + id, admin).andExpect(status().isNoContent());
-        buscar("/veterinarios/" + id, admin).andExpect(status().isNotFound());
+        remover("/api/v1/veterinarios/" + id, admin).andExpect(status().isNoContent());
+        buscar("/api/v1/veterinarios/" + id, admin).andExpect(status().isNotFound());
     }
 
     /**
@@ -197,18 +197,18 @@ class CadastroCrudTest extends TesteDeApi {
     @Test
     @DisplayName("veterinario: aceita o CRMV no formato do conselho")
     void aceitaCrmvNoFormatoReal() throws Exception {
-        String id = corpoDe(criar("/veterinarios", tokenAdmin(),
+        String id = corpoDe(criar("/api/v1/veterinarios", tokenAdmin(),
                 VETERINARIO.formatted("Paulo Teste", CPF_PAULO, "CRMV-SP 14321",
                         "Clinica Geral", SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isCreated())).get("id").asText();
 
-        removerDepois("/veterinarios/" + id);
+        removerDepois("/api/v1/veterinarios/" + id);
     }
 
     @Test
     @DisplayName("veterinario: clinica inexistente responde 404")
     void clinicaInexistenteResponde404() throws Exception {
-        criar("/veterinarios", tokenAdmin(),
+        criar("/api/v1/veterinarios", tokenAdmin(),
                 VETERINARIO.formatted("Sem Clinica", CPF_SEM_CLINICA, "CRMV-SP 88888",
                         "Clinica Geral", SeedV2.ID_INEXISTENTE))
                 .andExpect(status().isNotFound());

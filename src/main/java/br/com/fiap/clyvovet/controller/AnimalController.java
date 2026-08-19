@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.animal.AnimalPatchRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalResponse;
 import br.com.fiap.clyvovet.service.AnimalService;
@@ -63,6 +64,17 @@ public class AnimalController {
             @PathVariable UUID id,
             @Valid @RequestBody AnimalRequest request) {
         return ResponseEntity.ok(animalService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    // O patch sem tutorId nao troca o dono, e ai a segunda checagem
+    // nao se aplica -- ver SegurancaService.podeAtribuirTutor.
+    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAtribuirTutor(#patch.tutorId)")
+    @Operation(summary = "Atualizar parcialmente um animal: envie apenas os campos que mudam")
+    public ResponseEntity<AnimalResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody AnimalPatchRequest patch) {
+        return ResponseEntity.ok(animalService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

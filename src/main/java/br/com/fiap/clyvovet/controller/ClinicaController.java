@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.controller;
 
+import br.com.fiap.clyvovet.dto.clinica.ClinicaPatchRequest;
 import br.com.fiap.clyvovet.dto.clinica.ClinicaRequest;
 import br.com.fiap.clyvovet.dto.clinica.ClinicaResponse;
 import br.com.fiap.clyvovet.service.ClinicaService;
@@ -51,6 +52,14 @@ public class ClinicaController {
             @PathVariable UUID id,
             @Valid @RequestBody ClinicaRequest request) {
         return ResponseEntity.ok(clinicaService.atualizar(id, request));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Atualizar parcialmente um clínica: envie apenas os campos que mudam")
+    public ResponseEntity<ClinicaResponse> atualizarParcialmente(
+            @PathVariable UUID id,
+            @Valid @RequestBody ClinicaPatchRequest patch) {
+        return ResponseEntity.ok(clinicaService.atualizarParcialmente(id, patch));
     }
 
     @DeleteMapping("/{id}")

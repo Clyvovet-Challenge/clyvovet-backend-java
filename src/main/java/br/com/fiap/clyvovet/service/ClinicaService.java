@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.clinica.ClinicaPatchRequest;
 import br.com.fiap.clyvovet.dto.clinica.ClinicaRequest;
 import br.com.fiap.clyvovet.dto.clinica.ClinicaResponse;
 import br.com.fiap.clyvovet.mapper.ClinicaMapper;
@@ -45,6 +46,14 @@ public class ClinicaService {
     public ClinicaResponse atualizar(UUID id, ClinicaRequest request) {
         Clinica clinica = clinicaRepository.obterPorId(id);
         clinicaMapper.atualizar(clinica, request);
+        return clinicaMapper.toResponse(clinicaRepository.save(clinica));
+    }
+
+    @Transactional
+    @CacheEvict(value = "clinicas", allEntries = true)
+    public ClinicaResponse atualizarParcialmente(UUID id, ClinicaPatchRequest patch) {
+        Clinica clinica = clinicaRepository.obterPorId(id);
+        clinicaMapper.aplicarPatch(clinica, patch);
         return clinicaMapper.toResponse(clinicaRepository.save(clinica));
     }
 

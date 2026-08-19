@@ -59,7 +59,7 @@ public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pa
 | Mapper | `{Entidade}Mapper` | `AnimalMapper` |
 | DTO entrada | `{Entidade}Request` | `AnimalRequest` |
 | DTO saída | `{Entidade}Response` | `AnimalResponse` |
-| Rota | plural em português | `/animais` |
+| Rota | plural em português | `/api/v1/animais` |
 
 ### Métodos padrão
 

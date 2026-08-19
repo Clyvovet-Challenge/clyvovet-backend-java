@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoPatchRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
@@ -62,6 +63,14 @@ public class EventoClinicoService {
 
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
+    public EventoClinicoResponse atualizarParcialmente(UUID id, EventoClinicoPatchRequest patch) {
+        EventoClinico evento = eventoClinicoRepository.obterPorId(id);
+        eventoClinicoMapper.aplicarPatch(evento, patch, resolverRelacionamentos(patch));
+        return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
+    }
+
+    @Transactional
+    @CacheEvict(value = "eventos", allEntries = true)
     public void deletar(UUID id) {
         eventoClinicoRepository.garantirQueExiste(id);
         eventoClinicoRepository.deleteById(id);
@@ -76,5 +85,17 @@ public class EventoClinicoService {
                 veterinarioRepository.obterPorId(request.getVeterinarioId()),
                 animalRepository.obterPorId(request.getAnimalId()),
                 clinicaRepository.obterPorId(request.getClinicaId()));
+    }
+
+    /**
+     * Mesma resolucao, mas para PATCH: cada id ausente vira null, e o mapper
+     * entende null como "mantenha o vinculo atual". Buscar mesmo assim custaria
+     * tres consultas a toa e transformaria um id omitido num 404.
+     */
+    private RelacionamentosDoEvento resolverRelacionamentos(EventoClinicoPatchRequest patch) {
+        return new RelacionamentosDoEvento(
+                patch.getVeterinarioId() == null ? null : veterinarioRepository.obterPorId(patch.getVeterinarioId()),
+                patch.getAnimalId() == null ? null : animalRepository.obterPorId(patch.getAnimalId()),
+                patch.getClinicaId() == null ? null : clinicaRepository.obterPorId(patch.getClinicaId()));
     }
 }

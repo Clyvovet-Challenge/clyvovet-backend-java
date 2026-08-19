@@ -34,26 +34,26 @@ class IntegridadeReferencialTest extends TesteDeApi {
     @Test
     @DisplayName("tutor com pet cadastrado nao e removido: responde 409")
     void tutorComPetNaoERemovido() throws Exception {
-        naoRemoveEExplica("/tutores/" + SeedV2.TUTOR_LUCAS);
+        naoRemoveEExplica("/api/v1/tutores/" + SeedV2.TUTOR_LUCAS);
 
         // O tutor e o pet continuam la.
-        buscar("/tutores/" + SeedV2.TUTOR_LUCAS, tokenAdmin()).andExpect(status().isOk());
-        buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin()).andExpect(status().isOk());
+        buscar("/api/v1/tutores/" + SeedV2.TUTOR_LUCAS, tokenAdmin()).andExpect(status().isOk());
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin()).andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("animal com evento clinico nao e removido: responde 409")
     void animalComEventoNaoERemovido() throws Exception {
-        naoRemoveEExplica("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS);
+        naoRemoveEExplica("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS);
 
-        buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin()).andExpect(status().isOk());
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin()).andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("clinica com veterinario vinculado nao e removida: responde 409")
     void clinicaComVeterinarioNaoERemovida() throws Exception {
-        naoRemoveEExplica("/clinicas/" + SeedV2.CLINICA_VETCARE);
+        naoRemoveEExplica("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE);
 
-        buscar("/clinicas/" + SeedV2.CLINICA_VETCARE, tokenAdmin()).andExpect(status().isOk());
+        buscar("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE, tokenAdmin()).andExpect(status().isOk());
     }
 }

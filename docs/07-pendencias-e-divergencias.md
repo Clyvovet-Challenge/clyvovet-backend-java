@@ -29,7 +29,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 12 | `especie` e `porte` como texto livre | Baixa | Modelo | aberto |
 | 13 | Único teste, que depende do Oracle | Baixa | Testes | ✅ 98 testes, perfil fixo em `dev` |
 | 14 | README desatualizado na seção de estrutura | Baixa | Documentação | ✅ corrigido |
-| 15 | Inconsistências internas de padrão | Baixa | Código | ✅ parcial — resta `PagamentoRequest` com `@Data` |
+| 15 | Inconsistências internas de padrão | Baixa | Código | ✅ parcial — resta `PagamentoResponse` com `@Data` |
 | 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito — falta confirmar no Oracle |
 | 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
@@ -60,7 +60,7 @@ declara `REEMBOLSADO`. O check constraint em
 CONSTRAINT chk_status_pagamento CHECK (status_pagamento IN ('PENDENTE','PAGO','CANCELADO','ESTORNADO'))
 ```
 
-**Efeito:** `POST /pagamentos` com `"statusPagamento": "REEMBOLSADO"` passa pela
+**Efeito:** `POST /api/v1/pagamentos` com `"statusPagamento": "REEMBOLSADO"` passa pela
 validação, chega ao INSERT e estoura `ORA-02290: check constraint violated` — que hoje
 vira 500. O valor é impossível de gravar no perfil `oracle`.
 
@@ -168,7 +168,7 @@ public ResponseEntity<ErroValidacao> handleConflito(DataIntegrityViolationExcept
 
 **Severidade: média**
 
-`DELETE /tutores/{id}` só verifica se o tutor existe. Se ele tiver animais vinculados,
+`DELETE /api/v1/tutores/{id}` só verifica se o tutor existe. Se ele tiver animais vinculados,
 o `deleteById` estoura violação de FK.
 
 Aplica-se a: Tutor→Animal, Clinica→Veterinario/EventoClinico,
@@ -273,7 +273,7 @@ Todas as chaves `@Cacheable` usam apenas os filtros e a paginação:
 key = "#nome + '-' + #especie + '-' + #pageable.pageNumber + '-' + #pageable.pageSize"
 ```
 
-**Efeito:** `GET /animais?sort=nome,asc` e `GET /animais?sort=nome,desc` colidem na
+**Efeito:** `GET /api/v1/animais?sort=nome,asc` e `GET /api/v1/animais?sort=nome,desc` colidem na
 mesma chave. A segunda chamada devolve o resultado cacheado da primeira, com a ordem
 errada. Vale para os 6 recursos.
 
@@ -298,7 +298,7 @@ desnormalizados da entidade relacionada:
 | `veterinarios` | `clinicaNome` | não |
 | `eventos` | `veterinarioNome`, `animalNome`, `clinicaNome` | não |
 
-**Efeito:** renomear um tutor deixa `GET /animais` devolvendo o nome antigo até que
+**Efeito:** renomear um tutor deixa `GET /api/v1/animais` devolvendo o nome antigo até que
 alguma escrita em Animal limpe o cache.
 
 **Correção:** listar os caches afetados na anotação de quem é referenciado:
@@ -443,15 +443,14 @@ Divergências pequenas em relação ao padrão que o resto do projeto segue:
 |---|---|---|
 | `PagamentoService` | método `salvar` | chama-se `criar` |
 | `PagamentoResponse` | `record` | classe `@Data` com setters |
-| `PagamentoRequest` | `@NoArgsConstructor @AllArgsConstructor @Getter` | `@Data` |
 | `TutorResponse.sexo` | tipo do enum | `String` (via `.toString()`) |
 | `EnderecoRequest` vs `EnderecoResponse` | mesma ordem de campos | `complemento` em posições diferentes |
 | `EventoClinico.hora` | tipo temporal | `String` sem validação de formato |
 | `AnimalRequest.observacao` | `@Size` como nos demais textos | sem limite, mas coluna é `VARCHAR2(1000)` |
 
-Nenhuma quebra nada. `PagamentoRequest`/`Response` com `@Data` expõem setters
+Nenhuma quebra nada. `PagamentoResponse` com `@Data` expõe setters
 desnecessários, e `TutorResponse.sexo` como `String` faz o mesmo campo ter tipos
-diferentes em `/tutores` e `/veterinarios` no contrato da API — o que é visível para o
+diferentes em `/api/v1/tutores` e `/api/v1/veterinarios` no contrato da API — o que é visível para o
 cliente. `AnimalRequest.observacao` sem `@Size(max = 1000)` deixa passar textos que o
 Oracle vai truncar ou rejeitar.
 
@@ -459,8 +458,14 @@ Oracle vai truncar ou rejeitar.
 virou `record` e `TutorResponse.sexo` passou a ser o enum `Sexo` (o JSON não muda — o
 Jackson já serializava o enum pelo nome). Os mappers uniformizaram
 `toEntity`/`atualizar`/`toResponse`. Continuam abertos: `EventoClinico.hora` como
-`String` (agora ao menos com `@NotBlank`), `PagamentoRequest` com `@Data`,
+`String` (agora ao menos com `@NotBlank`), `PagamentoResponse` com `@Data`,
 `AnimalRequest.observacao` sem `@Size` e a ordem de campos de `Endereco`.
+
+`PagamentoRequest` também fechou: passou a `@NoArgsConstructor @AllArgsConstructor
+@Getter`, como os demais Request. Além da consistência, isso tira dois problemas
+concretos — o DTO deixa de ser mutável depois de validado, e some o `toString()`
+gerado pelo `@Data`, que imprimia valor e forma de pagamento em qualquer log que
+recebesse o objeto.
 
 ---
 
@@ -468,7 +473,7 @@ Jackson já serializava o enum pelo nome). Os mappers uniformizaram
 
 **Severidade: alta** — descoberto na revisão de código pós-Sprint 3.
 
-Toda listagem filtrada por texto devolvia lista vazia: `GET /veterinarios?nome=Camila`
+Toda listagem filtrada por texto devolvia lista vazia: `GET /api/v1/veterinarios?nome=Camila`
 retornava `totalElements: 0` com a Camila cadastrada. Só o filtro vazio funcionava,
 por cair no ramo `:nome IS NULL`.
 
@@ -535,7 +540,7 @@ O ownership de animal era verificado pelo id da URL, e só por ele:
 ```
 
 Só que quem define o dono do pet é o campo `tutorId`, que vem no **corpo**. Nenhuma
-regra olhava esse campo, e `POST /animais` não tinha regra nenhuma além de "estar
+regra olhava esse campo, e `POST /api/v1/animais` não tinha regra nenhuma além de "estar
 autenticado". Um tutor logado, portanto:
 
 - cadastrava pet no nome de outro tutor — o dono legítimo passava a ver na própria

@@ -17,6 +17,7 @@ import java.util.Deque;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -111,7 +112,7 @@ public abstract class TesteDeApi {
     }
 
     protected String token(String email, String senha) throws Exception {
-        String corpo = mockMvc.perform(post("/auth/login")
+        String corpo = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"senha\":\"%s\"}".formatted(email, senha)))
                 .andExpect(status().isOk())
@@ -137,6 +138,13 @@ public abstract class TesteDeApi {
                 .content(corpo));
     }
 
+    protected ResultActions atualizarParcialmente(String url, String token, String corpo) throws Exception {
+        return mockMvc.perform(patch(url)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(corpo));
+    }
+
     protected ResultActions remover(String url, String token) throws Exception {
         return mockMvc.perform(delete(url).header("Authorization", "Bearer " + token));
     }
@@ -151,6 +159,18 @@ public abstract class TesteDeApi {
     }
 
     protected int totalDe(ResultActions listagem) throws Exception {
-        return corpoDe(listagem).get("totalElements").asInt();
+        return totalDe(corpoDe(listagem));
+    }
+
+    /**
+     * Total de elementos de uma listagem paginada.
+     *
+     * O caminho e "page.totalElements", e nao "totalElements" na raiz, desde
+     * que o WebConfig passou a serializar as paginas via PagedModel. Concentrar
+     * a leitura aqui e o que faz uma mudanca dessas custar uma linha em vez de
+     * uma varredura pela suite.
+     */
+    protected int totalDe(JsonNode corpo) {
+        return corpo.get("page").get("totalElements").asInt();
     }
 }

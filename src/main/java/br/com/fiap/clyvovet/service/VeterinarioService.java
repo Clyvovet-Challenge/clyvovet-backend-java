@@ -1,9 +1,11 @@
 package br.com.fiap.clyvovet.service;
 
+import br.com.fiap.clyvovet.dto.veterinario.VeterinarioPatchRequest;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioRequest;
 import br.com.fiap.clyvovet.dto.veterinario.VeterinarioResponse;
 import br.com.fiap.clyvovet.mapper.VeterinarioMapper;
 import br.com.fiap.clyvovet.model.Veterinario;
+import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +51,15 @@ public class VeterinarioService {
     public VeterinarioResponse atualizar(UUID id, VeterinarioRequest request) {
         Veterinario veterinario = veterinarioRepository.obterPorId(id);
         veterinarioMapper.atualizar(veterinario, request, clinicaRepository.obterPorId(request.getClinicaId()));
+        return veterinarioMapper.toResponse(veterinarioRepository.save(veterinario));
+    }
+
+    @Transactional
+    @CacheEvict(value = "veterinarios", allEntries = true)
+    public VeterinarioResponse atualizarParcialmente(UUID id, VeterinarioPatchRequest patch) {
+        Veterinario veterinario = veterinarioRepository.obterPorId(id);
+        Clinica clinica = patch.getClinicaId() == null ? null : clinicaRepository.obterPorId(patch.getClinicaId());
+        veterinarioMapper.aplicarPatch(veterinario, patch, clinica);
         return veterinarioMapper.toResponse(veterinarioRepository.save(veterinario));
     }
 

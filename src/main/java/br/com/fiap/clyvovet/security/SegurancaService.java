@@ -51,6 +51,19 @@ public class SegurancaService {
         return podeAcessar(() -> Optional.ofNullable(tutorId));
     }
 
+    /**
+     * Autoriza a atribuicao de dono vinda de um PATCH.
+     *
+     * Num PATCH o tutorId ausente significa "nao mexa no dono", e isso e sempre
+     * permitido a quem ja pode editar o animal. Chamar podeAcessarTutor(null)
+     * direto devolveria false -- o Optional vazio nunca casa com o tutor
+     * autenticado -- e um tutor ficaria impedido de, por exemplo, corrigir o
+     * nome do proprio pet sem reenviar o proprio id no corpo.
+     */
+    public boolean podeAtribuirTutor(UUID tutorId) {
+        return tutorId == null || podeAcessarTutor(tutorId);
+    }
+
     public boolean podeAcessarAnimal(UUID animalId) {
         return podeAcessar(() -> animalRepository.findById(animalId)
                 .map(Animal::getTutor)

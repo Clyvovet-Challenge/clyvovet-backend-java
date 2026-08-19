@@ -27,7 +27,7 @@ class OwnershipTest extends TesteDeApi {
              "sexo":"FEMEA","dataNascimento":"2021-07-05","tutorId":"%s"}""";
 
     private JsonNode listarAnimais(String token) throws Exception {
-        return corpoDe(buscar("/animais", token).andExpect(status().isOk()));
+        return corpoDe(buscar("/api/v1/animais", token).andExpect(status().isOk()));
     }
 
     @Test
@@ -35,8 +35,8 @@ class OwnershipTest extends TesteDeApi {
     void tutorNaoAcessaPetDeTerceiro() throws Exception {
         String lucas = tokenTutor(LUCAS);
 
-        buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas).andExpect(status().isOk());
-        buscar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas).andExpect(status().isOk());
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
     }
 
     @Test
@@ -44,12 +44,12 @@ class OwnershipTest extends TesteDeApi {
     void tutorNaoEscreveEmPetDeTerceiro() throws Exception {
         String lucas = tokenTutor(LUCAS);
 
-        remover("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
+        remover("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas).andExpect(status().isForbidden());
 
         // Corpo VALIDO de proposito. O binding do @RequestBody acontece antes do
         // @PreAuthorize, entao um corpo invalido pararia em 400 e o teste nao
         // chegaria a exercitar a autorizacao — que e o que se quer provar aqui.
-        atualizar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas,
+        atualizar("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, lucas,
                 ANIMAL.formatted("Sequestrado", SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isForbidden());
     }
@@ -63,7 +63,7 @@ class OwnershipTest extends TesteDeApi {
     @Test
     @DisplayName("tutor nao cadastra pet no nome de outro tutor")
     void tutorNaoCadastraPetParaTerceiro() throws Exception {
-        criar("/animais", tokenTutor(LUCAS), ANIMAL.formatted("Pet Alheio", SeedV2.TUTOR_MARIA))
+        criar("/api/v1/animais", tokenTutor(LUCAS), ANIMAL.formatted("Pet Alheio", SeedV2.TUTOR_MARIA))
                 .andExpect(status().isForbidden());
 
         assertThat(listarAnimais(tokenTutor(MARIA)).get("content")).hasSize(2);
@@ -75,11 +75,11 @@ class OwnershipTest extends TesteDeApi {
     void tutorNaoTransfereOProprioPet() throws Exception {
         String lucas = tokenTutor(LUCAS);
 
-        atualizar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas,
+        atualizar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas,
                 ANIMAL.formatted("Bolinha", SeedV2.TUTOR_MARIA))
                 .andExpect(status().isForbidden());
 
-        assertThat(corpoDe(buscar("/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas))
+        assertThat(corpoDe(buscar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas))
                 .get("tutorId").asText()).isEqualTo(SeedV2.TUTOR_LUCAS);
     }
 
@@ -114,8 +114,8 @@ class OwnershipTest extends TesteDeApi {
     void veterinarioEnxergaTudo() throws Exception {
         String veterinaria = tokenVeterinaria();
 
-        assertThat(listarAnimais(veterinaria).get("totalElements").asInt()).isEqualTo(6);
-        buscar("/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, veterinaria).andExpect(status().isOk());
+        assertThat(totalDe(listarAnimais(veterinaria))).isEqualTo(6);
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, veterinaria).andExpect(status().isOk());
     }
 
     @Test
@@ -123,15 +123,15 @@ class OwnershipTest extends TesteDeApi {
     void tutorSoLeOProprioCadastro() throws Exception {
         String lucas = tokenTutor(LUCAS);
 
-        buscar("/tutores/" + SeedV2.TUTOR_LUCAS, lucas).andExpect(status().isOk());
-        buscar("/tutores/" + SeedV2.TUTOR_MARIA, lucas).andExpect(status().isForbidden());
+        buscar("/api/v1/tutores/" + SeedV2.TUTOR_LUCAS, lucas).andExpect(status().isOk());
+        buscar("/api/v1/tutores/" + SeedV2.TUTOR_MARIA, lucas).andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("eventos e pagamentos tambem sao isolados por tutor")
     void eventosEPagamentosSaoIsolados() throws Exception {
-        int totalLucas = totalDe(buscar("/eventos-clinicos", tokenTutor(LUCAS)).andExpect(status().isOk()));
-        int totalVet = totalDe(buscar("/eventos-clinicos", tokenVeterinaria()).andExpect(status().isOk()));
+        int totalLucas = totalDe(buscar("/api/v1/eventos-clinicos", tokenTutor(LUCAS)).andExpect(status().isOk()));
+        int totalVet = totalDe(buscar("/api/v1/eventos-clinicos", tokenVeterinaria()).andExpect(status().isOk()));
 
         assertThat(totalLucas).isEqualTo(6);   // apenas os eventos do Bolinha
         assertThat(totalVet).isEqualTo(11);    // todos

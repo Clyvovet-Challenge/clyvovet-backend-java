@@ -45,11 +45,11 @@ Não há sessão: cada requisição se sustenta pelo próprio token.
 
 | Rota | Acesso | Função |
 |---|---|---|
-| `POST /auth/login` | público | e-mail + senha → access token + refresh token |
-| `POST /auth/refresh` | público | renova o access token |
-| `POST /auth/registrar` | público | auto-cadastro; **perfil sempre `TUTOR`** |
-| `POST /auth/usuarios` | `ADMIN` | cria usuário com perfil arbitrário |
-| `GET /auth/me` | autenticado | dados do usuário logado |
+| `POST /api/v1/auth/login` | público | e-mail + senha → access token + refresh token |
+| `POST /api/v1/auth/refresh` | público | renova o access token |
+| `POST /api/v1/auth/registrar` | público | auto-cadastro; **perfil sempre `TUTOR`** |
+| `POST /api/v1/auth/usuarios` | `ADMIN` | cria usuário com perfil arbitrário |
+| `GET /api/v1/auth/me` | autenticado | dados do usuário logado |
 
 ### Tokens
 
@@ -68,12 +68,12 @@ O segredo vem de `JWT_SECRET`. `Keys.hmacShaKeyFor` recusa chaves com menos de
 ### Exemplo
 
 ```bash
-TOKEN=$(curl -s -X POST localhost:8080/auth/login \
+TOKEN=$(curl -s -X POST localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@clyvovet.com","senha":"admin12345"}' \
   | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')
 
-curl localhost:8080/animais -H "Authorization: Bearer $TOKEN"
+curl localhost:8080/api/v1/animais -H "Authorization: Bearer $TOKEN"
 ```
 
 No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bearer`.
@@ -84,21 +84,21 @@ No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bea
 
 | Recurso | Operação | TUTOR | VETERINARIO | ADMIN |
 |---|---|---|---|---|
-| `/auth/login`, `/refresh`, `/registrar` | — | público | público | público |
-| `/auth/usuarios` | POST | ✗ | ✗ | ✓ |
+| `/api/v1/auth/login`, `/refresh`, `/registrar` | — | público | público | público |
+| `/api/v1/auth/usuarios` | POST | ✗ | ✗ | ✓ |
 | `/swagger-ui/**`, `/v3/api-docs/**` | GET | público | público | público |
-| `/tutores` | GET lista | ✗ | ✓ | ✓ |
-| `/tutores/{id}` | GET, PUT | só o próprio | ✓ | ✓ |
-| `/tutores` | POST, DELETE | ✗ | ✓ | ✓ |
-| `/animais` | GET lista | só os próprios | ✓ | ✓ |
-| `/animais/{id}` | GET, PUT, DELETE | só os próprios | ✓ | ✓ |
-| `/animais` | POST | ✓ | ✓ | ✓ |
-| `/clinicas`, `/veterinarios` | GET | ✓ | ✓ | ✓ |
-| `/clinicas`, `/veterinarios` | POST, PUT, DELETE | ✗ | ✗ | ✓ |
-| `/eventos-clinicos` | GET | só dos próprios pets | ✓ | ✓ |
-| `/eventos-clinicos` | POST, PUT, DELETE | ✗ | ✓ | ✓ |
-| `/pagamentos` | GET | só dos próprios pets | ✓ | ✓ |
-| `/pagamentos` | POST, PUT, DELETE | ✗ | ✓ | ✓ |
+| `/api/v1/tutores` | GET lista | ✗ | ✓ | ✓ |
+| `/api/v1/tutores/{id}` | GET, PUT, PATCH | só o próprio | ✓ | ✓ |
+| `/api/v1/tutores` | POST, DELETE | ✗ | ✓ | ✓ |
+| `/api/v1/animais` | GET lista | só os próprios | ✓ | ✓ |
+| `/api/v1/animais/{id}` | GET, PUT, PATCH, DELETE | só os próprios | ✓ | ✓ |
+| `/api/v1/animais` | POST | ✓ | ✓ | ✓ |
+| `/api/v1/clinicas`, `/api/v1/veterinarios` | GET | ✓ | ✓ | ✓ |
+| `/api/v1/clinicas`, `/api/v1/veterinarios` | POST, PUT, PATCH, DELETE | ✗ | ✗ | ✓ |
+| `/api/v1/eventos-clinicos` | GET | só dos próprios pets | ✓ | ✓ |
+| `/api/v1/eventos-clinicos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✓ |
+| `/api/v1/pagamentos` | GET | só dos próprios pets | ✓ | ✓ |
+| `/api/v1/pagamentos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✓ |
 
 A cadeia termina em `anyRequest().authenticated()`: rota nova nasce protegida.
 
@@ -139,9 +139,16 @@ query, e não depois dela, mantém a paginação correta.
 
 As duas frentes acima olham a URL. O `tutorId` de `AnimalRequest` vem do **corpo**, e
 por ele passava a mesma decisão sem nenhuma verificação: um tutor autenticado
-cadastrava pet no nome de qualquer outro (`POST /animais`) e podia transferir o
-próprio pet para outro tutor (`PUT /animais/{id}`). A escrita de animal checa as duas
+cadastrava pet no nome de qualquer outro (`POST /api/v1/animais`) e podia transferir o
+próprio pet para outro tutor (`PUT /api/v1/animais/{id}`). A escrita de animal checa as duas
 perguntas separadamente:
+
+**No PATCH a segunda checagem é condicional.** O `tutorId` pode não vir no corpo, e aí
+não há troca de dono a autorizar. `SegurancaService.podeAtribuirTutor` trata `null`
+como "não mexa no dono" — sempre permitido a quem já pode editar o animal. Sem isso,
+`podeAcessarTutor(null)` devolveria `false` e um tutor não conseguiria alterar o
+próprio pet sem reenviar o próprio id. Trocar o dono via PATCH segue barrado, coberto
+por `AtualizacaoParcialTest.tutorNaoTransferePetViaPatch`.
 
 ```java
 @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
@@ -203,8 +210,8 @@ resposta também não denuncie a diferença.
 
 | Escopo | Limite |
 |---|---|
-| `POST /auth/login` | 10/min por IP |
-| `/auth/**` | 30/min por IP |
+| `POST /api/v1/auth/login` | 10/min por IP |
+| `/api/v1/auth/**` | 30/min por IP |
 | Demais rotas | 100/min por IP |
 
 Excedido: **429** com `Retry-After`. Swagger e console H2 ficam fora do limite.

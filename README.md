@@ -53,11 +53,11 @@ Obtenha um token e use-o no cabeçalho `Authorization`:
 
 ```bash
 # Devolve {"accessToken": "...", "refreshToken": "...", ...}
-curl -X POST http://localhost:8080/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@clyvovet.com","senha":"admin12345"}'
 
-curl http://localhost:8080/animais \
+curl http://localhost:8080/api/v1/animais \
   -H 'Authorization: Bearer <accessToken>'
 ```
 
@@ -115,35 +115,60 @@ cache, cuja chave inclui o `tutorId`.
 
 ## Endpoints
 
-### Autenticação — `/auth`
+### Autenticação — `/api/v1/auth`
 
 | Método | Rota | Acesso |
 |---|---|---|
-| POST | `/auth/login` | público |
-| POST | `/auth/refresh` | público |
-| POST | `/auth/logout` | público |
-| POST | `/auth/registrar` | público |
-| GET | `/auth/usuarios` | ADMIN |
+| POST | `/api/v1/auth/login` | público |
+| POST | `/api/v1/auth/refresh` | público |
+| POST | `/api/v1/auth/logout` | público |
+| POST | `/api/v1/auth/registrar` | público |
+| GET | `/api/v1/auth/usuarios` | ADMIN |
 
 ### Recursos de domínio
 
-Os seis recursos expõem o mesmo CRUD — `GET /` (paginado, com filtros),
-`GET /{id}`, `POST /`, `PUT /{id}` e `DELETE /{id}`:
+Todos os endpoints ficam sob **`/api/v1`**. Os seis recursos expõem o mesmo CRUD:
+
+| Método | Rota | O que faz |
+|---|---|---|
+| GET | `/` | lista paginada, com filtros |
+| GET | `/{id}` | busca por id |
+| POST | `/` | cria — devolve **201** |
+| PUT | `/{id}` | substitui o recurso inteiro |
+| PATCH | `/{id}` | altera **só os campos enviados** |
+| DELETE | `/{id}` | remove — devolve **204** |
 
 | Recurso | Filtros na listagem |
 |---|---|
-| `/tutores` | `nome`, `cidade` |
-| `/animais` | `nome`, `especie` |
-| `/clinicas` | `nome`, `cidade` |
-| `/veterinarios` | `nome`, `especialidade` |
-| `/eventos-clinicos` | `tipoEvento`, `animalNome` |
-| `/pagamentos` | `statusPagamento`, `formaPagamento` |
+| `/api/v1/tutores` | `nome`, `cidade` |
+| `/api/v1/animais` | `nome`, `especie` |
+| `/api/v1/clinicas` | `nome`, `cidade` |
+| `/api/v1/veterinarios` | `nome`, `especialidade` |
+| `/api/v1/eventos-clinicos` | `tipoEvento`, `animalNome` |
+| `/api/v1/pagamentos` | `statusPagamento`, `formaPagamento` |
 
 ```
-GET /animais?page=0&size=5&sort=nome,asc
-GET /tutores?nome=Lucas&page=0&size=10
-GET /pagamentos?statusPagamento=PENDENTE
+GET /api/v1/animais?page=0&size=5&sort=nome,asc
+GET /api/v1/tutores?nome=Lucas&page=0&size=10
+GET /api/v1/pagamentos?statusPagamento=PENDENTE
 ```
+
+Toda listagem responde no mesmo formato:
+
+```json
+{
+  "content": [ ... ],
+  "page": { "size": 10, "number": 0, "totalElements": 42, "totalPages": 5 }
+}
+```
+
+O PATCH aceita só os campos que mudam — o que não vier no corpo fica como está:
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/clinicas/{id}   -H 'Authorization: Bearer <accessToken>'   -H 'Content-Type: application/json'   -d '{"telefone":"1199998888"}'
+```
+
+Um campo omitido não é apagado: para limpar um campo opcional, use PUT.
 
 ### Quem pode o quê
 
@@ -236,6 +261,8 @@ ownership e as migrations do MySQL.
 | Documentação com Swagger | ✅ `/swagger-ui.html` |
 | Autenticação e autorização | ✅ JWT + perfis + ownership |
 | Schema versionado | ✅ Flyway, um conjunto por banco |
+| Versionamento da API | ✅ prefixo `/api/v1` |
+| Atualização parcial | ✅ PATCH nos 6 recursos |
 
 ---
 

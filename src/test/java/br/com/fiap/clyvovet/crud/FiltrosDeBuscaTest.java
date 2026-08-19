@@ -35,7 +35,7 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     @Test
     @DisplayName("veterinarios: filtro por nome encontra o registro do seed")
     void filtraVeterinarioPorNome() throws Exception {
-        assertThat(nomesEm("/veterinarios?nome=Camila", tokenAdmin())).containsExactly("Camila Ferreira");
+        assertThat(nomesEm("/api/v1/veterinarios?nome=Camila", tokenAdmin())).containsExactly("Camila Ferreira");
     }
 
     @Test
@@ -43,15 +43,15 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void buscaPorNomeEParcialEInsensivelACaixa() throws Exception {
         String admin = tokenAdmin();
 
-        assertThat(nomesEm("/veterinarios?nome=camila", admin)).containsExactly("Camila Ferreira");
-        assertThat(nomesEm("/veterinarios?nome=CAMILA", admin)).containsExactly("Camila Ferreira");
-        assertThat(nomesEm("/veterinarios?nome=Ferreira", admin)).containsExactly("Camila Ferreira");
+        assertThat(nomesEm("/api/v1/veterinarios?nome=camila", admin)).containsExactly("Camila Ferreira");
+        assertThat(nomesEm("/api/v1/veterinarios?nome=CAMILA", admin)).containsExactly("Camila Ferreira");
+        assertThat(nomesEm("/api/v1/veterinarios?nome=Ferreira", admin)).containsExactly("Camila Ferreira");
     }
 
     @Test
     @DisplayName("veterinarios: filtro por especialidade")
     void filtraVeterinarioPorEspecialidade() throws Exception {
-        assertThat(nomesEm("/veterinarios?especialidade=Cardio", tokenAdmin()))
+        assertThat(nomesEm("/api/v1/veterinarios?especialidade=Cardio", tokenAdmin()))
                 .containsExactly("Rafael Matos");
     }
 
@@ -60,25 +60,25 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void filtrosSeSomam() throws Exception {
         String admin = tokenAdmin();
 
-        assertThat(nomesEm("/veterinarios?nome=Camila&especialidade=Clinica", admin))
+        assertThat(nomesEm("/api/v1/veterinarios?nome=Camila&especialidade=Clinica", admin))
                 .containsExactly("Camila Ferreira");
         // Camila existe e Cardiologia existe, mas nao na mesma pessoa.
-        assertThat(nomesEm("/veterinarios?nome=Camila&especialidade=Cardiologia", admin)).isEmpty();
+        assertThat(nomesEm("/api/v1/veterinarios?nome=Camila&especialidade=Cardiologia", admin)).isEmpty();
     }
 
     @Test
     @DisplayName("veterinarios: termo sem correspondencia devolve lista vazia")
     void termoSemCorrespondenciaDevolveVazio() throws Exception {
-        assertThat(totalDe(buscar("/veterinarios?nome=ZZZinexistente", tokenAdmin()))).isZero();
+        assertThat(totalDe(buscar("/api/v1/veterinarios?nome=ZZZinexistente", tokenAdmin()))).isZero();
     }
 
     @Test
     @DisplayName("veterinarios: sem filtro, a listagem continua completa")
     void semFiltroTrazTudo() throws Exception {
-        int total = totalDe(buscar("/veterinarios", tokenAdmin()));
+        int total = totalDe(buscar("/api/v1/veterinarios", tokenAdmin()));
 
         assertThat(total).isGreaterThan(1);
-        assertThat(totalDe(buscar("/veterinarios?nome=Camila", tokenAdmin()))).isLessThan(total);
+        assertThat(totalDe(buscar("/api/v1/veterinarios?nome=Camila", tokenAdmin()))).isLessThan(total);
     }
 
     @Test
@@ -86,9 +86,9 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void filtraTutorPorNomeECidade() throws Exception {
         String admin = tokenAdmin();
 
-        assertThat(nomesEm("/tutores?nome=Lucas", admin)).containsExactly("Lucas M. Santos");
-        assertThat(totalDe(buscar("/tutores?cidade=Sao", admin))).isPositive();
-        assertThat(totalDe(buscar("/tutores?cidade=ZZZinexistente", admin))).isZero();
+        assertThat(nomesEm("/api/v1/tutores?nome=Lucas", admin)).containsExactly("Lucas M. Santos");
+        assertThat(totalDe(buscar("/api/v1/tutores?cidade=Sao", admin))).isPositive();
+        assertThat(totalDe(buscar("/api/v1/tutores?cidade=ZZZinexistente", admin))).isZero();
     }
 
     @Test
@@ -96,8 +96,8 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void filtraClinicaPorNomeECidade() throws Exception {
         String admin = tokenAdmin();
 
-        assertThat(nomesEm("/clinicas?nome=PetMed", admin)).containsExactly("PetMed Centro");
-        assertThat(totalDe(buscar("/clinicas?cidade=Sao", admin))).isPositive();
+        assertThat(nomesEm("/api/v1/clinicas?nome=PetMed", admin)).containsExactly("PetMed Centro");
+        assertThat(totalDe(buscar("/api/v1/clinicas?cidade=Sao", admin))).isPositive();
     }
 
     @Test
@@ -105,22 +105,22 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void filtraAnimalPorNomeEEspecie() throws Exception {
         String veterinaria = tokenVeterinaria();
 
-        assertThat(nomesEm("/animais?nome=Bolinha", veterinaria)).containsExactly("Bolinha");
-        assertThat(totalDe(buscar("/animais?especie=GATO", veterinaria))).isPositive();
-        assertThat(totalDe(buscar("/animais?especie=GATO", veterinaria)))
-                .isLessThan(totalDe(buscar("/animais", veterinaria)));
+        assertThat(nomesEm("/api/v1/animais?nome=Bolinha", veterinaria)).containsExactly("Bolinha");
+        assertThat(totalDe(buscar("/api/v1/animais?especie=GATO", veterinaria))).isPositive();
+        assertThat(totalDe(buscar("/api/v1/animais?especie=GATO", veterinaria)))
+                .isLessThan(totalDe(buscar("/api/v1/animais", veterinaria)));
     }
 
     @Test
     @DisplayName("eventos clinicos: filtro pelo nome do animal e pelo tipo")
     void filtraEventoPorAnimalETipo() throws Exception {
         String veterinaria = tokenVeterinaria();
-        int total = totalDe(buscar("/eventos-clinicos", veterinaria));
+        int total = totalDe(buscar("/api/v1/eventos-clinicos", veterinaria));
 
-        int doBolinha = totalDe(buscar("/eventos-clinicos?animalNome=Bolinha", veterinaria));
+        int doBolinha = totalDe(buscar("/api/v1/eventos-clinicos?animalNome=Bolinha", veterinaria));
         assertThat(doBolinha).isPositive().isLessThan(total);
 
-        int consultas = totalDe(buscar("/eventos-clinicos?tipoEvento=CONSULTA", veterinaria));
+        int consultas = totalDe(buscar("/api/v1/eventos-clinicos?tipoEvento=CONSULTA", veterinaria));
         assertThat(consultas).isPositive().isLessThan(total);
     }
 
@@ -128,15 +128,15 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     @DisplayName("pagamentos: filtro por status e por forma de pagamento")
     void filtraPagamentoPorStatusEForma() throws Exception {
         String veterinaria = tokenVeterinaria();
-        JsonNode pagos = corpoDe(buscar("/pagamentos?statusPagamento=PAGO", veterinaria)
+        JsonNode pagos = corpoDe(buscar("/api/v1/pagamentos?statusPagamento=PAGO", veterinaria)
                 .andExpect(status().isOk()));
 
-        assertThat(pagos.get("totalElements").asInt()).isPositive();
+        assertThat(totalDe(pagos)).isPositive();
         assertThat(pagos.get("content").findValuesAsText("statusPagamento"))
                 .isNotEmpty()
                 .allMatch("PAGO"::equals);
 
-        assertThat(totalDe(buscar("/pagamentos?formaPagamento=PIX", veterinaria))).isPositive();
+        assertThat(totalDe(buscar("/api/v1/pagamentos?formaPagamento=PIX", veterinaria))).isPositive();
     }
 
     /**
@@ -148,8 +148,8 @@ class FiltrosDeBuscaTest extends TesteDeApi {
     void ordenacaoNaoColideNoCache() throws Exception {
         String admin = tokenAdmin();
 
-        List<String> crescente = nomesEm("/veterinarios?sort=nome,asc", admin);
-        List<String> decrescente = nomesEm("/veterinarios?sort=nome,desc", admin);
+        List<String> crescente = nomesEm("/api/v1/veterinarios?sort=nome,asc", admin);
+        List<String> decrescente = nomesEm("/api/v1/veterinarios?sort=nome,desc", admin);
 
         List<String> crescenteInvertida = new ArrayList<>(crescente);
         Collections.reverse(crescenteInvertida);
