@@ -23,6 +23,7 @@ silenciosamente corrigido no texto.
 | [06-guia-de-desenvolvimento.md](06-guia-de-desenvolvimento.md) | Convenções do código, como adicionar uma entidade nova, build, testes e o grafo do codebase |
 | [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e documentação |
 | [08-seguranca.md](08-seguranca.md) | Autenticação JWT, perfis, ownership, matriz de autorização e hardening |
+| [09-estado-do-projeto.md](09-estado-do-projeto.md) | Onde o projeto está, o que serve à tese de absenteísmo, o que falta e em que ordem |
 
 ---
 

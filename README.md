@@ -122,8 +122,9 @@ cache, cuja chave inclui o `tutorId`.
 | POST | `/api/v1/auth/login` | público |
 | POST | `/api/v1/auth/refresh` | público |
 | POST | `/api/v1/auth/logout` | público |
-| POST | `/api/v1/auth/registrar` | público |
-| GET | `/api/v1/auth/usuarios` | ADMIN |
+| POST | `/api/v1/auth/registrar` | público — o perfil é sempre TUTOR |
+| POST | `/api/v1/auth/usuarios` | ADMIN — cria com perfil arbitrário |
+| GET | `/api/v1/auth/me` | autenticado |
 
 ### Recursos de domínio
 
@@ -165,7 +166,10 @@ Toda listagem responde no mesmo formato:
 O PATCH aceita só os campos que mudam — o que não vier no corpo fica como está:
 
 ```bash
-curl -X PATCH http://localhost:8080/api/v1/clinicas/{id}   -H 'Authorization: Bearer <accessToken>'   -H 'Content-Type: application/json'   -d '{"telefone":"1199998888"}'
+curl -X PATCH http://localhost:8080/api/v1/clinicas/{id} \
+  -H 'Authorization: Bearer <accessToken>' \
+  -H 'Content-Type: application/json' \
+  -d '{"telefone":"1199998888"}'
 ```
 
 Um campo omitido não é apagado: para limpar um campo opcional, use PUT.
@@ -210,6 +214,7 @@ em [`docs/08-seguranca.md`](docs/08-seguranca.md).
 | [Guia de Desenvolvimento](docs/06-guia-de-desenvolvimento.md) | Convenções, como adicionar entidades, testes |
 | [Pendências e Divergências](docs/07-pendencias-e-divergencias.md) | Inconsistências conhecidas e seu status |
 | [Segurança](docs/08-seguranca.md) | JWT, perfis, ownership, bloqueio de conta |
+| [Estado do Projeto](docs/09-estado-do-projeto.md) | Onde estamos, o que falta para atacar o absenteísmo e em que ordem |
 
 Os requisitos do Challenge que originaram o projeto estão em
 [`specs/`](specs/README.md).
