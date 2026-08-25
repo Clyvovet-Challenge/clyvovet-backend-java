@@ -25,6 +25,14 @@ silenciosamente corrigido no texto.
 | [08-seguranca.md](08-seguranca.md) | Autenticação JWT, perfis, ownership, matriz de autorização e hardening |
 | [09-estado-do-projeto.md](09-estado-do-projeto.md) | Onde o projeto está, o que serve à tese de absenteísmo, o que falta e em que ordem |
 
+### Fora desta pasta
+
+| Documento | Conteúdo |
+|---|---|
+| [`../learning/`](../learning/) | **Material de estudo** — os conceitos de Spring e REST usados aqui, explicados sobre o código real deste repositório |
+| [`../specs/07-backlog.md`](../specs/07-backlog.md) | O que está implementado e o que falta, por sprint e por disciplina |
+| [`../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md`](../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md) | Spec técnica dos dois módulos decididos na mentoria de 21/08/2026 |
+
 ---
 
 ## Visão geral em 30 segundos
@@ -50,10 +58,11 @@ Clinica ─1:N─> Veterinario ──┘
 | Camada | Tecnologia |
 |---|---|
 | Linguagem | Java 17 |
-| Framework | Spring Boot 3.5.14 |
+| Framework | Spring Boot 3.5.16 |
 | Persistência | Spring Data JPA / Hibernate 6.6 |
-| Banco (produção) | Oracle 19c (FIAP) |
-| Banco (dev/container) | H2 |
+| Banco (entrega) | Oracle 19c (FIAP) |
+| Banco (alvo do deploy) | MySQL 8 (Azure Database for MySQL) |
+| Banco (dev/container) | H2 em `MODE=Oracle` |
 | Segurança | Spring Security + JWT (jjwt) · BCrypt · Bucket4j (rate limit) |
 | Migrations | Flyway |
 | Validação | Bean Validation (Jakarta) |
@@ -64,18 +73,20 @@ Clinica ─1:N─> Veterinario ──┘
 
 ### Números do projeto
 
+Conferidos no código em 25/08/2026.
+
 | Item | Quantidade |
 |---|---|
 | Entidades JPA | 7 + 1 `@Embeddable` |
 | Enums | 6 |
 | Controllers | 7 |
-| Endpoints REST | 35 |
-| Services | 7 |
-| Repositories | 7 |
-| Mappers | 7 |
-| DTOs | 19 |
-| Migrations Flyway | 4 |
-| Testes automatizados | 27 |
+| Endpoints REST | **42** (36 de domínio + 6 de autenticação), todos sob `/api/v1` |
+| Services | 8 |
+| Repositories | 7 + `RepositorioBase` |
+| Mappers | 8 + 3 classes de apoio |
+| DTOs | 27 |
+| Migrations Flyway | 4, em **dois conjuntos** (`oracle/` e `mysql/`) |
+| Testes automatizados | **126** |
 
 ---
 

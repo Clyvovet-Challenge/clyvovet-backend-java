@@ -1,13 +1,18 @@
 # Estado do projeto
 
-Snapshot de **19/08/2026**: o que está construído, o quanto disso serve à tese do
+Snapshot de **25/08/2026**: o que está construído, o quanto disso serve à tese do
 produto, o que falta e em que ordem atacar.
 
 Escrito para conversa — mentoria, alinhamento com as outras disciplinas, retomada
 depois de uma pausa. Para a referência técnica de cada parte, siga os links.
 
-> Este documento **envelhece**. Os números vêm da suíte e do código em 19/08/2026;
+> Este documento **envelhece**. Os números vêm da suíte e do código em 25/08/2026;
 > confira antes de citá-los em outro contexto.
+
+> **O que mudou desde o snapshot anterior (19/08):** o código não mudou — a revisão
+> `/api/v1`, o PATCH e a estabilização da paginação já estavam entregues. O que mudou foi
+> a **direção**: a mentoria presencial da Clyvo em **21/08/2026** acrescentou dois módulos
+> ao escopo deste backend. Ver a [seção 5](#5-o-que-a-mentoria-de-2108-acrescentou).
 
 ---
 
@@ -163,9 +168,60 @@ destravada por fora.
 
 ---
 
-## 5. Pendências abertas
+## 5. O que a mentoria de 21/08 acrescentou
 
-Do [levantamento completo](07-pendencias-e-divergencias.md):
+Dois módulos, ambos deste lado Java. Especificação técnica completa — entidades, DDL nos
+dois bancos, contratos de endpoint e regras de cálculo — em
+[`../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md`](../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md).
+
+### Painel do Veterinário
+
+Dashboard analítico da própria clínica: volume por raça, desfecho por raça, gasto com
+medicamento, benchmark regional, score de risco de abandono por pet, taxa de retorno e
+"tempo de vida ganho".
+
+### Dados + IA
+
+Apoio à decisão clínica: casos semelhantes no histórico, cluster de patologias por
+raça/idade e validação cruzada de medicação. **A IA sugere; o veterinário decide e assina.**
+
+### O achado que reposiciona a seção 3
+
+Os módulos foram descritos como analíticos — "cruzam dados que já existem". **O schema não
+sustenta isso.** Das 12 necessidades de dado levantadas, **uma** é atendida hoje.
+
+E as lacunas que os bloqueiam são **exatamente as quatro da seção 3**:
+
+| Falta (seção 3) | Já bloqueava | Agora também bloqueia |
+|---|---|---|
+| `status` no `EventoClinico` | medir absenteísmo | taxa de retorno, score de risco |
+| vínculo "gera retorno em X" | saber o que venceu | retenção, cobrança de retorno |
+| filtro por intervalo de data | perguntar "o que está atrasado" | toda janela do painel |
+| — | — | **óbito e desfecho do animal** (novo) |
+| — | — | **prescrição e medicamento** (novo — não existe nenhuma tabela) |
+| — | — | **diagnóstico estruturado** (novo — só há `descricao` texto livre) |
+
+Isto é uma **confirmação**, não uma reviravolta: a Etapa 1 do caminho de evolução continua
+sendo o primeiro passo, e agora dois módulos dependem dela em vez de um. O que muda é o
+tamanho da rodada de captura de dado que vem antes da análise.
+
+Também vale registrar o que a mentoria **não** mudou: `animal.raca` continua sendo texto
+livre sem catálogo (item 12 de [07-pendencias](07-pendencias-e-divergencias.md)). Era uma
+pendência de severidade baixa; com o painel agregando por raça, passa a ser estrutural.
+
+### Onde isso entra no calendário
+
+Os dois módulos são maiores que a janela da Sprint 3 (18 dias em 25/08). O sequenciamento
+proposto — o que cabe antes de 12/09 e o que vai para a Sprint 4 — está em
+[`../specs/07-backlog.md`](../specs/07-backlog.md).
+
+---
+
+## 6. Pendências abertas
+
+Do [levantamento completo](07-pendencias-e-divergencias.md). O que falta por sprint e por
+disciplina — incluindo os módulos novos — está consolidado em
+[`../specs/07-backlog.md`](../specs/07-backlog.md):
 
 | # | Item | Severidade | Situação |
 |---|---|---|---|
@@ -187,7 +243,7 @@ Do [levantamento completo](07-pendencias-e-divergencias.md):
 
 ---
 
-## 6. Números
+## 7. Números
 
 | | |
 |---|---|
