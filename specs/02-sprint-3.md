@@ -5,7 +5,7 @@
 | Requisito | Pontos | Situação |
 |---|---|---|
 | Frontend | 30 | não iniciado — adiado por decisão do time |
-| Flyway | 20 | ✅ 4 migrations, único conjunto para Oracle e H2 |
+| Flyway | 20 | ✅ V1–V4 em dois conjuntos: `oracle/` (serve também ao H2, que roda em `MODE=Oracle`) e `mysql/` |
 | Spring Security | 30 | ✅ JWT, 3 perfis, ownership, hardening |
 | Funcionalidades (2 fluxos não-CRUD) | 20 | não iniciado — fluxos ainda não escolhidos |
 

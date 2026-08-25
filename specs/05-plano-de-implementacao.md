@@ -1,5 +1,13 @@
 # Plano de implementação — Sprint 3
 
+> ⚠️ **DOCUMENTO HISTÓRICO — fotografia de 07/08/2026.**
+> Os blocos A (fundação) e B (segurança) foram **concluídos** desde então, e as decisões
+> 3, 4 e 5 foram fechadas. O status abaixo não vale mais.
+> **O backlog vigente está em [07-backlog.md](07-backlog.md).**
+>
+> O que continua válido aqui: a lista de **fluxos candidatos** (decisão 2, ainda aberta) e
+> a análise de riscos.
+
 > **Este documento não consta nos PDFs do Challenge.** É um backlog derivado dos
 > requisitos das specs 01–04, mapeado ao código existente. Serve como proposta de
 > execução, não como requisito oficial.

@@ -29,7 +29,7 @@ nas duas, é necessário entregar nas duas.
 | 5 | Respeitar os conceitos fundamentais de APIs REST (RESTful) | ✅ Recursos no plural, verbos corretos, status adequados |
 | 6 | Utilizar Design Patterns com prudência | ✅ Sem over-engineering |
 | 7 | Pode utilizar JPQL e/ou Spring JPA Query Methods | ✅ JPQL com filtros opcionais nos 6 repositories |
-| 8 | Artefatos no GitHub público, professores com acesso | ✅ `leojp04/clyvovet-backend-java` |
+| 8 | Artefatos no GitHub público, professores com acesso | ✅ `Clyvovet-Challenge/clyvovet-backend-java` |
 
 ---
 
@@ -68,6 +68,12 @@ Detalhamento técnico de cada item em [`../docs/`](../docs/).
 ---
 
 ## Pendências desta entrega
+
+> **Atualização de 25/08/2026:** o item 3 foi resolvido em quase todo o escopo — `REEMBOLSADO`
+> alinhado pela migration V4 (manteve-se o nome no Java e corrigiu-se o check), `@Size` de
+> `crmv` ampliado para 4–30 e duplicidade passando a 409. **Segue aberto** apenas
+> `dataPagamento` obrigatória. Os itens 1, 2 e 4 continuam abertos como descrito.
+> Status consolidado em [07-backlog.md](07-backlog.md).
 
 Itens que ainda custam nota e são baratos de resolver:
 

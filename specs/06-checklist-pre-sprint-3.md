@@ -1,5 +1,12 @@
 # Verificação e checklist pré-Sprint 3
 
+> ⚠️ **DOCUMENTO HISTÓRICO — auditoria de 07/08/2026.**
+> A maior parte dos itens de prioridade 1 a 3 foi resolvida: seed completado, credenciais
+> externalizadas, perfil de teste fixado, `sort` na chave de cache, `@Transactional` nos
+> services, 409 em duplicidade, null-guard nos mappers. O histórico de commits deixou de ter
+> autor único (hoje são 2 de 4 integrantes).
+> **A auditoria vigente está em [07-backlog.md](07-backlog.md).**
+
 Auditoria do repositório contra as specs, feita em **07/08/2026**, 36 dias antes da
 entrega da Sprint 3.
 
