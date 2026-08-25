@@ -1,62 +1,133 @@
 # 05 — Bean Validation
 
-## O que é
+> **Pré-requisito:** [03 — API REST](03-api-rest.md) (status 400 × 409) e a seção sobre
+> **anotações** do [00](00-java-essencial.md).
 
-**Bean Validation** (Jakarta Validation) é a especificação que permite declarar restrições
-com anotações no próprio DTO, em vez de espalhar `if` pelo controller.
+---
 
-```java
-// ❌ sem Bean Validation
-if (request.getNome() == null || request.getNome().isBlank()) {
-    return ResponseEntity.badRequest().body("Nome é obrigatório");
-}
-if (request.getEmail() == null || !request.getEmail().contains("@")) { ... }
+## A regra que organiza tudo: nunca confie no cliente
+
+Quem chama a sua API pode mandar qualquer coisa. Não porque é malicioso — muitas vezes é só
+um bug no app, um campo que ficou vazio, um formulário mal preenchido.
+
+```jsonc
+POST /api/v1/animais
+{ "nome": "", "tutorId": null }
 ```
 
+Se a API aceitar, você grava lixo. Se estourar sem explicação, o cliente não sabe o que
+corrigir. O certo é **recusar com clareza**:
+
+```jsonc
+400 Bad Request
+[
+  { "campo": "nome",    "mensagem": "Nome é obrigatório" },
+  { "campo": "tutorId", "mensagem": "Tutor é obrigatório" }
+]
+```
+
+---
+
+## Sem e com Bean Validation
+
 ```java
-// ✅ com Bean Validation
+// ❌ validação na mão — no controller
+@PostMapping
+public ResponseEntity<?> criar(@RequestBody AnimalRequest request) {
+    if (request.getNome() == null || request.getNome().isBlank()) {
+        return ResponseEntity.badRequest().body("Nome é obrigatório");
+    }
+    if (request.getTutorId() == null) {
+        return ResponseEntity.badRequest().body("Tutor é obrigatório");
+    }
+    if (request.getObservacao() != null && request.getObservacao().length() > 1000) {
+        return ResponseEntity.badRequest().body("Observação muito longa");
+    }
+    // ... e a regra do negócio ainda nem começou
+}
+```
+
+Problemas: o controller engordou (violando o que vimos no
+[02](02-arquitetura-em-camadas.md)), só o **primeiro** erro é reportado, e os outros 6
+recursos vão repetir tudo.
+
+```java
+// ✅ com Bean Validation — a restrição mora no DTO
 @NotBlank(message = "Nome é obrigatório")
 private String nome;
 
-@Email
-private String email;
+@NotNull(message = "Tutor é obrigatório")
+private UUID tutorId;
+
+@Size(max = 1000)
+private String observacao;
 ```
 
-A validação roda **antes** do corpo do método do controller. Se falhar, o método nem começa.
-
-## Como ligar
-
-Duas peças:
-
 ```java
-// 1. no controller — @Valid dispara a validação
+// e o controller volta a ter uma linha
 @PostMapping
 public ResponseEntity<AnimalResponse> criar(@Valid @RequestBody AnimalRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(animalService.criar(request));
+}
 ```
+
+**A validação roda antes do corpo do método.** Se falhar, `animalService.criar` **nem é
+chamado**.
+
+---
+
+## As duas peças (e o erro clássico)
 
 ```java
-// 2. no DTO — as restrições
-@NotNull
-private UUID veterinarioId;
+// 1. no controller: @Valid é o GATILHO
+public ResponseEntity<AnimalResponse> criar(@Valid @RequestBody AnimalRequest request)
+
+// 2. no DTO: as restrições
+@NotBlank
+private String nome;
 ```
 
-Sem `@Valid`, as anotações do DTO são simplesmente ignoradas — é um erro silencioso e comum.
+⚠️ **Sem `@Valid`, as anotações do DTO são simplesmente ignoradas.** Nenhum erro, nenhum
+aviso — os dados passam direto. É o bug mais comum de quem está começando, e é silencioso.
 
-## As restrições usadas aqui
+💡 **Conceito: declarativo precisa de alguém que leia**
+
+Lembra do [00](00-java-essencial.md): anotação é um bilhete que **alguém** lê depois. `@NotBlank`
+sozinha não faz nada.
+
+Quem lê é o validador do Spring — e ele só é acionado quando vê `@Valid` no parâmetro. Sem
+o gatilho, os bilhetes ficam colados no DTO sem ninguém para lê-los.
+
+Sempre que uma anotação "não funcionou", a primeira pergunta é: **quem deveria ler isso, e
+foi acionado?**
+
+---
+
+## As restrições usadas neste projeto
 
 | Anotação | Verifica | Cuidado |
 |---|---|---|
-| `@NotNull` | não é nulo | aceita `""` e `"   "` |
-| `@NotBlank` | texto não nulo, não vazio, não só espaços | **só para String** |
+| `@NotNull` | não é `null` | **aceita `""` e `"   "`** |
+| `@NotBlank` | texto não nulo, não vazio, não só espaços | só para `String` |
 | `@NotEmpty` | coleção/texto não vazio | aceita `"   "` |
-| `@Size(min, max)` | tamanho | alinhe com a coluna do banco |
+| `@Size(min, max)` | tamanho | alinhe com a coluna |
 | `@Email` | formato de e-mail | permissivo por padrão |
 | `@Positive` | número > 0 | |
-| `@PastOrPresent` | data não futura | **ignora nulo** |
+| `@PastOrPresent` | data não futura | **ignora `null`** |
 | `@Digits(integer, fraction)` | dígitos de um decimal | espelha `NUMBER(10,2)` |
 | `@Pattern(regexp)` | expressão regular | último recurso, mas resolve formato |
 
-Exemplo real, com as três restrições cobrindo coisas diferentes:
+### A confusão que custa caro: `@NotNull` × `@NotBlank`
+
+```java
+@NotNull  private String nome;   // "" passa ✅ (e não deveria)
+@NotBlank private String nome;   // "" é recusado ✅
+```
+
+Para **texto obrigatório é sempre `@NotBlank`**. Este projeto aprendeu na prática: o campo
+`hora` era `@NotNull`, então `""` passava, chegava ao banco e estourava lá.
+
+### Três restrições cobrindo coisas diferentes
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/dto/pagamento/PagamentoRequest.java
@@ -66,7 +137,12 @@ Exemplo real, com as três restrições cobrindo coisas diferentes:
 private BigDecimal valor;
 ```
 
-## A resposta de erro
+`@NotNull` cuida da presença, `@Positive` do sinal, `@Digits` do formato. Cada uma responde
+uma pergunta — e juntas descrevem exatamente o que a coluna `NUMBER(10,2)` aceita.
+
+---
+
+## Como o erro vira resposta
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/exception/GlobalExceptionHandler.java
@@ -81,19 +157,21 @@ public ResponseEntity<List<ErroValidacao>> handleValidationErrors(MethodArgument
 }
 ```
 
-O cliente recebe **400** com a lista de todos os campos que falharam — não só o primeiro:
+Lendo em português: *"pegue todos os erros de campo, transforme cada um num `ErroValidacao`
+com o nome do campo e a mensagem, junte numa lista e devolva 400"*.
 
-```json
-[
-  { "campo": "nome",  "mensagem": "Nome é obrigatório" },
-  { "campo": "valor", "mensagem": "Valor deve ser positivo" }
-]
-```
+O `.stream()...map()...toList()` é o jeito idiomático de transformar uma lista em outra —
+`map` aplica a função a cada item (revisar [00, seção 9](00-java-essencial.md)).
 
-## A regra que este projeto seguiu: validação espelha a coluna
+O cliente recebe **todos** os campos com problema de uma vez, não só o primeiro. Isso importa
+para a experiência: um formulário que mostra um erro por vez é insuportável.
 
-O princípio: **o que a coluna não comporta, a validação deve recusar** — para o erro sair
-como 400 com o campo indicado, e não como 500 vindo do banco.
+---
+
+## A regra de ouro: validação espelha a coluna
+
+**O que a coluna não comporta, a validação deve recusar.** Assim o erro vira 400 com o campo
+indicado, e não 500 vindo do banco.
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/dto/eventoClinico/EventoClinicoRequest.java
@@ -101,30 +179,40 @@ como 400 com o campo indicado, e não como 500 vindo do banco.
 private String descricao;
 ```
 
-O comentário `// coluna VARCHAR2(1000)` é a prática que sustenta isso: quem mexer no DTO vê
-de onde veio o número.
+O comentário `// coluna VARCHAR2(1000)` é a prática que sustenta isso — quem mexer depois vê
+**de onde veio o número** e não o muda por engano.
 
-Esse alinhamento foi conquistado corrigindo defeitos reais, nas duas direções:
+Este alinhamento foi conquistado corrigindo defeitos reais, e eles falharam em **direções
+opostas**:
 
 | Direção | Campo | O que acontecia |
 |---|---|---|
-| Validação **mais estreita** que a coluna | `crmv` era 4–6, a coluna é 30 | o CRMV real (`CRMV-SP 14320`, 13 chars) era **rejeitado** — o seed não podia ser recriado pela API |
-| Validação **mais larga** que a coluna | `observacao` sem `@Size`, coluna `VARCHAR2(1000)` | texto grande passava e estourava no INSERT → **500** |
+| Validação **mais estreita** que a coluna | `crmv` era 4–6; a coluna é 30 | o CRMV real (`CRMV-SP 14320`, 13 caracteres) era **recusado** — os dados do próprio seed não podiam ser recriados pela API |
+| Validação **mais larga** que a coluna | `observacao` sem `@Size`; coluna `VARCHAR2(1000)` | texto grande passava e estourava no INSERT → **500** |
 
-Itens 6 e 18 de [`../docs/07-pendencias-e-divergencias.md`](../docs/07-pendencias-e-divergencias.md).
+Itens 6 e 18 de
+[`../docs/07-pendencias-e-divergencias.md`](../docs/07-pendencias-e-divergencias.md).
+
+Repare que os dois erros são igualmente ruins, por motivos diferentes: um bloqueia uso
+legítimo, o outro transforma erro do cliente em erro do servidor.
+
+---
 
 ## Validação × regra de negócio
 
-Nem tudo cabe em anotação. A divisão usada aqui:
+Nem tudo cabe em anotação. A divisão:
 
 | | Bean Validation | Regra de negócio |
 |---|---|---|
-| Olha para | **um campo**, isoladamente | o objeto inteiro, o banco, o contexto |
-| Onde | DTO | Service |
+| Olha para | **um campo**, isolado | o objeto inteiro, o banco, o contexto |
+| Onde mora | DTO | **Service** |
 | Falha vira | **400** | **409** (`RegraDeNegocioException`) |
 | Exemplo | "valor deve ser positivo" | "pagamento PAGO exige data de pagamento" |
 
-O caso do `dataPagamento` mostra a fronteira — e é uma **pendência ainda aberta**:
+O teste para decidir: **essa restrição depende de outro campo, de outro registro ou do banco?**
+Se sim, é regra de negócio.
+
+### O caso real, ainda em aberto
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/dto/pagamento/PagamentoRequest.java
@@ -133,61 +221,77 @@ O caso do `dataPagamento` mostra a fronteira — e é uma **pendência ainda abe
 private LocalDate dataPagamento;
 ```
 
-O problema: um pagamento **PENDENTE** não tem data ainda — o próprio seed grava pendentes
-com `data_pagamento` nula. Como está, é impossível registrar um pendente pela API; o usuário
-é forçado a inventar uma data.
+O problema: um pagamento **PENDENTE** ainda não tem data — o próprio seed grava pendentes com
+`data_pagamento` nula. Como está, **é impossível registrar um pendente pela API**; o usuário é
+forçado a inventar uma data.
 
-A correção é justamente mover a obrigatoriedade para onde o contexto existe:
+A obrigatoriedade **depende do status** — ou seja, de outro campo. Não cabe numa anotação de
+campo:
 
 ```java
-// no service — a regra depende de OUTRO campo, então não cabe numa anotação de campo
+// no service, onde o contexto existe
 if (request.getStatusPagamento() == StatusPagamento.PAGO && request.getDataPagamento() == null) {
     throw new RegraDeNegocioException("dataPagamento", "Pagamento com status PAGO exige data de pagamento");
 }
 ```
 
-O `@PastOrPresent` pode ficar: ele **ignora nulos** por especificação.
+O `@PastOrPresent` pode continuar: por especificação, ele **ignora nulos**.
+
+É o item 7 de [`../docs/07`](../docs/07-pendencias-e-divergencias.md), aberto.
+
+---
 
 ## Validação no PATCH
-
-O PATCH tem outro DTO justamente por causa da validação:
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/dto/eventoClinico/EventoClinicoPatchRequest.java
 /**
  * Corpo do PATCH: so os campos que mudam.
- *
  * Mantem as restricoes de FORMATO e abre mao das de PRESENCA.
  */
 @Pattern(regexp = "([01]\\d|2[0-3]):[0-5]\\d", message = "Hora deve estar no formato HH:mm")
 private String hora;
 ```
 
-Regra: **formato fica, presença sai.** Se `hora` vier, precisa ser `HH:mm`; se não vier, não
-se mexe no campo.
+**Formato fica, presença sai.** Se `hora` vier, precisa ser `HH:mm`; se não vier, o campo não
+é tocado.
 
-A alternativa seria reaproveitar o `Request` com **grupos de validação**
-(`@NotBlank(groups = Criacao.class)`). O projeto não foi por aí porque grupos espalham a
-regra em anotações condicionais difíceis de ler, e porque os dois DTOs têm semânticas
-genuinamente diferentes.
+A alternativa seria reaproveitar o `Request` com **grupos de validação**:
+
+```java
+// ❌ o caminho não escolhido
+@NotBlank(groups = Criacao.class)
+@Pattern(regexp = "...", groups = {Criacao.class, Atualizacao.class})
+private String hora;
+```
+
+Funciona, e o projeto não foi por aí: grupos espalham a regra em anotações condicionais
+difíceis de ler, e os dois DTOs têm semânticas genuinamente diferentes. Duas classes simples
+costumam vencer uma classe com dois modos.
+
+---
 
 ## Armadilhas
 
-### 1. `@NotNull` numa String aceita `""`
+### 1. Esquecer o `@Valid` (de novo)
 
-`@NotNull` só checa nulo. Para texto obrigatório é sempre **`@NotBlank`**. Foi exatamente
-esse o bug do campo `hora`: `@NotNull` deixava passar `""`, que estourava no banco.
+Vale repetir porque é o erro mais comum, e falha em silêncio.
 
-### 2. Validar `Pageable` ou `@RequestParam` é outra história
+### 2. Validar `@RequestParam` é outra história
 
-`@Valid` cobre o `@RequestBody`. Para parâmetros de query é preciso `@Validated` na classe.
-Aqui os `@RequestParam` são todos opcionais e sem restrição, então não aparece.
+`@Valid` cobre o `@RequestBody`. Para parâmetros de query seria preciso `@Validated` na
+classe. Aqui não aparece porque todos os `@RequestParam` são opcionais e sem restrição.
 
-### 3. Validação não substitui constraint no banco
+### 3. Validação **não** substitui constraint no banco
 
-Unicidade de CPF, CNPJ e CRMV existe **só** como constraint no banco. Duas requisições
-simultâneas com o mesmo CPF passam as duas pela validação — só o banco decide quem chega
-primeiro. Por isso existe a rede de segurança:
+A unicidade de CPF, CNPJ e CRMV existe **só** como constraint no banco. E não dá para
+resolver na validação:
+
+> Duas requisições simultâneas com o mesmo CPF passam **as duas** pela validação — cada uma
+> consulta antes de a outra gravar. Só o banco, que serializa as escritas, decide quem chega
+> primeiro.
+
+Isso se chama **condição de corrida**, e é por isso que existe a rede de segurança:
 
 ```java
 @ExceptionHandler(DataIntegrityViolationException.class)
@@ -198,19 +302,43 @@ public ResponseEntity<ErroValidacao> handleIntegridade(DataIntegrityViolationExc
 }
 ```
 
-Repare que a causa vai para o **log**, não para o cliente — a mensagem do Oracle carregaria o
-SQL e o nome da constraint, expondo a estrutura interna.
+E note: a causa vai para o **log**, não para o cliente. A mensagem do Oracle carregaria o SQL
+e o nome da constraint (`uk_tutor_cpf`), expondo a estrutura interna a quem estiver sondando.
 
-## Perguntas de avaliação oral
+**A validação melhora a mensagem; a constraint garante a regra.** As duas são necessárias.
 
-1. Qual a diferença entre `@NotNull`, `@NotEmpty` e `@NotBlank`? Qual usar para uma String
-   obrigatória?
+---
+
+## Consolidação
+
+**Entender**
+1. Qual a diferença entre `@NotNull`, `@NotEmpty` e `@NotBlank`? Qual usar para texto
+   obrigatório?
 2. O que acontece se você esquecer o `@Valid` no parâmetro do controller?
-3. Por que `@Size(max = 1000)` em `descricao`? De onde vem esse número?
-4. Por que a obrigatoriedade de `dataPagamento` não deveria ser um `@NotNull`?
-5. Validação de campo dá 400 e regra de negócio dá 409. Por que a distinção importa para
+
+**Aplicar**
+3. Escreva as anotações para um campo `peso` (`BigDecimal`), obrigatório, positivo, com no
+   máximo 3 dígitos inteiros e 3 decimais.
+4. `@Size(max = 1000)` em `descricao` — de onde veio esse número? Onde você conferiria?
+
+**Analisar**
+5. Por que a obrigatoriedade de `dataPagamento` **não** deveria ser `@NotNull`? Qual o teste
+   para decidir isso?
+6. Validação de campo dá 400 e regra de negócio dá 409. Por que a distinção importa para
    quem consome a API?
-6. Se a validação já garante o formato, por que ainda existe CHECK constraint no banco?
+
+**Avaliar**
+7. Se a validação já garante o formato, por que manter CHECK constraint no banco? Dê um
+   cenário em que só a constraint salva.
+8. Um colega quer validar "CPF já existe" com `@Unique` customizada no DTO. Isso resolve o
+   problema? O que ele está deixando de considerar?
+
+---
+
+## Se você levar só uma coisa daqui
+
+**Validação melhora a mensagem; constraint garante a regra.** Nenhuma das duas substitui a
+outra — a validação evita o 500, a constraint evita o dado corrompido.
 
 ---
 

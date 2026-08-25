@@ -1,33 +1,73 @@
 # 08 — Cache
 
-## O que é
+> **Pré-requisito:** [01 — O que é Spring](01-spring-boot-e-injecao-de-dependencia.md),
+> principalmente a **armadilha do proxy**.
 
-Guardar o resultado de uma operação cara para não repeti-la. No Spring, isso é declarativo:
-você anota o método e o framework intercepta a chamada.
+---
+
+## O que é, e por que existe
+
+Ir ao banco custa tempo: abrir conexão, mandar SQL, esperar, ler o resultado. Se a mesma
+consulta é feita mil vezes por minuto e o resultado é sempre igual, mil idas ao banco são
+desperdício.
+
+**Cache** é guardar o resultado na memória e reusar.
+
+```
+1ª chamada:  aplicação ──▶ banco ──▶ resultado ──▶ guarda no cache ──▶ cliente
+2ª chamada:  aplicação ──▶ cache ──────────────────────────────────▶ cliente
+                                (o banco nem é consultado)
+```
+
+No Spring isso é **declarativo** — você anota o método:
 
 ```java
 @Cacheable("animais")
 public Page<AnimalResponse> listarTodos(...) { ... }
 ```
 
-Na primeira chamada o método executa e o retorno é guardado. Nas seguintes, com a mesma
-chave, o método **não roda** — o valor sai do cache.
+Na primeira chamada o método executa e o retorno é guardado. Nas seguintes, **com a mesma
+chave**, o método **não roda**.
 
-Como funciona por baixo: o Spring embrulha o bean num **proxy** que consulta o cache antes de
-delegar. Consequência prática (a mesma de `@Transactional`): **chamada interna não passa pelo
-proxy**. Se `metodoA()` chama `this.metodoB()` da mesma classe, o `@Cacheable` de `metodoB`
-é ignorado.
+---
+
+## Como funciona por baixo (e a armadilha)
+
+O Spring embrulha o bean num **proxy** que consulta o cache antes de delegar:
+
+```
+quem chama ──▶ [ PROXY ] ──▶ seu método
+                  │
+          "já tenho essa chave?"
+           sim → devolve, não chama
+           não → chama, guarda, devolve
+```
+
+⚠️ **Consequência (a mesma de `@Transactional`): chamada interna não passa pelo proxy.**
+
+```java
+// ❌ o @Cacheable de metodoB é IGNORADO
+public void metodoA() {
+    this.metodoB();          // chamada direta
+}
+
+@Cacheable("x")
+public Page<...> metodoB() { ... }
+```
+
+Sem erro, sem aviso — só não cacheia. Se algo "não está cacheando", esta é a primeira
+hipótese.
+
+---
 
 ## As anotações
 
 | Anotação | O que faz |
 |---|---|
 | `@Cacheable` | consulta o cache; se não achar, executa e guarda |
-| `@CacheEvict` | remove entradas |
+| `@CacheEvict` | **remove** entradas |
 | `@CachePut` | executa **sempre** e atualiza o cache |
 | `@EnableCaching` | liga o mecanismo |
-
-## Neste projeto
 
 ### Leitura
 
@@ -49,11 +89,24 @@ public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pa
 public AnimalResponse criar(AnimalRequest request) { ... }
 ```
 
-`allEntries = true` limpa o cache inteiro daquele nome. É grosseiro — mas é o correto aqui:
-uma inserção pode afetar **qualquer** página de **qualquer** combinação de filtros. Invalidar
-só a entrada do id criado não adiantaria nada, porque o que está cacheado são listagens.
+💡 **Conceito: por que invalidar TUDO (`allEntries = true`)**
 
-### Configuração
+Parece exagero apagar o cache inteiro só porque um animal foi criado. Mas pense no que está
+guardado: **listagens paginadas e filtradas**, não animais individuais.
+
+Um animal novo pode entrar em: `?nome=bo` página 0, `?especie=CAO` página 3, a listagem sem
+filtro ordenada por nome, e assim por diante. **Qualquer combinação pode ter mudado**, e não
+há como saber quais sem refazer todas.
+
+A alternativa seria invalidar "a entrada daquele id" — que não existe, porque ninguém cacheou
+animais por id.
+
+Regra prática: **cacheou uma lista, invalide a lista inteira.** Invalidação seletiva só vale
+quando o cache é por chave individual.
+
+---
+
+## Configuração
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/config/CacheConfig.java
@@ -68,57 +121,95 @@ public CacheManager cacheManager() {
 }
 ```
 
-O `ConcurrentMapCacheManager` padrão do Spring foi trocado por **Caffeine** por um motivo
-concreto, registrado no comentário da classe: o default *"não tem TTL nem limite de tamanho:
-uma entrada cacheada permanecia até a próxima escrita da entidade, e o mapa crescia
-indefinidamente conforme apareciam novas combinações de filtro e paginação"*.
+Duas configurações, cada uma resolvendo um problema:
 
-E o limite virou necessidade, não luxo, quando o `tutorId` entrou na chave: o número de
-chaves possíveis passou a crescer junto com a base de usuários.
+| Configuração | Sem ela |
+|---|---|
+| `expireAfterWrite(10 min)` | entrada fica cacheada até a próxima escrita — dado velho por tempo indeterminado |
+| `maximumSize(1_000)` | o mapa cresce sem limite; a cada nova combinação de filtro, mais uma entrada — **vazamento de memória** |
 
-## A chave é o assunto mais delicado
+O `ConcurrentMapCacheManager` padrão do Spring **não tem nenhuma das duas**. Por isso a troca
+por Caffeine.
 
-Por padrão, a chave é a combinação dos parâmetros do método. Quando isso não basta, se
-declara em SpEL — e é aí que moram os bugs.
+E o limite virou necessidade quando o `tutorId` entrou na chave: o número de chaves possíveis
+passou a crescer **junto com a base de usuários**.
 
-Esta chave tem três decisões dentro:
+⚠️ **Nome de cache precisa estar nessa lista.** Um `@Cacheable("relatorios")` sem declarar
+`"relatorios"` ali não funciona.
+
+---
+
+## A chave é onde moram os bugs
+
+Por padrão, a chave é a combinação dos parâmetros. Quando isso não basta, se declara em SpEL.
+Esta chave tem **três decisões**:
 
 ```java
 key = "#nome + '-' + #especie + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable"
 ```
 
-### 1. `@seguranca.tutorIdParaFiltro()` — segurança
+### 1. `@seguranca.tutorIdParaFiltro()` — isto é segurança, não performance
 
-Sem isso, a listagem do tutor A seria servida ao tutor B que usasse os mesmos filtros.
-**Vazamento de dados entre contas** — não um problema de performance.
+Sem isso:
 
-Um cache que serve resultado filtrado por permissão **precisa** ter o escopo do usuário na
-chave. Coberto por `OwnershipTest.cacheNaoVazaEntreTutores`.
+```
+tutor A: GET /animais           → consulta o banco, cacheia sob a chave "null-null-null-..."
+tutor B: GET /animais           → mesma chave → recebe OS PETS DO TUTOR A
+```
 
-### 2. `#pageable` inteiro — não só `pageNumber` e `pageSize`
+A autorização estava perfeita. O vazamento acontece **porque a segunda requisição nem chegou
+a consultar** — o cache respondeu antes.
+
+Coberto por `OwnershipTest.cacheNaoVazaEntreTutores`.
+
+### 2. `#pageable` inteiro — um bug real
 
 Era assim antes:
 
 ```java
-// ❌ versão antiga — bug real
+// ❌ versão antiga
 key = "#nome + '-' + #especie + '-' + #pageable.pageNumber + '-' + #pageable.pageSize"
 ```
 
-`?sort=nome,asc` e `?sort=nome,desc` colidiam na mesma chave. A segunda chamada recebia o
-resultado da primeira, **na ordem errada** — sem erro nenhum, só a resposta errada. Valia
-para os 6 recursos.
+Percebeu o que falta? O **sort**.
 
-Usar `#pageable` inteiro traz o `sort` junto. Item 8 de
+```
+GET /animais?sort=nome,asc   → cacheia sob "null-null-0-10"
+GET /animais?sort=nome,desc  → MESMA chave → devolve a lista na ordem errada
+```
+
+Sem erro, sem exceção — só a resposta errada. E valia para os 6 recursos. Item 8 de
 [`../docs/07-pendencias-e-divergencias.md`](../docs/07-pendencias-e-divergencias.md).
+
+Usar `#pageable` inteiro traz `page`, `size` **e** `sort` juntos.
 
 ### 3. O separador `'-'`
 
-Detalhe que passa despercebido: concatenar valores sem separador cria colisão. `"ab" + "c"` e
-`"a" + "bc"` dão a mesma string — filtros diferentes, mesma chave.
+Detalhe que passa despercebido: concatenar sem separador cria colisão.
+
+```
+"ab" + "c"  = "abc"
+"a"  + "bc" = "abc"     ← filtros diferentes, mesma chave
+```
+
+💡 **Conceito: a regra da chave de cache**
+
+A chave precisa conter **tudo o que muda o resultado**. Tudo mesmo:
+
+- os filtros (`nome`, `especie`);
+- a paginação **e a ordenação**;
+- **quem está perguntando**, se o resultado depende disso.
+
+Faltou alguma coisa? Duas situações diferentes colidem na mesma chave, e a segunda recebe a
+resposta da primeira. O sintoma nunca é um erro — é um dado errado, que ninguém percebe até
+alguém reclamar.
+
+---
 
 ## O que ainda está errado — item 9, em aberto
 
-As respostas carregam campos **desnormalizados** da entidade associada:
+As respostas carregam campos **desnormalizados** da entidade associada (ver
+[02](02-arquitetura-em-camadas.md)):
 
 | Cache | Campo desnormalizado | Invalidado quando a origem muda? |
 |---|---|---|
@@ -126,11 +217,11 @@ As respostas carregam campos **desnormalizados** da entidade associada:
 | `veterinarios` | `clinicaNome` | **não** |
 | `eventos` | `veterinarioNome`, `animalNome`, `clinicaNome` | **não** |
 
-`@CacheEvict` é sempre escopado à própria entidade. Renomear um tutor deixa
-`GET /api/v1/animais` devolvendo o nome antigo até que alguma escrita em `Animal` limpe o
-cache — ou até o TTL de 10 minutos expirar.
+`@CacheEvict` é escopado à **própria** entidade. Renomear um tutor não limpa o cache de
+`animais` — que continua servindo o nome antigo até alguma escrita em `Animal` acontecer, ou
+até o TTL de 10 minutos expirar.
 
-A correção seria listar os caches afetados em quem é referenciado:
+A correção seria declarar os caches afetados em quem é **referenciado**:
 
 ```java
 // em TutorService
@@ -138,23 +229,28 @@ A correção seria listar os caches afetados em quem é referenciado:
 public TutorResponse atualizar(UUID id, TutorRequest request) { ... }
 ```
 
-Está aberto e documentado. É um bom exemplo para a oral: **desnormalizar tem custo**, e o
-custo é invalidação de cache.
+É um bom exemplo para a oral: **desnormalizar acelera a leitura e complica a invalidação**.
+Nada é de graça.
 
-## Limitação conhecida: o cache é por processo
+---
 
-Caffeine vive na memória da JVM. Com mais de uma réplica, cada uma tem o próprio cache:
+## Limitação assumida: o cache é por processo
 
-| Sintoma | Por quê |
+Caffeine vive na memória da JVM. Com mais de uma réplica da aplicação:
+
+| Sintoma | Causa |
 |---|---|
 | Réplica A serve dado velho depois de escrita na B | o `@CacheEvict` da B não alcança a A |
-| Rate limit vale por réplica | mesmo problema, no `RateLimitFilter` |
-| Logout não revoga em todas | mesmo problema, no `RevogacaoTokenService` |
+| Rate limit vale por réplica, não no total | mesmo problema, no `RateLimitFilter` |
+| Logout numa réplica não revoga nas outras | mesmo problema, no `RevogacaoTokenService` |
 
-A saída seria **Redis** (`spring-boot-starter-data-redis`, `bucket4j-redis`). Está listado
-como melhoria sugerida em [`../docs/07`](../docs/07-pendencias-e-divergencias.md) — não é
-defeito enquanto rodar uma instância só, mas é preciso saber que a decisão está tomada com
-essa premissa.
+A saída seria **Redis** — um cache externo compartilhado. Está registrado como melhoria
+sugerida em [`../docs/07`](../docs/07-pendencias-e-divergencias.md).
+
+Não é defeito enquanto roda uma instância só. É uma **premissa**, e o valor de documentá-la é
+que a decisão pode ser revista quando a premissa mudar.
+
+---
 
 ## Nos testes
 
@@ -176,29 +272,55 @@ void limparCaches() {
 }
 ```
 
-Teste que compartilha cache com outro teste é teste que **passa por engano** — e um dia falha
-sem motivo aparente, dependendo da ordem de execução.
+Teste que compartilha cache com outro **passa por engano** — e um dia falha sem motivo
+aparente, só porque a ordem de execução mudou. Estado compartilhado entre testes é uma das
+piores fontes de teste instável.
+
+---
 
 ## Quando cachear (e quando não)
 
-| Cachear | Não cachear |
+| ✅ Cachear | ❌ Não cachear |
 |---|---|
 | leitura frequente, escrita rara | dado que muda a cada requisição |
-| consulta cara (JOIN, agregação) | consulta trivial por PK |
-| resultado igual para muitos | resultado único por usuário **sem** escopo na chave |
+| consulta cara (JOIN, agregação) | consulta trivial por chave primária |
+| resultado igual para muitos | resultado por usuário **sem** o usuário na chave |
 
-O último ponto é o resumo do que se aprende aqui: cache e permissão se misturam mal. Se o
-resultado depende de **quem** pergunta, o "quem" tem que estar na chave — ou não se cacheia.
+E a pergunta que resume tudo: **por quanto tempo um dado velho é aceitável aqui?** Se a
+resposta for "nenhum", não cacheie. Cache é sempre uma troca entre velocidade e frescor.
 
-## Perguntas de avaliação oral
+---
 
-1. Por que trocar o `ConcurrentMapCacheManager` padrão por Caffeine?
-2. O que `@seguranca.tutorIdParaFiltro()` faz na chave do cache? O que acontecia sem ele?
-3. Por que a chave usa `#pageable` inteiro e não `pageNumber` + `pageSize`?
-4. Por que `@CacheEvict(allEntries = true)` e não invalidar só a entrada alterada?
-5. Se um tutor é renomeado, por quanto tempo `GET /animais` pode mostrar o nome antigo? Por quê?
-6. O que muda no cache se a aplicação subir com duas réplicas?
-7. Por que os testes limpam o cache no `@AfterEach`?
+## Consolidação
+
+**Entender**
+1. O que `@Cacheable` faz na primeira chamada e o que faz na segunda?
+2. Por que o `ConcurrentMapCacheManager` padrão foi trocado por Caffeine?
+
+**Aplicar**
+3. Você criou um método cacheado que recebe `de`, `ate` e `veterinarioId`. Escreva a chave.
+4. Onde você precisa declarar o nome de um cache novo?
+
+**Analisar**
+5. O que `@seguranca.tutorIdParaFiltro()` faz na chave? Descreva o vazamento que ocorre sem
+   ele.
+6. Por que `#pageable` inteiro e não `pageNumber` + `pageSize`? Qual era o sintoma do bug?
+7. Se um tutor é renomeado, por quanto tempo `GET /animais` pode mostrar o nome antigo? Por
+   quê?
+
+**Avaliar**
+8. Um colega quer cachear `GET /animais/{id}` por 1 hora. Que perguntas você faria antes de
+   concordar?
+9. A aplicação vai subir com 3 réplicas. O que quebra? Qual seria sua ordem de prioridade
+   para corrigir?
+
+---
+
+## Se você levar só uma coisa daqui
+
+**A chave precisa conter tudo o que muda o resultado — inclusive quem está perguntando.**
+Faltou algo na chave, duas situações diferentes colidem, e o sintoma nunca é um erro: é um
+dado errado.
 
 ---
 

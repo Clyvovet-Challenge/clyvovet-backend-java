@@ -1,25 +1,49 @@
 # 10 — Testes
 
-## O que é
+> **Pré-requisito:** ter passado pelos documentos [03](03-api-rest.md) e
+> [06](06-spring-security.md) — os testes daqui exercitam exatamente aquilo.
 
-Teste automatizado é código que exercita o seu código e falha quando o comportamento muda.
-O valor não está em "ter testes" — está em **poder mudar o código sem medo**, porque algo
-avisa se você quebrou o que já funcionava.
+---
 
-Este projeto tem **126 testes**, e vale saber que nem sempre foi assim: até a Sprint 3 havia
-**um**, o `contextLoads()` do Initializr — e ele falhava sem conexão com o Oracle da FIAP. Era
-por isso que o `Dockerfile` usava `-DskipTests`.
+## Para que serve um teste automatizado
 
-## A pirâmide, e onde este projeto fica
+A resposta comum é "para achar bugs". É incompleta.
 
-| Tipo | Escopo | Velocidade | Aqui |
+O valor real aparece depois: **poder mudar o código sem medo**. Com uma suíte que roda em
+segundos, você refatora, renomeia, extrai um método — e algo avisa se você quebrou o que já
+funcionava. Sem ela, cada mudança é uma aposta, e o time para de mexer no que "está
+funcionando" (que é como código apodrece).
+
+Este projeto tem **126 testes**. E nem sempre foi assim: até a Sprint 3 havia **um**, o
+`contextLoads()` gerado pelo Initializr — e ele **falhava sem conexão com o Oracle da FIAP**.
+Era por isso que o `Dockerfile` usava `-DskipTests`.
+
+---
+
+## Os tipos de teste
+
+| Tipo | Testa | Velocidade | Aqui |
 |---|---|---|---|
-| Unitário | uma classe isolada | ms | mappers (`src/test/.../mapper/`) |
-| Integração | várias camadas juntas | s | **a maioria** — `crud/`, `security/` |
-| E2E | sistema inteiro | min | não há |
+| **Unitário** | uma classe isolada | milissegundos | mappers (`src/test/.../mapper/`) |
+| **Integração** | várias camadas juntas | segundos | **a maioria** — `crud/`, `security/` |
+| **E2E** | sistema inteiro, pelo navegador | minutos | não há |
 
-A escolha por integração é consciente: o que este projeto precisa provar — ownership,
-constraint, filtro, status HTTP — só aparece com a cadeia real de filtros rodando.
+A "pirâmide de testes" clássica manda ter muitos unitários e poucos de integração. **Este
+projeto inverte** — e por um bom motivo.
+
+💡 **Conceito: teste o que pode quebrar**
+
+O que este projeto precisa provar é: *"um tutor consegue ver o pet de outro?"*, *"apagar um
+tutor com animais devolve 409?"*, *"o filtro por nome funciona?"*.
+
+Nada disso aparece numa classe isolada. Ownership envolve filtro + `@PreAuthorize` + cache +
+JWT — **quatro peças que só falham juntas**. Um teste unitário do service com repositório
+falso passaria feliz enquanto a API vaza dados.
+
+A regra: **teste na altura onde o comportamento existe.** Se a regra nasce da interação
+entre camadas, teste a interação.
+
+---
 
 ## A base: `TesteDeApi`
 
@@ -40,16 +64,17 @@ public abstract class TesteDeApi {
 
 | Anotação | O que faz |
 |---|---|
-| `@SpringBootTest` | sobe o contexto inteiro da aplicação |
+| `@SpringBootTest` | sobe o contexto **inteiro** da aplicação |
 | `@AutoConfigureMockMvc` | injeta o `MockMvc` |
 
-**`MockMvc`** simula requisições HTTP **sem subir servidor**: passa pela cadeia real de
-filtros, controllers e services, mas sem socket. Rápido e realista ao mesmo tempo.
+**`MockMvc`** simula requisições HTTP **sem abrir porta de rede**. A requisição passa pela
+cadeia real — filtros, controller, service, repositório, banco — mas sem socket, sem
+serialização de rede. Realista e rápido ao mesmo tempo.
 
-O comentário da classe explica por que ela existe: sem ela, *"o mesmo helper de token
-copiado em cada arquivo, cada um com uma regra própria para descobrir a senha do usuário"*.
+O comentário da classe explica por que ela existe: sem ela, *"o mesmo helper de token copiado
+em cada arquivo, cada um com uma regra própria para descobrir a senha do usuário"*.
 
-### Helpers
+### Os helpers
 
 ```java
 protected String token(String email, String senha) throws Exception {
@@ -66,10 +91,11 @@ protected ResultActions buscar(String url, String token) throws Exception {
 }
 ```
 
-O login é **real**: emite JWT de verdade, que passa pelo filtro de verdade. Não há mock de
-segurança — se a autorização quebrar, o teste acusa.
+⚠️ **O login é real.** Emite um JWT de verdade, que passa pelo filtro de verdade. **Não há
+mock de segurança.** Se a autorização quebrar, os testes acusam — o que não aconteceria com
+`@WithMockUser`, que pula a autenticação inteira.
 
-### O helper que esconde uma decisão de contrato
+### Um helper que esconde uma decisão de contrato
 
 ```java
 /**
@@ -83,11 +109,15 @@ protected int totalDe(JsonNode corpo) {
 }
 ```
 
-Quando o envelope de paginação mudou, **uma linha** mudou na suíte inteira.
+Quando o envelope de paginação mudou (documento [03](03-api-rest.md)), **uma linha** mudou na
+suíte inteira. DRY vale em teste tanto quanto em produção.
 
-## Sem rollback — decisão contra-intuitiva
+---
 
-O padrão comum é `@Transactional` na classe de teste, que dá rollback ao fim. Aqui **não**:
+## Sem rollback — a decisão contra-intuitiva
+
+O padrão que se ensina é `@Transactional` na classe de teste: tudo o que o teste grava é
+desfeito no fim. Aqui **não é assim**:
 
 ```java
 /**
@@ -109,12 +139,24 @@ void limparRecursosCriados() throws Exception {
 }
 ```
 
-O argumento é forte. Numa transação com rollback, o Hibernate adia os INSERTs até o commit —
-que nunca vem. Um CPF duplicado ou um texto acima do limite da coluna **não estouraria**, e o
-teste passaria dando falsa segurança sobre exatamente o que deveria provar.
+💡 **Conceito: por que o rollback esconderia bugs**
 
-O preço é a limpeza manual, feita numa pilha (`Deque`) — remoção em ordem inversa à do
-cadastro, que é a ordem que as FKs permitem.
+O Hibernate não manda o `INSERT` na hora — ele acumula e envia no **commit** (isso se chama
+*flush*).
+
+Num teste com rollback, o commit **nunca acontece**. Então:
+
+- CPF duplicado? A constraint `UNIQUE` **nunca é verificada**.
+- Texto de 1001 caracteres numa coluna de 1000? **Nunca chega ao banco**.
+- FK apontando para id inexistente? **Nunca é validada**.
+
+O teste passaria — dando falsa segurança sobre exatamente o que deveria provar.
+
+Gravando de verdade, o banco reclama de verdade. O preço é a limpeza manual, feita numa
+pilha (`Deque`), em ordem inversa à do cadastro — que é a ordem que as FKs permitem: o
+pagamento sai antes do evento, o evento antes do animal.
+
+---
 
 ## Perfil de teste isolado
 
@@ -123,9 +165,15 @@ cadastro, que é a ordem que as FKs permitem.
 spring.profiles.active=dev
 ```
 
-Uma linha que resolveu um problema real: o perfil padrão é `oracle`, então `mvn test`
-**falhava sem conectividade com a FIAP**. Com `dev`, roda em H2 na memória, sem rede — e o
-`-DskipTests` do build deixa de ser necessário, o que é pré-requisito do CI da Sprint 4.
+Uma linha que resolveu um problema real. O perfil padrão da aplicação é `oracle` — então
+`mvn test` **falhava sem conectividade com a FIAP**, mesmo em testes que nada tinham a ver com
+o Oracle.
+
+Com `dev`, roda em H2 na memória, sem rede. E aí o `-DskipTests` do build deixa de ser
+necessário — que é **pré-requisito do CI da Sprint 4**, onde a pipeline precisa executar os
+testes.
+
+---
 
 ## Dados de teste com nome
 
@@ -143,9 +191,20 @@ public final class SeedV2 {
 ```
 
 Antes eram literais soltos em cada classe, *"o que obrigava a decorar qual UUID era de quem"*.
-`ANIMAL_BOLINHA_DO_LUCAS` diz de quem é o pet sem sair do arquivo de teste.
 
-## Um teste de verdade
+Compare a legibilidade:
+
+```java
+buscar("/api/v1/animais/44444444-4444-4444-4444-000000000001", tokenTutor(MARIA))   // ❌
+buscar("/api/v1/animais/" + ANIMAL_BOLINHA_DO_LUCAS, tokenTutor(MARIA))            // ✅
+```
+
+A segunda linha **conta a história do teste**: a Maria tentando acessar o pet do Lucas. A
+primeira é um enigma.
+
+---
+
+## Um teste de verdade, comentado
 
 ```java
 // src/test/java/br/com/fiap/clyvovet/crud/FiltrosDeBuscaTest.java
@@ -161,18 +220,36 @@ void filtrosSeSomam() throws Exception {
 }
 ```
 
-Três coisas a copiar daqui:
+Três coisas a copiar:
 
-1. **`@DisplayName` descreve comportamento**, não implementação. Numa falha, o relatório diz
-   o que parou de funcionar.
-2. **AssertJ** (`assertThat(...).containsExactly(...)`) — encadeável e com mensagem de erro
-   legível.
-3. **Verifica os dois sentidos**: o que o filtro traz **e** o que ele deixa de fora.
+**1. `@DisplayName` descreve comportamento**, não implementação. Quando o teste falhar, o
+relatório diz *"os dois filtros se somam, não se substituem"* — e você sabe o que parou de
+funcionar sem abrir o código.
 
-Esse último ponto é a lição central desta classe, e ela nasceu de um bug: todo filtro por
-texto devolvia lista vazia por meses. Os testes existentes passavam porque *"só exercitavam o
-recorte por tutor, com o texto indo nulo"* — sempre pelo ramo `:nome IS NULL`. Um teste que
-percorre só o caminho fácil não protege nada.
+**2. AssertJ** — `assertThat(...).containsExactly(...)`. Encadeável e com mensagem de erro
+legível:
+
+```
+Expecting actual: ["Camila Ferreira", "Rafael Matos"]
+to contain exactly: ["Camila Ferreira"]
+```
+
+**3. Verifica os dois sentidos** — o que o filtro traz **e** o que ele deixa de fora. É a
+lição central desta classe, e ela nasceu de um bug.
+
+### Por que "os dois sentidos" virou regra aqui
+
+Todo filtro por texto devolvia lista vazia — **por meses** (o bug do `ESCAPE`, documento
+[03](03-api-rest.md)). E havia testes de listagem, que passavam.
+
+> Os testes que existiam passavam porque só exercitavam o recorte por tutor, com o parâmetro
+> de texto indo `null` — caindo sempre no ramo `:nome IS NULL`.
+
+**Um teste que percorre só o caminho fácil não protege nada.** Ele dá a sensação de cobertura
+sem a cobertura. Hoje, sem o `ESCAPE`, três testes de `FiltrosDeBuscaTest` falham — é isso que
+um teste de regressão faz.
+
+---
 
 ## O que a suíte cobre
 
@@ -190,47 +267,87 @@ percorre só o caminho fácil não protege nada.
 | `MigrationsMySqlTest` | o conjunto `mysql/` aplica sem erro |
 | `EscapeNoOracleTest` | o `ESCAPE '\'` contra o Oracle real — **pulado** sem `DB_USERNAME` |
 
+Repare no `ValidacaoDeEntradaTest`: **1000 passa, 1001 não**. Isso se chama **teste de
+fronteira**, e é onde o bug mora. Testar com 500 e 2000 caracteres não prova nada sobre onde
+está o limite — só testar exatamente na borda prova.
+
+---
+
 ## Teste que só roda quando pode
 
 ```bash
 DB_USERNAME=seu_rm DB_PASSWORD=sua_senha ./mvnw test -Dtest=EscapeNoOracleTest
 ```
 
-`EscapeNoOracleTest` roda por JDBC puro sobre `dual` — não lê nem grava tabela do projeto, não
-sobe o contexto, e portanto não dispara Flyway nem `validate` num banco compartilhado. Fica
-**pulado** enquanto a variável não existir, então não atrapalha o `mvn test` de ninguém.
+`EscapeNoOracleTest` depende do Oracle real. Ele roda por JDBC puro sobre `dual` — não lê nem
+grava tabela do projeto, não sobe o contexto, e portanto não dispara Flyway nem `validate` num
+banco compartilhado. E fica **pulado** enquanto a variável não existir.
 
-É o padrão certo para teste que depende de recurso externo: **skip condicional**, não teste
-comentado nem quebrado.
+Esse é o padrão certo para teste que depende de recurso externo: **skip condicional**. As
+alternativas são piores — teste comentado (que ninguém lembra de descomentar) ou teste que
+falha para todo mundo (que ensina o time a ignorar falha vermelha).
+
+---
 
 ## Boas práticas que aparecem aqui
 
 | Prática | Por quê |
 |---|---|
-| Um comportamento por teste | a falha aponta uma causa só |
+| Um comportamento por teste | quando falha, a causa é uma só |
 | `@DisplayName` em português | o relatório vira documentação |
 | Sem dependência de ordem | `@AfterEach` limpa cache e recursos criados |
-| Testar o caminho triste | 404, 403, 400, 409 — não só o caminho feliz |
-| Testar o **limite** | 1000 passa, 1001 não; é na borda que o bug mora |
-| Teste de regressão para bug corrigido | sem o `ESCAPE`, três testes de `FiltrosDeBuscaTest` falham |
+| Testar o caminho triste | 404, 403, 400, 409 — não só o feliz |
+| Testar a **fronteira** | 1000 passa, 1001 não |
+| Teste de regressão para cada bug corrigido | garante que ele não volta |
+
+Essa última é a mais valiosa e a mais pulada. **Todo bug corrigido merece um teste** — não
+para provar que você consertou, mas para garantir que ninguém desfaz sem perceber, seis meses
+depois.
+
+---
 
 ## Rodando
 
 ```bash
-./mvnw test                              # tudo
-./mvnw test -Dtest=OwnershipTest         # uma classe
-./mvnw test -Dtest=OwnershipTest#cacheNaoVazaEntreTutores   # um método
+./mvnw test                                                # tudo
+./mvnw test -Dtest=OwnershipTest                           # uma classe
+./mvnw test -Dtest=OwnershipTest#cacheNaoVazaEntreTutores  # um método
 ```
 
-## Perguntas de avaliação oral
+---
 
-1. Por que os testes **não** usam `@Transactional` com rollback? O que isso esconderia?
-2. O que `MockMvc` faz? Por que não subir o servidor de verdade?
-3. Por que existe `src/test/resources/application.properties` com `spring.profiles.active=dev`?
-4. Por que `TesteDeApi` faz login de verdade em vez de mockar a segurança?
-5. Por que `FiltrosDeBuscaTest` verifica também o que o filtro **não** traz?
-6. Por que `EscapeNoOracleTest` é pulado por padrão?
-7. Se você adicionasse um campo novo numa entidade, quais testes esperaria ver quebrar?
+## Consolidação
+
+**Entender**
+1. O que `MockMvc` faz? Por que não subir um servidor de verdade?
+2. Por que `@DisplayName` em vez de confiar no nome do método?
+
+**Aplicar**
+3. Escreva o `@DisplayName` de um teste que prova que um tutor recebe 403 ao buscar o pet de
+   outro.
+4. Você corrigiu um bug onde `?especie=CAO` não achava nada. Que teste escreveria?
+
+**Analisar**
+5. Por que os testes **não** usam `@Transactional` com rollback? Cite três coisas que ficariam
+   sem verificação.
+6. Por que `TesteDeApi` faz login de verdade em vez de usar `@WithMockUser`?
+7. Por que `FiltrosDeBuscaTest` verifica também o que o filtro **não** traz?
+
+**Avaliar**
+8. A suíte tem mais testes de integração que unitários, invertendo a "pirâmide". Isso é um
+   problema neste projeto? Justifique.
+9. Você vai implementar o `CalculadoraDeRisco` do Painel do Veterinário (uma classe de cálculo
+   puro). Que tipo de teste usaria, e por que seria diferente do padrão daqui?
+10. Se você adicionasse um campo novo numa entidade, quais testes esperaria ver quebrar
+    primeiro?
+
+---
+
+## Se você levar só uma coisa daqui
+
+**Um teste que percorre só o caminho fácil dá a sensação de cobertura sem a cobertura.** Os
+filtros desta API ficaram quebrados por meses com testes verdes — porque nenhum deles
+exercitava um filtro de verdade.
 
 ---
 

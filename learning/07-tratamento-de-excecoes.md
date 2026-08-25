@@ -1,43 +1,45 @@
 # 07 — Tratamento de exceções
 
-## O que é
+> **Pré-requisito:** [03 — API REST](03-api-rest.md) (status codes) e a seção sobre
+> **exceções** do [00](00-java-essencial.md).
 
-Sem um ponto central, cada controller acaba com `try/catch` traduzindo exceção em resposta —
-e cada um inventa o próprio formato de erro. O `@RestControllerAdvice` resolve: **um lugar
-só** converte exceção em status HTTP + corpo.
+---
+
+## O problema
+
+Quando algo dá errado no meio do código, uma **exceção** é lançada e "sobe" até alguém
+tratar. Se ninguém tratar, o Spring devolve **500** com uma página de erro genérica.
+
+Sem organização, cada controller vira isto:
 
 ```java
-// ❌ o que acontece sem um handler global
+// ❌ o que acontece sem um lugar central
 @GetMapping("/{id}")
 public ResponseEntity<?> buscarPorId(@PathVariable UUID id) {
     try {
         return ResponseEntity.ok(service.buscarPorId(id));
     } catch (EntityNotFoundException e) {
         return ResponseEntity.status(404).body(Map.of("erro", e.getMessage()));
+    } catch (DataIntegrityViolationException e) {
+        return ResponseEntity.status(409).body("conflito");
     } catch (Exception e) {
         return ResponseEntity.status(500).body("erro interno");
     }
 }
 ```
 
-```java
-// ✅ com handler global — o controller só cuida do caminho feliz
-@GetMapping("/{id}")
-public ResponseEntity<AnimalResponse> buscarPorId(@PathVariable UUID id) {
-    return ResponseEntity.ok(animalService.buscarPorId(id));
-}
-```
+Multiplique por 42 endpoints. Três consequências: o controller some sob `try/catch`, cada um
+inventa um formato de erro diferente, e o cliente nunca sabe o que esperar.
 
-## O handler deste projeto
+---
+
+## A solução: um lugar só
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/exception/GlobalExceptionHandler.java
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<List<ErroValidacao>> handleValidationErrors(MethodArgumentNotValidException ex) { ... }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<ErroValidacao> handleRecursoNaoEncontrado(RecursoNaoEncontradoException ex) {
@@ -48,16 +50,39 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroValidacao> handleRegraDeNegocio(RegraDeNegocioException ex) {
         return respostaDe(HttpStatus.CONFLICT, ex.getCampo(), ex.getMessage());
     }
-    ...
 }
 ```
 
-`@RestControllerAdvice` = `@ControllerAdvice` + `@ResponseBody`: vale para todos os
-controllers e o retorno vira JSON.
+E o controller volta a ter uma linha:
 
-### O mapa completo
+```java
+@GetMapping("/{id}")
+public ResponseEntity<AnimalResponse> buscarPorId(@PathVariable UUID id) {
+    return ResponseEntity.ok(animalService.buscarPorId(id));
+}
+```
 
-| Exceção | Status | Origem |
+| Anotação | O que faz |
+|---|---|
+| `@RestControllerAdvice` | "eu trato exceções de **todos** os controllers, e devolvo JSON" |
+| `@ExceptionHandler(X.class)` | "este método cuida da exceção X" |
+
+💡 **Conceito: *cross-cutting concern***
+
+Tratamento de erro é uma preocupação **transversal**: atravessa todas as camadas e todos os
+recursos, mas não pertence a nenhum deles.
+
+Colocar transversal dentro de cada classe é o que gera duplicação massiva. O padrão do Spring
+é **extrair para um lugar e aplicar por fora** — mesma ideia por trás de `@Transactional`
+(transação), `@Cacheable` (cache) e dos filtros de segurança.
+
+Reconhecer uma preocupação transversal é o que faz você parar de copiar `try/catch`.
+
+---
+
+## O mapa completo deste projeto
+
+| Exceção | Status | Vem de |
 |---|---|---|
 | `MethodArgumentNotValidException` | **400** | Bean Validation |
 | `RecursoNaoEncontradoException` | **404** | domínio — id inexistente |
@@ -66,6 +91,18 @@ controllers e o retorno vira JSON.
 | `DataIntegrityViolationException` | **409** | constraint do banco |
 | `BadCredentialsException` | **401** | falha de login |
 
+Formato único de saída:
+
+```java
+// src/main/java/br/com/fiap/clyvovet/dto/exception/ErroValidacao.java
+public record ErroValidacao(String campo, String mensagem) {}
+```
+
+Erro de validação devolve uma **lista** (podem ser vários campos); os demais devolvem um
+objeto.
+
+---
+
 ## Exceção de domínio, não de infraestrutura
 
 Este projeto criou a própria exceção de "não encontrado" em vez de deixar subir a do JPA:
@@ -73,8 +110,6 @@ Este projeto criou a própria exceção de "não encontrado" em vez de deixar su
 ```java
 // src/main/java/br/com/fiap/clyvovet/exception/RecursoNaoEncontradoException.java
 /**
- * Recurso inexistente — mapeada para 404 pelo GlobalExceptionHandler.
- *
  * E uma excecao de dominio, e nao a EntityNotFoundException do JPA: quem
  * decide que "buscar por um id inexistente e um erro" e a regra da aplicacao,
  * nao a camada de persistencia. Manter a excecao do JPA subindo pelos services
@@ -83,13 +118,27 @@ Este projeto criou a própria exceção de "não encontrado" em vez de deixar su
 public class RecursoNaoEncontradoException extends RuntimeException {
 ```
 
-O argumento vale entender: se o service lançasse `EntityNotFoundException`, trocar JPA por
-outra coisa um dia obrigaria a mexer em toda a camada de negócio. A exceção de domínio isola
-essa decisão.
+O argumento vale entender. Se o service lançasse `EntityNotFoundException` (uma classe do
+JPA), então:
 
-Repare que ela **estende `RuntimeException`** (unchecked). É a escolha padrão no Spring:
-checked exception obrigaria `throws` em toda a cadeia, poluindo assinaturas sem ganho — e o
-`@RestControllerAdvice` captura as duas do mesmo jeito.
+- a camada de **negócio** passaria a depender de uma escolha de **persistência**;
+- trocar JPA por outra coisa um dia obrigaria a mexer em toda a camada de negócio.
+
+Além disso, há um argumento conceitual: *"animal não encontrado"* é uma decisão da
+**aplicação**, não do banco. Para o banco, um `SELECT` sem resultado é normal — quem chama
+isso de erro é a sua regra.
+
+### Por que `extends RuntimeException`
+
+| Tipo | Obriga tratar? |
+|---|---|
+| *checked* (`extends Exception`) | sim — `try/catch` ou `throws` em toda a cadeia |
+| *unchecked* (`extends RuntimeException`) | não |
+
+Todas as exceções daqui são **unchecked**. O motivo: como existe um lugar único que captura
+tudo (`@RestControllerAdvice`), obrigar `throws RecursoNaoEncontradoException` em cada método
+da cadeia só poluiria assinaturas — sem ninguém no meio do caminho tendo o que fazer com a
+informação.
 
 ### O truque do `Supplier`
 
@@ -99,8 +148,6 @@ public static Supplier<RecursoNaoEncontradoException> naoEncontrado(Recurso recu
 }
 ```
 
-Existe porque `Optional.orElseThrow` espera um **fornecedor**, não uma exceção pronta:
-
 ```java
 // src/main/java/br/com/fiap/clyvovet/repository/RepositorioBase.java
 default T obterPorId(UUID id, Recurso recurso) {
@@ -108,7 +155,11 @@ default T obterPorId(UUID id, Recurso recurso) {
 }
 ```
 
-A exceção só é **construída** se o `Optional` estiver vazio.
+`Optional.orElseThrow` espera um **fornecedor** de exceção, não uma exceção pronta — assim a
+exceção só é **construída** se o `Optional` estiver vazio. No caminho feliz, o objeto nem
+chega a existir.
+
+---
 
 ## Mensagem no enum, não espalhada
 
@@ -130,13 +181,16 @@ public enum Recurso {
 }
 ```
 
-O comentário da classe conta o problema que isso resolveu: a mensagem estava repetida em
-cerca de vinte pontos, *"cada um concatenando o próprio texto. Além da duplicação, a
-concordância variava ('não encontrado' × 'não encontrada')"*.
+O comentário da classe conta o problema resolvido: a mensagem estava repetida em cerca de
+vinte pontos, *"cada um concatenando o próprio texto. Além da duplicação, a concordância
+variava ('não encontrado' × 'não encontrada')"*.
 
-É um exemplo pequeno e ótimo de DRY: cada recurso declara a própria frase **uma vez**.
+É DRY em escala pequena, e por isso mesmo é um bom exemplo: cada recurso declara a própria
+frase **uma vez**, e o enum garante que não existe um oitavo recurso sem mensagem.
 
-## Não vazar detalhe interno
+---
+
+## A regra mais importante: não vazar detalhe interno
 
 ```java
 @ExceptionHandler(DataIntegrityViolationException.class)
@@ -147,9 +201,19 @@ public ResponseEntity<ErroValidacao> handleIntegridade(DataIntegrityViolationExc
 }
 ```
 
-A causa vai para o **log**; o cliente recebe mensagem genérica. Sem isso, uma duplicata de
-CPF subiria como 500 carregando o SQL e o nome da constraint (`uk_tutor_cpf`) na resposta —
-o que entrega a estrutura interna do banco a quem estiver sondando.
+Repare na assimetria: a causa completa vai para o **log**; o cliente recebe uma mensagem
+genérica.
+
+Sem isso, uma duplicata de CPF subiria assim:
+
+```
+500 Internal Server Error
+ORA-00001: unique constraint (RM550341.UK_TUTOR_CPF) violated
+```
+
+O que isso entrega de graça a quem estiver sondando: o banco é Oracle, o schema chama
+`RM550341`, existe uma tabela `tutor`, existe uma constraint em `cpf`. Cada detalhe é um passo
+a mais no mapa de quem quer atacar.
 
 O mesmo princípio no login:
 
@@ -160,16 +224,30 @@ public ResponseEntity<ErroValidacao> handleCredenciais(BadCredentialsException e
 }
 ```
 
-E a mensagem que chega aqui é sempre a genérica definida no `AuthService` — *"distinguir
-'senha errada' de 'e-mail inexistente' permitiria enumerar a base"*.
+E a mensagem que chega aqui é sempre a genérica definida no `AuthService` — porque
+*"distinguir 'senha errada' de 'e-mail inexistente' permitiria enumerar a base"*
+(ver [06](06-spring-security.md)).
 
-**A regra geral:** mensagem de erro é para o usuário resolver o problema dele, não para o
-atacante mapear o seu sistema. Detalhe técnico vai para o log.
+💡 **Conceito: a quem a mensagem de erro serve**
 
-## 401 e 403 fora do `@RestControllerAdvice`
+Existem **dois públicos** para um erro, e eles querem coisas opostas:
 
-Erros de segurança acontecem **nos filtros**, antes de chegar ao Spring MVC — então o
-`@RestControllerAdvice` não os enxerga. Por isso existe um componente próprio:
+- **O usuário** precisa saber o que **ele** pode corrigir: *"o CPF já está cadastrado"*.
+- **Você** precisa saber o que aconteceu tecnicamente: stack trace, SQL, constraint.
+
+A regra: **detalhe técnico vai para o log; mensagem acionável vai para o cliente.** Um erro
+que só diz "erro interno" frustra o usuário; um que devolve o stack trace ajuda o atacante.
+
+---
+
+## 401 e 403 não passam por aqui
+
+Este é um ponto que confunde muita gente.
+
+Erros de segurança acontecem **nos filtros**, antes de a requisição chegar ao Spring MVC. E
+`@RestControllerAdvice` é um mecanismo do MVC — ele **não enxerga** o que acontece antes.
+
+Por isso existe um componente próprio:
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/config/SecurityConfig.java
@@ -178,48 +256,78 @@ Erros de segurança acontecem **nos filtros**, antes de chegar ao Spring MVC —
         .accessDeniedHandler(respostaErroSeguranca))       // 403
 ```
 
-`RespostaErroSeguranca` devolve o mesmo formato JSON dos demais erros. Sem ele, 401 e 403
-sairiam como página HTML padrão do container — quebrando qualquer cliente que espere JSON.
+`RespostaErroSeguranca` devolve o **mesmo formato JSON** dos demais erros. Sem ele, 401 e 403
+sairiam como página HTML padrão do container — e qualquer cliente que espere JSON quebraria
+ao tentar interpretar `<html>`.
 
-Vale saber isso: é uma pegadinha comum ("por que meu handler global não pega o 403?").
+Guarde a pergunta diagnóstica: **"meu handler global não pega o 403"** → é porque o erro
+nasceu antes do MVC.
 
-## Formato único
-
-```java
-// src/main/java/br/com/fiap/clyvovet/dto/exception/ErroValidacao.java
-public record ErroValidacao(String campo, String mensagem) {}
-```
-
-Um formato só, em todos os erros. Erro de validação devolve uma **lista** (podem ser vários
-campos); os demais devolvem um objeto.
+---
 
 ## Armadilhas
 
 ### 1. Capturar `Exception` genérica esconde bug
 
-Um `@ExceptionHandler(Exception.class)` devolvendo 500 formatado parece cuidadoso, mas
-transforma `NullPointerException` em "erro interno" silencioso. Este projeto **não** tem esse
-handler — falha inesperada sobe como 500 e aparece no log.
+```java
+// ❌ tentador, e ruim
+@ExceptionHandler(Exception.class)
+public ResponseEntity<ErroValidacao> handleTudo(Exception ex) {
+    return respostaDe(HttpStatus.INTERNAL_SERVER_ERROR, "erro", "Erro interno");
+}
+```
 
-### 2. O handler não pega o que acontece nos filtros
+Parece cuidadoso. Na prática, transforma todo `NullPointerException` num 500 bonitinho — e
+o bug **some do radar**, porque ninguém percebe a diferença entre "erro esperado" e "bug que
+ninguém previu".
 
-Vale para JWT, CORS e rate limit. Ver a seção acima.
+Este projeto **não** tem esse handler. Falha inesperada sobe como 500 e aparece no log, onde
+alguém pode consertá-la.
 
-### 3. Ordem entre handlers
+### 2. Ordem entre handlers
 
-Se houvesse `@ExceptionHandler(RuntimeException.class)` e
+Se houvesse `@ExceptionHandler(RuntimeException.class)` **e**
 `@ExceptionHandler(RecursoNaoEncontradoException.class)`, o Spring escolhe o **mais
-específico**. Mas é fácil errar ao criar hierarquias de exceção — quanto mais rasa, melhor.
+específico**. Funciona — mas hierarquias profundas de exceção tornam difícil prever qual
+handler pega o quê. Quanto mais rasa, melhor.
 
-## Perguntas de avaliação oral
+### 3. Exceção não é fluxo de controle
 
-1. Por que os controllers não têm `try/catch`?
-2. Por que criar `RecursoNaoEncontradoException` em vez de usar `EntityNotFoundException`?
-3. Por que `naoEncontrado()` devolve um `Supplier` e não a exceção pronta?
-4. Por que a mensagem de "não encontrado" fica no enum `Recurso`?
-5. Por que a `DataIntegrityViolationException` vira mensagem genérica, com a causa só no log?
-6. Por que 401 e 403 **não** passam pelo `GlobalExceptionHandler`? Quem cuida deles?
-7. As exceções deste projeto são checked ou unchecked? Por quê?
+Exceção é para o **excepcional**. Usar `throw`/`catch` para decidir o caminho normal do
+programa é lento (a JVM monta o stack trace) e ilegível.
+
+---
+
+## Consolidação
+
+**Entender**
+1. Por que os controllers deste projeto não têm `try/catch`?
+2. O que é uma preocupação transversal (*cross-cutting concern*)? Cite outras duas neste
+   projeto.
+
+**Aplicar**
+3. Você precisa devolver **422** para uma regra nova. O que criaria e onde?
+4. Um `NullPointerException` acontece num service. Que status o cliente recebe hoje, e por
+   quê?
+
+**Analisar**
+5. Por que criar `RecursoNaoEncontradoException` em vez de usar `EntityNotFoundException`?
+6. Por que `naoEncontrado()` devolve um `Supplier` e não a exceção pronta?
+7. Por que 401 e 403 **não** passam pelo `GlobalExceptionHandler`? Quem cuida deles?
+
+**Avaliar**
+8. Por que a `DataIntegrityViolationException` vira mensagem genérica? O que exatamente
+   vazaria sem isso, e por que cada detalhe importa?
+9. Um colega adiciona `@ExceptionHandler(Exception.class)` "para nunca mais ver 500 feio". O
+   que você argumenta?
+
+---
+
+## Se você levar só uma coisa daqui
+
+**Detalhe técnico vai para o log; mensagem acionável vai para o cliente.** Um erro serve a
+dois públicos com necessidades opostas, e confundi-los ou frustra o usuário ou ajuda o
+atacante.
 
 ---
 

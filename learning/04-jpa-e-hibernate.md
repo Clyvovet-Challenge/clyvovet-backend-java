@@ -1,20 +1,88 @@
-# 04 — JPA e Hibernate
+# 04 — JPA e Hibernate (o banco, sem escrever SQL)
 
-## O que é
+> **Pré-requisito:** [00 — O Java que você precisa](00-java-essencial.md), seções sobre
+> **interface**, **generics** e **anotações**.
 
-**JPA** (*Jakarta Persistence API*) é a especificação de mapeamento objeto-relacional em
-Java. **Hibernate** é a implementação usada aqui. **Spring Data JPA** é a camada por cima
-que gera repositórios a partir de interfaces.
+---
 
-O que o ORM resolve: você trabalha com objetos Java, ele traduz para SQL.
+## O mínimo de banco relacional
 
-```java
-Animal animal = animalRepository.obterPorId(id);   // vira SELECT
-animal.setNome("Bolinha");
-animalRepository.save(animal);                     // vira UPDATE
+Um banco relacional guarda dados em **tabelas** — como planilhas, com regras.
+
+```
+tabela: animal
+┌──────────────┬──────────┬───────────────────┬──────────────┐
+│ id           │ nome     │ raca              │ tutor_id     │
+├──────────────┼──────────┼───────────────────┼──────────────┤
+│ 4444...0001  │ Bolinha  │ Golden Retriever  │ 2222...0001  │
+│ 4444...0002  │ Mimi     │ Siames            │ 2222...0002  │
+└──────────────┴──────────┴───────────────────┴──────────────┘
 ```
 
-## Entidade
+| Termo | O que é |
+|---|---|
+| **Coluna** | um campo (`nome`, `raca`) |
+| **Linha** | um registro (um animal) |
+| **PK** (chave primária) | a coluna que identifica a linha **unicamente** — aqui, `id` |
+| **FK** (chave estrangeira) | coluna que **aponta** para a PK de outra tabela — `tutor_id` → `tutor.id` |
+| **Constraint** | regra que o banco garante (`NOT NULL`, `UNIQUE`, `CHECK`) |
+
+A FK é o que cria o relacionamento: o animal `Bolinha` pertence ao tutor `2222...0001`. E o
+banco **recusa** um `tutor_id` que não exista — isso se chama integridade referencial.
+
+E o SQL, a linguagem de consulta:
+
+```sql
+SELECT nome FROM animal WHERE raca = 'Golden Retriever';
+INSERT INTO animal (id, nome, raca) VALUES ('444...', 'Bolinha', 'Golden Retriever');
+UPDATE animal SET nome = 'Bolinha Silva' WHERE id = '444...';
+DELETE FROM animal WHERE id = '444...';
+```
+
+---
+
+## O problema: objeto e tabela não se parecem
+
+Java tem **objetos**, com referências entre eles. O banco tem **tabelas**, com FKs. Traduzir
+entre os dois na mão é assim:
+
+```java
+// ❌ como seria sem ORM — e isto é só um SELECT
+String sql = "SELECT id, nome, raca, tutor_id FROM animal WHERE id = ?";
+try (Connection conn = dataSource.getConnection();
+     PreparedStatement stmt = conn.prepareStatement(sql)) {
+    stmt.setString(1, id.toString());
+    ResultSet rs = stmt.executeQuery();
+    if (rs.next()) {
+        Animal animal = new Animal();
+        animal.setId(UUID.fromString(rs.getString("id")));
+        animal.setNome(rs.getString("nome"));
+        animal.setRaca(rs.getString("raca"));
+        // e agora buscar o tutor, montar o objeto Tutor, setar...
+    }
+}
+```
+
+Vinte linhas para ler **uma** linha. Multiplique por 7 entidades × 5 operações.
+
+**ORM** (*Object-Relational Mapping*) automatiza isso:
+
+```java
+Animal animal = animalRepository.obterPorId(id);   // pronto
+```
+
+| Nome | O que é |
+|---|---|
+| **JPA** | a **especificação** — o conjunto de anotações e regras |
+| **Hibernate** | a **implementação** que faz o trabalho |
+| **Spring Data JPA** | a camada que gera os repositórios automaticamente |
+
+Analogia: JPA é a norma técnica da tomada; Hibernate é a tomada fabricada; Spring Data é o
+adaptador que deixa tudo mais fácil de plugar.
+
+---
+
+## Mapeando uma entidade
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/model/Animal.java
@@ -43,27 +111,57 @@ public class Animal {
 }
 ```
 
-| Anotação | Função |
-|---|---|
-| `@Entity` | classe mapeada para tabela (nome = classe, se não disser outro) |
-| `@Id` | chave primária |
-| `@GeneratedValue` | como o id é gerado |
-| `@Column(name = ...)` | ponte quando o nome Java difere da coluna |
-| `@Enumerated(EnumType.STRING)` | grava o **nome** do enum, não o ordinal |
-| `@ManyToOne` + `@JoinColumn` | associação N:1 e a coluna FK |
+Anotação por anotação:
 
-`@NoArgsConstructor` não é decoração: o Hibernate **precisa** de construtor sem argumentos
-para instanciar a entidade ao ler do banco.
+| Anotação | Diz ao Hibernate |
+|---|---|
+| `@Entity` | "esta classe é uma tabela" (nome = nome da classe, se não disser outro) |
+| `@Id` | "esta é a chave primária" |
+| `@GeneratedValue` | "gere o valor assim" |
+| `@Column(name = "genero")` | "o campo `sexo` é a coluna `genero`" |
+| `@Enumerated(EnumType.STRING)` | "grave o **nome** do enum" |
+| `@ManyToOne` | "muitos Animais para um Tutor" |
+| `@JoinColumn(name = "tutor_id")` | "a FK é a coluna `tutor_id`" |
+
+Campos **sem** `@Column` (como `nome`, `raca`) usam o nome do atributo. Só quando difere é
+preciso dizer.
+
+> ⚠️ `@NoArgsConstructor` não é decoração: o Hibernate **precisa** de um construtor sem
+> argumentos para instanciar a entidade ao ler do banco.
+
+---
+
+## Duas decisões que valem entender
 
 ### `EnumType.STRING` — nunca use `ORDINAL`
 
-`ORDINAL` grava a posição do enum (0, 1, 2). Se alguém inserir um valor no meio da
-declaração, **todos os registros do banco passam a significar outra coisa**, em silêncio.
-`STRING` grava `"MACHO"` — imune a reordenação e legível direto no banco.
+```java
+public enum SexoAnimal { MACHO, FEMEA, DESCONHECIDO }
+```
 
-## Chave primária: UUID em texto
+| Estratégia | Grava no banco |
+|---|---|
+| `ORDINAL` | `0`, `1`, `2` — a **posição** |
+| `STRING` | `'MACHO'`, `'FEMEA'` — o **nome** |
 
-Todas as entidades usam a mesma estratégia:
+💡 **Conceito: por que `ORDINAL` é uma bomba-relógio**
+
+Com `ORDINAL`, o banco guarda a posição. Se alguém inserir um valor **no meio** do enum:
+
+```java
+public enum SexoAnimal { MACHO, INDEFINIDO, FEMEA, DESCONHECIDO }
+//                                ↑ novo
+```
+
+...todo registro que valia `1` (`FEMEA`) passa a significar `INDEFINIDO`. **Todos os dados
+históricos mudam de sentido, em silêncio.** Nenhum erro, nenhum log.
+
+Com `STRING`, `'FEMEA'` continua sendo `'FEMEA'` — e ainda dá para ler o banco direto e
+entender.
+
+O custo é alguns bytes por linha. É o melhor negócio da lista.
+
+### UUID em texto, gerado pela aplicação
 
 ```java
 @Id
@@ -71,72 +169,97 @@ Todas as entidades usam a mesma estratégia:
 private UUID id;
 ```
 
-O UUID é gerado **pela aplicação**, antes do INSERT. Vantagem: o id existe antes de ir ao
-banco, então não é preciso um round-trip para descobri-lo — e ids não são sequenciais e
-adivinháveis, como seriam com `IDENTITY`.
+| Estratégia | Quem gera | Consequência |
+|---|---|---|
+| `IDENTITY` | o banco (auto-increment) | precisa ir ao banco para saber o id; ids sequenciais e adivinháveis |
+| `UUID` | a **aplicação**, antes do INSERT | id existe antes de gravar; não é adivinhável |
 
-A coluna é `VARCHAR2(36)` no Oracle e `VARCHAR(36)` no MySQL — **texto, não binário**. Isso
+"Adivinhável" importa: com id `1`, `2`, `3`, alguém tenta `/animais/2` e descobre quanto
+você tem de base. Com UUID, não há sequência a percorrer.
+
+A coluna é `VARCHAR2(36)` (Oracle) / `VARCHAR(36)` (MySQL) — **texto, não binário**. Isso
 depende de duas propriedades:
 
 ```properties
-# src/main/resources/application-oracle.properties
 spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
 spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
 ```
 
-Sem elas o Hibernate grava `RAW(16)`/`BINARY(16)` e os ids não casam com os do seed, que
+Sem elas, o Hibernate grava `RAW(16)`/`BINARY(16)` e os ids **não casam** com os do seed, que
 foram escritos como texto.
+
+---
 
 ## Relacionamentos
 
-Todos aqui são **`@ManyToOne` unidirecionais**:
+Neste projeto, todos são `@ManyToOne`:
 
 ```
-Animal ──N:1──▶ Tutor
+Animal ──N:1──▶ Tutor                    (muitos animais, um tutor)
 Veterinario ──N:1──▶ Clinica
 EventoClinico ──N:1──▶ Veterinario, Animal, Clinica
 Pagamento ──N:1──▶ EventoClinico
 ```
 
-**Unidirecional** = `Animal` conhece seu `Tutor`, mas `Tutor` **não** tem
-`List<Animal> animais`. É uma escolha:
+O lado `@ManyToOne` é o que **tem a FK**. Faz sentido: a coluna `tutor_id` fica na tabela
+`animal`, porque cada animal tem **um** tutor.
 
-| | Ganha | Perde |
-|---|---|---|
-| Unidirecional | entidades leves, sem recursão na serialização | não dá para navegar do "lado um" |
+### Unidirecional — e por quê
 
-Sem a coleção, buscar os animais de um tutor é uma consulta no repositório — o que é
-adequado, porque uma coleção mapeada carregaria **todos** eles sem paginação.
+`Animal` conhece seu `Tutor`. Mas `Tutor` **não** tem `List<Animal> animais`.
+
+Se tivesse (`@OneToMany`), você poderia escrever `tutor.getAnimais()`. Parece conveniente, e
+tem dois custos:
+
+1. **Sem paginação.** `tutor.getAnimais()` carrega **todos** — 3 ou 3.000.
+2. **Recursão na serialização.** `Tutor` tem `List<Animal>`, cada `Animal` tem `Tutor`, que
+   tem `List<Animal>`… O Jackson entra em laço infinito.
+
+Sem a coleção, buscar animais de um tutor é uma consulta no repositório — **que aceita
+paginação e filtro**. É a escolha certa aqui.
 
 ### `EAGER` × `LAZY`
 
 | | Quando busca a associação |
 |---|---|
-| `EAGER` | junto com a entidade principal |
+| `EAGER` | **junto** com a entidade principal |
 | `LAZY` | só quando o campo é acessado |
 
-Aqui é `EAGER` em todos — explícito em cinco casos, implícito em `Pagamento` (é o default de
-`@ManyToOne`). Isso combina com:
+Neste projeto tudo é `EAGER`. E isso combina com:
 
 ```properties
 # src/main/resources/application.properties
 spring.jpa.open-in-view=false
 ```
 
-Com `open-in-view=false`, a sessão do Hibernate **fecha ao sair da camada de serviço**. Se
-um relacionamento fosse `LAZY` e o mapper tentasse acessá-lo depois, viria
-`LazyInitializationException`. O comentário do arquivo diz exatamente isso: *"nenhum
-relacionamento do projeto é LAZY, então nada depende disso"*.
+💡 **Conceito: `open-in-view` e o `LazyInitializationException`**
 
-O preço do `EAGER`: uma consulta que devolve 100 eventos traz veterinário, animal, tutor e
-clínica de cada um. Para CRUD é aceitável; para **agregação analítica** não é — por isso a
-spec dos módulos novos exige *projections* nas consultas de painel.
+Uma associação `LAZY` só é carregada quando você a acessa — e para isso a **sessão** do
+Hibernate precisa estar aberta.
+
+`open-in-view=true` (o padrão do Boot) mantém a sessão aberta até a resposta ser serializada.
+Parece bom, mas segura a conexão por mais tempo e permite que uma consulta dispare de dentro
+da camada web, longe de onde deveria.
+
+Este projeto desligou. Aí surge a regra: com a sessão fechada ao sair do service, acessar um
+campo `LAZY` no mapper estouraria `LazyInitializationException`. Por isso o comentário do
+arquivo diz: *"nenhum relacionamento do projeto é LAZY, então nada depende disso"*.
+
+**As duas decisões se sustentam mutuamente** — mudar uma sem a outra quebra o sistema.
+
+O preço do `EAGER`: uma consulta que traz 100 eventos traz também veterinário, animal, tutor
+e clínica de cada um. Para CRUD é aceitável. Para **agregação analítica** não é — e é por
+isso que a spec do Painel do Veterinário exige *projections* nas consultas de relatório.
+
+---
 
 ## `@Embeddable` — objeto sem tabela própria
 
+Tutor, Clínica e Veterinário têm endereço. Criar uma tabela `endereco` daria JOIN em toda
+consulta. A alternativa:
+
 ```java
 // src/main/java/br/com/fiap/clyvovet/model/Endereco.java
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Embeddable
 public class Endereco {
     @Column(name = "rua")
@@ -157,16 +280,18 @@ private Endereco endereco;
 ```
 
 As colunas ficam **achatadas** na tabela do dono — `tutor` tem `rua`, `numero`, `bairro`…
-Ganha-se reúso de código sem criar tabela nem JOIN.
+Você reusa o código sem criar tabela nem JOIN.
 
-Detalhe que importa: quando **todas** as colunas do embeddable estão nulas, o Hibernate
-devolve `null` no campo `endereco` — e não um objeto com campos nulos. Isso já causou NPE
-nos mappers (item 10 de [`../docs/07`](../docs/07-pendencias-e-divergencias.md)), resolvido
-com null-guard no `EnderecoMapper`.
+⚠️ **Detalhe que causou um bug real:** quando **todas** as colunas do embeddable estão nulas,
+o Hibernate devolve `null` no campo `endereco` inteiro — não um objeto de campos vazios. Os
+mappers não esperavam isso e estouravam NPE. Item 10 de
+[`../docs/07-pendencias-e-divergencias.md`](../docs/07-pendencias-e-divergencias.md).
+
+---
 
 ## Consultas
 
-### Derivadas do nome do método
+### Nível 1 — derivada do nome do método
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/repository/UsuarioRepository.java
@@ -174,9 +299,21 @@ Optional<Usuario> findByEmail(String email);
 boolean existsByEmail(String email);
 ```
 
-Sem corpo, sem `@Query`. O Spring Data lê o **nome** e gera o SQL.
+Sem corpo. Sem SQL. O Spring Data **lê o nome** e gera a consulta:
 
-### JPQL com `@Query`
+| Nome do método | Vira |
+|---|---|
+| `findByEmail` | `WHERE email = ?` |
+| `existsByEmail` | `SELECT COUNT(*) > 0 ... WHERE email = ?` |
+| `findByNomeAndEspecie` | `WHERE nome = ? AND especie = ?` |
+| `findByNomeContainingIgnoreCase` | `WHERE LOWER(nome) LIKE LOWER('%?%')` |
+
+⚠️ Se você digitar `findByEmial`, a aplicação **não sobe** — o Spring não acha o atributo
+`emial` na entidade e falha no boot. Erro no lugar certo.
+
+### Nível 2 — JPQL com `@Query`
+
+Quando o nome ficaria absurdo, escreva a consulta:
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/repository/PagamentoRepository.java
@@ -187,83 +324,147 @@ Sem corpo, sem `@Query`. O Spring Data lê o **nome** e gera o SQL.
 Page<Pagamento> buscarPorFiltros(...);
 ```
 
-**JPQL não é SQL.** Ele opera sobre **entidades e atributos Java**, não tabelas e colunas:
-`p.eventoClinico.animal.tutor.id` navega quatro entidades e vira uma cadeia de JOINs.
+**JPQL não é SQL.** Compare:
 
-Dois padrões desta linha valem guardar:
+```sql
+-- SQL: fala de TABELAS e COLUNAS
+SELECT * FROM pagamento p
+JOIN evento_clinico e ON p.evento_id = e.id
+JOIN animal a ON e.animal_id = a.id
+WHERE a.tutor_id = ?
+```
 
-1. **`:param IS NULL OR ...`** — o filtro desaparece quando não informado. Uma query serve a
-   todas as combinações, sem Criteria API.
-2. **O recorte de segurança dentro da query.** `tutorId` não é filtro do cliente: é o
-   isolamento por dono. Aplicá-lo **na** query, e não depois dela, é o que mantém a
-   paginação correta — filtrar em memória deixaria a página 1 com 7 itens em vez de 10.
+```java
+// JPQL: fala de ENTIDADES e ATRIBUTOS
+"SELECT p FROM Pagamento p WHERE p.eventoClinico.animal.tutor.id = :tutorId"
+```
+
+`p.eventoClinico.animal.tutor.id` navega **quatro entidades** com um ponto — e o Hibernate
+gera os JOINs. Você escreve na linguagem do seu modelo, não na do banco.
+
+### Dois padrões desta query
+
+**1. `:param IS NULL OR ...` — o filtro que desaparece**
+
+```java
+(:nome IS NULL OR LOWER(a.nome) LIKE ...)
+```
+
+Se `nome` vier `null`, a primeira metade é verdadeira e o `OR` já resolve — o filtro não
+restringe nada. **Uma query serve a todas as combinações**, sem Criteria API nem
+Specification.
+
+**2. O recorte de segurança dentro da query**
+
+```java
+(:tutorId IS NULL OR a.tutor.id = :tutorId)
+```
+
+💡 **Conceito: filtrar no banco, não na memória**
+
+`tutorId` não é filtro do cliente — é o isolamento por dono: um tutor só vê os próprios pets.
+
+Por que **dentro** da query e não depois? Imagine 10 animais na página, 3 do tutor logado.
+Filtrar depois entregaria uma "página de 10" com 3 itens, e `totalElements` mentiria.
+
+Regra geral: **filtro que afeta a contagem tem que estar na query**. Vale para segurança,
+vale para qualquer filtro em listagem paginada.
+
+---
 
 ## `ddl-auto` — quem cria as tabelas
 
-| Valor | Efeito |
-|---|---|
-| `create-drop` | recria tudo a cada boot — só dev |
-| `update` | tenta ajustar o schema — **imprevisível** |
-| **`validate`** | **não altera nada**; confere se entidade e schema batem, e falha se não |
-| `none` | ignora |
+| Valor | O que faz | Quando |
+|---|---|---|
+| `create-drop` | apaga e recria tudo a cada boot | protótipo |
+| `update` | tenta ajustar sozinho | **nunca em produção** — imprevisível, não remove coluna |
+| **`validate`** | **não altera nada**; confere e falha se divergir | ✅ aqui |
+| `none` | ignora | quando outra coisa cuida |
 
 ```properties
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-`validate` é a escolha certa quando o schema é versionado por Flyway: o banco é responsabilidade
-das migrations, e o Hibernate só **confere**. Consequência direta: **campo novo na entidade
-sem migration correspondente derruba o boot** — e isso é bom, porque a alternativa é
-descobrir em produção.
+A divisão de trabalho:
+
+| Peça | Papel |
+|---|---|
+| **Flyway** | **cria e altera** o schema (documento [09](09-flyway-e-migrations.md)) |
+| **Hibernate `validate`** | **confere** se as entidades batem, e derruba o boot se não |
+
+Consequência: **campo novo na entidade sem migration = aplicação não sobe**. E isso é bom —
+o erro aparece no `mvn spring-boot:run`, não em produção.
+
+---
 
 ## Armadilhas reais deste projeto
 
-### 1. Enum do Java × CHECK constraint do banco
+### 1. Enum do Java × CHECK do banco — duas fontes de verdade
 
 ```java
 public enum StatusPagamento { PENDENTE, PAGO, CANCELADO, REEMBOLSADO }
 ```
 
 ```sql
-CONSTRAINT chk_status_pagamento CHECK (status_pagamento IN ('PENDENTE','PAGO','CANCELADO','ESTORNADO'))
+CHECK (status_pagamento IN ('PENDENTE','PAGO','CANCELADO','ESTORNADO'))
 ```
 
-`REEMBOLSADO` passava na validação, chegava ao INSERT e estourava `ORA-02290` — **500** para
-o cliente. O valor era literalmente impossível de gravar. Corrigido pela migration V4, que
-alinhou o check ao enum.
+Percebeu? O Java diz `REEMBOLSADO`, o banco diz `ESTORNADO`. O valor passava na validação,
+chegava ao INSERT e estourava `ORA-02290` — **500** para o cliente. Era literalmente
+impossível gravar um pagamento reembolsado.
 
-Lição: `@Enumerated(STRING)` não valida nada sozinho. Enum e CHECK são **duas fontes de
-verdade** que precisam ser mantidas em sincronia — e a única coisa que garante isso é o
-`ddl-auto=validate` mais o cuidado de escrever a migration junto.
+**A lição:** `@Enumerated(STRING)` não valida nada sozinho. O enum e o CHECK são duas
+declarações da mesma regra, em lugares diferentes, e nada as mantém sincronizadas
+automaticamente. Corrigido pela migration V4.
 
 ### 2. Apagar entidade com dependentes
 
-`DELETE /tutores/{id}` de um tutor com animais estoura violação de FK. Hoje o
-`GlobalExceptionHandler` traduz para **409**. Cascata automática seria pior: apagar um tutor
-não deveria apagar o histórico clínico do pet.
+`DELETE /tutores/{id}` de um tutor com animais viola a FK. Hoje vira **409**.
+
+E note a decisão de **não** usar cascata automática: apagar um tutor não deveria apagar o
+histórico clínico do pet. Cascata é conveniente e perigosa.
 
 ### 3. Texto livre onde deveria haver enum
 
 `especie` e `porte` são `String`. O banco restringe `porte` por CHECK, mas a aplicação aceita
 `"grande"` minúsculo — que o Oracle rejeita. E `especie` não tem constraint nenhuma: o seed
-grava `'CAO'`, o README exemplifica `"CACHORRO"`, os dois convivem, e o filtro `?especie=CAO`
-não acha os registros gravados como `CACHORRO`.
+grava `'CAO'`, o README exemplifica `"CACHORRO"`, os dois convivem, e `?especie=CAO` não acha
+os segundos.
 
-Item 12 de [`../docs/07`](../docs/07-pendencias-e-divergencias.md). Estava classificado como
-severidade **baixa** — e a spec do Painel do Veterinário mostra que, no momento em que a API
-começa a **agregar por raça e espécie**, ele vira estrutural.
+Item 12 de [`../docs/07`](../docs/07-pendencias-e-divergencias.md). Estava como severidade
+**baixa** — e a spec do Painel do Veterinário mostra que, no momento em que a API passa a
+**agregar por espécie e raça**, vira estrutural. Dívida técnica costuma envelhecer assim: sem
+custo até a primeira vez que alguém precisa daquilo.
 
-## Perguntas de avaliação oral
+---
 
-1. Por que `@Enumerated(EnumType.STRING)` e não `ORDINAL`?
-2. Por que o UUID é gerado pela aplicação e não pelo banco?
-3. Por que `Tutor` não tem `List<Animal>`? O que se ganha e o que se perde?
-4. O que aconteceria se um `@ManyToOne` fosse `LAZY` neste projeto, dado
-   `open-in-view=false`?
-5. O que `ddl-auto=validate` faz? O que quebra se você adicionar um campo na entidade e
-   esquecer a migration?
-6. Em `p.eventoClinico.animal.tutor.id`, o que o Hibernate gera de SQL?
-7. Por que o `tutorId` entra **dentro** da query em vez de a lista ser filtrada depois?
+## Consolidação
+
+**Entender**
+1. O que é uma FK? Qual FK liga `animal` a `tutor`?
+2. Qual a diferença entre JPA, Hibernate e Spring Data JPA?
+
+**Aplicar**
+3. Escreva a assinatura de um método derivado que busque veterinários por `crmv`.
+4. Traduza para JPQL: "todos os eventos clínicos de animais de um tutor específico".
+
+**Analisar**
+5. Por que `EnumType.STRING` e não `ORDINAL`? Dê um cenário concreto de dado corrompido.
+6. Por que `Tutor` **não** tem `List<Animal>`? Cite os dois custos que isso evita.
+7. Por que `open-in-view=false` e `EAGER` são decisões que se sustentam mutuamente?
+
+**Avaliar**
+8. Você vai criar a entidade `Prescricao` com um campo novo. Quais passos precisa dar para a
+   aplicação subir, dado `ddl-auto=validate`?
+9. `especie` como `String` livre foi classificado como severidade "baixa" e virou problema
+   estrutural. O que isso ensina sobre priorizar dívida técnica?
+
+---
+
+## Se você levar só uma coisa daqui
+
+**Filtro que afeta a contagem tem que estar na query, não depois dela.** Vale para
+segurança, paginação e qualquer listagem — filtrar em memória faz o `totalElements` mentir.
 
 ---
 
