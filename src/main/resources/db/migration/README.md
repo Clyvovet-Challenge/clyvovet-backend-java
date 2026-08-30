@@ -4,11 +4,16 @@ O schema é versionado pelo Flyway e existe em **dois conjuntos**, um por banco:
 
 ```
 db/migration/
-├── oracle/   ← Oracle FIAP, e também H2 (que roda com MODE=Oracle)
-└── mysql/    ← Azure Database for MySQL, alvo do deploy
+├── oracle/   ← Oracle FIAP (banco de TESTE), e também H2 com MODE=Oracle
+└── mysql/    ← Azure Database for MySQL — PRODUÇÃO
 ```
 
-Cada pasta é uma linha do tempo completa e independente: V1 a V4 nas duas. Quem
+> **Os papéis inverteram em 30/08/2026.** O Oracle era o alvo de entrega e virou o
+> banco onde se testa contra um servidor real; o MySQL da Azure é a produção, e o
+> perfil `mysql` é o default do projeto. Isso muda quem é o conjunto crítico: um erro
+> em `mysql/` agora vai para produção, um erro em `oracle/` para o ambiente de teste.
+
+Cada pasta é uma linha do tempo completa e independente: V1 a V5 nas duas. Quem
 abrir `mysql/` vê o schema inteiro, sem precisar cruzar com a outra pasta.
 
 ## Por que dois conjuntos
@@ -38,8 +43,10 @@ problema desaparece.
 O risco real de manter dois conjuntos é a **divergência silenciosa**: alguém cria a
 V5 só em `mysql/`, ninguém percebe, e o erro aparece no deploy.
 
-Quem guarda contra isso é o [`MigrationsMySqlTest`](../../../../test/java/br/com/fiap/clyvovet/migration/MigrationsMySqlTest.java).
-Ele roda o conjunto `mysql/` do zero num H2 em `MODE=MySQL` e confere que as quatro
+Quem guarda contra isso é o [`MigrationsMySqlTest`](../../../../test/java/br/com/fiap/clyvovet/migration/MigrationsMySqlTest.java) —
+e desde a inversão de papéis ele é o **único** teste automático que toca o conjunto de
+produção, já que a suíte roda em `MODE=Oracle`.
+Ele roda o conjunto `mysql/` do zero num H2 em `MODE=MySQL` e confere que as cinco
 migrations aplicam e que o seed carrega as mesmas contagens. Se `mysql/` parar de
 rodar, a build quebra.
 

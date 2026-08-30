@@ -98,20 +98,23 @@ a aplicação subiria contra um banco sem tabela.
 | Arquivo | Papel |
 |---|---|
 | [`application.properties`](../src/main/resources/application.properties) | Nome da aplicação e escolha do perfil ativo |
-| [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — perfil de entrega/produção |
+| [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
-| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — alvo do deploy. **Ainda não executado contra um MySQL real** |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Ainda não executado contra um MySQL real |
 
-O arquivo raiz tem apenas duas linhas:
+O arquivo raiz define o perfil padrão:
 
 ```properties
 spring.application.name=clyvovet
-spring.profiles.active=oracle
+spring.profiles.active=${SPRING_PROFILES_ACTIVE:mysql}
 ```
 
-**O perfil `oracle` é o ativo por padrão.** Rodar `mvn spring-boot:run` sem
-sobrescrever nada faz a aplicação tentar conectar no Oracle da FIAP.
+**O perfil `mysql` é o ativo por padrão desde 30/08/2026**, quando a produção passou
+a ser o Azure Database for MySQL e o Oracle da FIAP virou o banco de teste. Rodar
+`mvn spring-boot:run` sem sobrescrever nada tenta conectar no MySQL e falha no boot
+sem `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` — para desenvolvimento
+local use o perfil `dev`.
 
 ---
 
@@ -128,7 +131,7 @@ sobrescrever nada faz a aplicação tentar conectar no Oracle da FIAP.
 | Seed inicial | 42 registros (V2) | idem | idem | idem |
 | Console H2 | — | — | `/h2-console` | `/h2-console` |
 | Roda fora do Docker? | sim | sim | **não** | sim |
-| Uso pretendido | banco de testes / entrega | **deploy** | container | desenvolvimento local |
+| Uso pretendido | **banco de teste real** | **produção (padrão)** | container | desenvolvimento local |
 | Já rodou de verdade? | sim | **não** | sim | sim |
 
 > ⚠️ O perfil `h2` aponta para o host `clyvovet-db`, que só existe na rede do
@@ -330,9 +333,12 @@ Do mais forte para o mais fraco:
 | 4 | `application-{perfil}.properties` | perfil ativo |
 | 5 | `application.properties` | base |
 
-No container, o `ENTRYPOINT` do Dockerfile passa `-Dspring.profiles.active=h2` **e** o
-compose define `SPRING_PROFILES_ACTIVE=h2`. Como os dois valores coincidem, não há
-conflito — mas vale saber que o `-D` venceria.
+O `ENTRYPOINT` do Dockerfile **não fixa mais o perfil**. Ele passava
+`-Dspring.profiles.active=h2`, e como o `-D` (prioridade 2) vence a variável de
+ambiente (prioridade 3), a imagem subiria em H2 mesmo com `SPRING_PROFILES_ACTIVE=mysql`
+definido no Azure — e H2 não é aceito como banco em nuvem. Sem o `-D`, quem manda é a
+variável de ambiente; sem ela, o default `mysql`. O docker-compose continua definindo
+`SPRING_PROFILES_ACTIVE=h2` e segue funcionando para o stack local.
 
 ---
 

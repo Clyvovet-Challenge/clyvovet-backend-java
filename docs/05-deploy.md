@@ -32,7 +32,7 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 USER appuser
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-Dspring.profiles.active=h2", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 Decisões relevantes:

@@ -23,11 +23,18 @@ import java.util.function.Consumer;
  * numa migration: hash de credencial nao deve ser versionado, e uma migration
  * com senha fixa acabaria aplicada tambem no banco de entrega.
  *
- * Ativo apenas nos perfis dev e h2. Idempotente — nada e recriado se ja existe.
+ * Ativo nos perfis dev, h2 e oracle. Idempotente — nada e recriado se ja existe.
+ *
+ * O perfil oracle entrou na lista em 30/08/2026, quando o Oracle da FIAP virou
+ * o banco de teste do projeto: sem estes usuarios a suite nao consegue fazer
+ * login, e quase todo teste falharia com 401 por um motivo que nao e o dele.
+ *
+ * Note que producao (perfil mysql) continua FORA da lista, que e o ponto: o
+ * banco de entrega nao deve receber usuario de desenvolvimento.
  */
 @Slf4j
 @Configuration
-@Profile({"dev", "h2"})
+@Profile({"dev", "h2", "oracle"})
 @RequiredArgsConstructor
 public class DevDataSeeder {
 
