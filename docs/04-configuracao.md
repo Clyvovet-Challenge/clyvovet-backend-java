@@ -97,18 +97,50 @@ a aplicação subiria contra um banco sem tabela.
 
 | Arquivo | Papel |
 |---|---|
-| [`application.properties`](../src/main/resources/application.properties) | Nome da aplicação e escolha do perfil ativo |
+| [`application.properties`](../src/main/resources/application.properties) | Nome, porta e escolha do perfil ativo. Importa `comum.properties` |
+| [`comum.properties`](../src/main/resources/comum.properties) | **O que vale em todos os perfis** — JSON, JPA e Flyway. Importado por main **e** pelos testes |
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
 | [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Ainda não executado contra um MySQL real |
 
-O arquivo raiz define o perfil padrão:
+O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
 ```properties
 spring.application.name=clyvovet
+server.port=8080
 spring.profiles.active=${SPRING_PROFILES_ACTIVE:mysql}
+spring.config.import=classpath:comum.properties
 ```
+
+### Por que existe um `comum.properties`, e não só o arquivo raiz
+
+`src/test/resources/application.properties` **sombreia** o de
+`src/main/resources` — não soma, substitui. Só um arquivo com esse nome é
+carregado, e no teste vence o do `test`.
+
+Isso significa que tudo que morasse apenas na base de `main` sumiria durante a
+suíte: os testes rodariam com um formato de data, um mapeamento de UUID e um
+modelo de sessão JPA diferentes dos de produção — validando um sistema que não é
+o que vai ser entregue. Era o caso de `spring.jpa.open-in-view=false`, que estava
+na base desde sempre e **nunca valeu num teste sequer**.
+
+Um nome diferente de `application.properties` resolve: não há sombreamento, e os
+dois lados importam o mesmo arquivo com `spring.config.import`. O que é
+importado entra **antes** de quem importa, então perfis e testes continuam
+podendo sobrescrever.
+
+### O que ficou onde
+
+| Mora em | Conteúdo |
+|---|---|
+| `application.properties` | nome, porta, perfil ativo, o import |
+| `comum.properties` | formato de datas, `open-in-view`, UUID→CHAR, `flyway.enabled`, e a nota sobre o coringa `{vendor}` |
+| `application-<perfil>.properties` | **só o que difere** — conexão, pasta de migrations, `ddl-auto`, `show-sql`, segredo |
+| `src/test/resources/application.properties` | perfil da suíte, chave de teste, rate limit desligado |
+
+Antes desta separação, `server.port`, o formato de datas e o mapeamento de UUID
+estavam copiados em três dos quatro perfis — e o quarto, `dev`, ficara sem eles.
 
 **O perfil `mysql` é o ativo por padrão desde 30/08/2026**, quando a produção passou
 a ser o Azure Database for MySQL e o Oracle da FIAP virou o banco de teste. Rodar
