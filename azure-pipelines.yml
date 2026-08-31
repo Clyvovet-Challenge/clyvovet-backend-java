@@ -1,0 +1,132 @@
+# Pipeline de CI/CD no Azure DevOps — requisitos C2 e C3 da spec 03.
+#
+# SOBRE O GATILHO (item C4 do backlog)
+# A spec da disciplina cita `master`; este repositório usa `main`. As duas
+# ficam declaradas abaixo: se o Azure DevOps espelhar o repositório com outro
+# nome de branch padrão, o pipeline dispara do mesmo jeito, em vez de ficar em
+# silêncio esperando um push numa branch que não existe.
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  # A suíte roda em H2 em memória (perfil dev, fixado em
+  # src/test/resources/application.properties). Sem credencial de banco e sem
+  # rota até a FIAP — se dependesse do Oracle, todo build aqui falharia por
+  # infraestrutura em vez de por defeito no código.
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+
+stages:
+  - stage: Build
+    displayName: Build e testes
+    jobs:
+      - job: maven
+        displayName: mvn verify
+        steps:
+          - task: Cache@2
+            displayName: Cache do Maven
+            inputs:
+              key: 'maven | "$(Agent.OS)" | pom.xml'
+              restoreKeys: 'maven | "$(Agent.OS)"'
+              path: $(MAVEN_CACHE_FOLDER)
+
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: x64
+              jdkSourceOption: PreInstalled
+
+          - script: ./mvnw -B verify
+            displayName: Testes
+
+          # Publica mesmo com a suíte vermelha: é aí que alguém precisa ver
+          # qual teste quebrou, sem abrir o log inteiro.
+          - task: PublishTestResults@2
+            displayName: Resultado dos testes
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              failTaskOnFailedTests: true
+
+          - task: CopyFiles@2
+            inputs:
+              contents: 'target/*.jar'
+              targetFolder: $(Build.ArtifactStagingDirectory)
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: clyvovet-jar
+            displayName: Publica o artefato
+
+  - stage: Imagem
+    displayName: Imagem Docker
+    dependsOn: Build
+    # Só na branch padrão: um PR não precisa gerar imagem.
+    condition: >
+      and(succeeded(),
+          or(eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+             eq(variables['Build.SourceBranch'], 'refs/heads/master')))
+    jobs:
+      - job: docker
+        steps:
+          - task: Docker@2
+            displayName: Build da imagem
+            inputs:
+              command: build
+              repository: clyvovet
+              dockerfile: Dockerfile
+              tags: |
+                $(Build.BuildId)
+                latest
+
+          # O push está comentado de propósito: exige um service connection ao
+          # Azure Container Registry, que depende da conta do time. Quando ela
+          # existir, basta preencher containerRegistry e descomentar — a imagem
+          # já é construída e validada acima.
+          #
+          # - task: Docker@2
+          #   displayName: Push para o ACR
+          #   inputs:
+          #     command: push
+          #     repository: clyvovet
+          #     containerRegistry: '<service-connection-do-acr>'
+          #     tags: |
+          #       $(Build.BuildId)
+          #       latest
+
+  # CD — deploy no Azure Container Apps.
+  #
+  # Fica desabilitado até existirem o registry e o service connection. As
+  # variáveis de ambiente NÃO entram aqui em texto: DB_URL, DB_USERNAME,
+  # DB_PASSWORD e JWT_SECRET são secrets do container ou referência ao Key
+  # Vault, como está descrito em application-mysql.properties.
+  #
+  # - stage: Deploy
+  #   displayName: Deploy no Azure
+  #   dependsOn: Imagem
+  #   condition: succeeded()
+  #   jobs:
+  #     - deployment: producao
+  #       environment: clyvovet-producao
+  #       strategy:
+  #         runOnce:
+  #           deploy:
+  #             steps:
+  #               - task: AzureContainerApps@1
+  #                 inputs:
+  #                   azureSubscription: '<service-connection-azure>'
+  #                   containerAppName: clyvovet-api
+  #                   resourceGroup: '<resource-group>'
+  #                   imageToDeploy: '<acr>.azurecr.io/clyvovet:$(Build.BuildId)'

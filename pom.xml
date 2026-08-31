@@ -115,6 +115,16 @@
             <artifactId>spring-boot-starter-hateoas</artifactId>
         </dependency>
 
+        <!--
+            Actuator: a probe de saude que o Azure Container Apps consulta para
+            saber se a instancia pode receber trafego. So /health fica exposto —
+            os demais endpoints publicam versao, beans e configuracao.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

@@ -96,7 +96,10 @@ public class SecurityConfig {
             // Swagger publico: e por ele que a API e avaliada e testada.
             // Fica fora do api(): o WebConfig so prefixa os @RestController da
             // aplicacao, entao as rotas do springdoc seguem na raiz.
-            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll();
+            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            // A probe de saude precisa responder antes de haver token. Só
+            // /health esta exposto, e sem detalhes.
+            .requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
 
         if (h2ConsoleHabilitado) {
             rotas.requestMatchers("/h2-console/**").permitAll();

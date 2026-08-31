@@ -1,0 +1,95 @@
+name: CI
+
+# Roda a cada push e a cada PR na main.
+#
+# A suíte usa H2 em memória (perfil dev, fixado em src/test/resources), então o
+# build não precisa de credencial nem de rota até a FIAP. Foi por isso que o
+# perfil de teste padrão continuou sendo `dev` e não `oracle`: com `oracle`,
+# todo build aqui ficaria vermelho por infraestrutura, não por defeito no
+# código.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Um push novo cancela o build anterior do mesmo branch: o resultado do
+  # commit antigo já não interessa quando existe um mais recente.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build e testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Testes
+        run: ./mvnw -B verify
+
+      # Publica o resultado mesmo quando a suíte falha — é justamente aí que
+      # alguém precisa ver qual teste quebrou, sem abrir o log inteiro.
+      - name: Resultado dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+      - name: Empacota o jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: clyvovet-jar
+          path: target/*.jar
+          retention-days: 7
+
+  imagem:
+    name: Imagem Docker
+    runs-on: ubuntu-latest
+    needs: build
+    # Só na main: um PR não precisa gerar imagem, e construir uma a cada push
+    # de branch gastaria minutos sem ninguém consumir o resultado.
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Constrói sem publicar. Publicar exige registry e credencial, que
+      # dependem da conta Azure do time — quando existirem, entra aqui um
+      # docker/login-action seguido de push.
+      - name: Build da imagem
+        run: docker build -t clyvovet:${{ github.sha }} .
+
+      - name: Sobe e confere que a aplicação responde
+        run: |
+          docker run -d --name clyvovet \
+            -e SPRING_PROFILES_ACTIVE=dev \
+            -e JWT_SECRET=$(openssl rand -base64 32) \
+            -p 8080:8080 clyvovet:${{ github.sha }}
+
+          # O build só passa se a aplicação SUBIR. Uma imagem que compila e não
+          # inicia é o erro que só apareceria no deploy.
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1 \
+               || curl -sf http://localhost:8080/v3/api-docs > /dev/null 2>&1; then
+              echo "aplicação respondeu"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "a aplicação não respondeu em 60s"
+          docker logs clyvovet
+          exit 1
