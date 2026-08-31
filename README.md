@@ -322,6 +322,7 @@ clyvovet-backend-java/
 │  ── Artefatos de entrega. O nome da pasta é exigido pela rubrica da FIAP.
 ├── documentos/
 │   ├── clyvovet-api.postman_collection.json   # 71 requisições, todos os endpoints
+│   ├── script_bd.sql                   # DDL completo, gerado das migrations
 │   ├── Cronograma_CLYVOVET.pdf
 │   ├── Diagrama_De_Classes.pdf
 │   └── Post_*.png                      # Capturas dos POSTs testados

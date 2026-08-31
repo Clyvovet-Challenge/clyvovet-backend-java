@@ -112,9 +112,9 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 | # | Item | Vale | Situação |
 |---|---|---|---|
 | C1 | **Aplicação rodando online** por URL pública no dia da avaliação | parte de 40 pts | `deploy.sh` existe (Azure CLI); nada publicado e verificado hoje |
-| C2 | **Pipeline CI no Azure DevOps** — build + **execução de testes** + publicação do artefato | DevOps S4 | `ls .github azure-pipelines.yml` → não existe. O `Dockerfile` ainda usa `-DskipTests` |
-| C3 | **Pipeline CD** — deploy automático em Azure Web App ou ACI | DevOps S4 | idem |
-| C4 | Gatilho do CI na branch — a spec cita `master`, o repositório usa `main` | DevOps S4 | confirmar qual o Azure DevOps espera |
+| ~~C2~~ | **Pipeline CI** — build + testes + artefato | DevOps S4 | ✅ **31/08/2026** — `.github/workflows/ci.yml` e `azure-pipelines.yml`. O Dockerfile já rodava os testes |
+| C3 | **Pipeline CD** — deploy automático | DevOps S4 | ⚠️ **parcial** — a imagem é construída e validada (sobe e responde ao health). O push e o deploy estão declarados e comentados: dependem do service connection e da conta Azure |
+| ~~C4~~ | Gatilho do CI na branch | DevOps S4 | ✅ as duas declaradas — dispara com `main` ou `master` |
 | C5 | **Procedures PL/SQL chamadas pela aplicação**, demonstradas em vídeo | Database S4 | `grep -r "@Procedure\|StoredProcedureQuery"` → ausente. Hoje só JPQL |
 | C6 | **IA integrada à aplicação** | Disruptive S4 | coberto pelo **Módulo 2** (Parte 4) |
 | C7 | Narrativa da solução — decisões e justificativas | 20 pts | a base documental em `docs/` já sustenta isso |
@@ -126,7 +126,7 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 
 | # | Item | Origem | Situação |
 |---|---|---|---|
-| D1 | **`script_bd.sql`** — DDL em arquivo separado, com estrutura e comentários | DevOps S3 | `find . -name "script_bd*"` → **ausente**. As migrations existem, mas o requisito pede este arquivo |
+| ~~D1~~ | **`script_bd.sql`** — DDL em arquivo separado | DevOps S3 | ✅ **31/08/2026** — `documentos/script_bd.sql`, **gerado** das migrations por `scripts/gerar-script-bd.py`. `ScriptDoBancoTest` quebra se defasar |
 | D2 | Banco em nuvem (H2 não é aceito) | DevOps S3 | decidido: **MySQL no Azure**. Perfil `mysql` pronto — **nunca executado contra um MySQL real** (item E5) |
 | D3 | **Avisar Mobile e Frontend da mudança de contrato** (`/api/v1` + `page.totalElements`) | Backend, 19/08 | registrado na spec 04 como conflito 8; **o documento sozinho não avisa ninguém** |
 | D4 | Autenticação do app mobile por esta API | Mobile S3 | ✅ JWT pronto e documentado — falta o mobile consumir |
@@ -137,8 +137,8 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 | # | Item | Severidade | Situação |
 |---|---|---|---|
 | E1 | **Senha do Oracle no histórico do Git** | **Alta** | código e docs limpos; **falta trocar a senha no portal da FIAP**. Único jeito de fechar |
-| E2 | `dataPagamento` obrigatória impede registrar pagamento `PENDENTE` | Média | confirmado aberto: `@NotNull` ainda em `PagamentoRequest:30`. O próprio seed grava pendentes com data nula |
-| E3 | Cache não invalida entre entidades relacionadas | Média | renomear um tutor deixa `GET /animais` devolvendo o nome antigo por até 10 min |
+| ~~E2~~ | `dataPagamento` obrigatória | Média | ✅ **31/08/2026** — opcional no cadastro; a data entra na confirmação (regra P1) |
+| ~~E3~~ | Cache não invalida entre entidades relacionadas | Média | ✅ **31/08/2026** — cada service invalida os caches que consomem seus dados. `CacheCruzadoTest`, verificado contra a ausência da correção |
 | E4 | `especie` e `porte` como texto livre | Baixa | `CAO` e `CACHORRO` convivem; quebra o filtro. **Vira alta com o Painel** — ver risco R3 da spec dos módulos |
 | E5 | Perfil `mysql` nunca rodou contra um MySQL real | Média | validado só em H2 `MODE=MySQL`; `ddl-auto=validate` no servidor real é o teste que importa |
 | E6 | `EventoClinico.hora` como `String`; ordem de campos de `Endereco` divergente | Baixa | resíduo do item 15 |
