@@ -45,15 +45,25 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: surefire-reports
-          path: target/surefire-reports/
+          # Só os XML, que é o que ferramenta lê. Economiza pouco (os .txt são
+          # 0,1 MB dos 3,5), mas evita baixar duas versões do mesmo resultado.
+          path: target/surefire-reports/*.xml
           retention-days: 7
 
+      # O jar tem 76 MB (fat jar: Tomcat, Hibernate e Jackson vão dentro), e
+      # hoje não há para onde mandá-lo. Guardar uma semana de builds encheria
+      # os 500 MB da cota de armazenamento da conta sem ninguém baixar nenhum.
+      #
+      # 2 dias cobre o caso que interessa agora: "o build de ontem gerou um jar
+      # que sobe?". Quando existir o registry, a imagem publicada passa a ser o
+      # artefato de verdade e este passo pode sair.
       - name: Empacota o jar
         uses: actions/upload-artifact@v5
         with:
           name: clyvovet-jar
           path: target/*.jar
-          retention-days: 7
+          retention-days: 2
+          compression-level: 9
 
   imagem:
     name: Imagem Docker
