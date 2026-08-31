@@ -20,11 +20,17 @@ dependência direta sobre o backend — ver [04-dependencias-externas.md](04-dep
 | [05-plano-de-implementacao.md](05-plano-de-implementacao.md) | Backlog da Sprint 3 — **fotografia de 07/08/2026, histórico** *(não consta no PDF)* |
 | [06-checklist-pre-sprint-3.md](06-checklist-pre-sprint-3.md) | Auditoria pré-Sprint 3 — **fotografia de 07/08/2026, histórico** *(não consta no PDF)* |
 | **[07-backlog.md](07-backlog.md)** | **O que está implementado e o que falta — backlog consolidado e vigente** *(não consta no PDF)* |
+| **[08-modelo-de-negocio.md](08-modelo-de-negocio.md)** | **O produto que queremos — visão do time confrontada com o código, e as regras a implementar** *(não consta no PDF)* |
 
 > **Comece pelo [07-backlog.md](07-backlog.md).** Ele reconcilia as specs 01–04 com o
 > estado real do código em 25/08/2026 e reúne, num lugar só, tudo o que falta — incluindo os
 > dois módulos decididos na mentoria de 21/08. Os documentos 05 e 06 seguem no repositório
 > como registro histórico, mas o status deles está vencido.
+>
+> O **[08-modelo-de-negocio.md](08-modelo-de-negocio.md)** é o par dele: onde o 07 diz de onde
+> partimos, o 08 diz para onde vamos. Ele descreve o produto — tutor que agenda, consentimento
+> do tutor para o veterinário ler o histórico, documentos externos, licença da clínica — e
+> marca, item por item, o que o código já sustenta e o que falta.
 
 Documentação técnica do que já existe: [`../docs/`](../docs/).
 Spec técnica dos módulos novos: [`../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md`](../SPEC_PAINEL_VETERINARIO_E_DADOS_IA.md).
