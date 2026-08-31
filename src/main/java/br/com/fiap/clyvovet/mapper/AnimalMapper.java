@@ -32,6 +32,8 @@ public class AnimalMapper {
         animal.setSexo(request.getSexo());
         animal.setDataNascimento(request.getDataNascimento());
         animal.setObservacao(request.getObservacao());
+        animal.setMicrochip(request.getMicrochip());
+        animal.setCastrado(request.getCastrado());
         animal.setTutor(tutor);
     }
 
@@ -45,6 +47,9 @@ public class AnimalMapper {
         aplicarSePresente(patch.getSexo(), animal::setSexo);
         aplicarSePresente(patch.getDataNascimento(), animal::setDataNascimento);
         aplicarSePresente(patch.getObservacao(), animal::setObservacao);
+        aplicarSePresente(patch.getMicrochip(), animal::setMicrochip);
+        aplicarSePresente(patch.getCastrado(), animal::setCastrado);
+        aplicarSePresente(patch.getResumoDeSegurancaAtivo(), animal::setResumoDeSegurancaAtivo);
         // O tutor ja chega resolvido, ou null quando o patch nao trocou o dono.
         aplicarSePresente(tutor, animal::setTutor);
     }
@@ -62,6 +67,9 @@ public class AnimalMapper {
                 animal.getObservacao(),
                 Referencias.de(animal.getTutor(), Tutor::getId),
                 Referencias.de(animal.getTutor(), Tutor::getNome)
-        );
+        ,
+                animal.getMicrochip(),
+                animal.getCastrado(),
+                animal.getResumoDeSegurancaAtivo());
     }
 }

@@ -19,7 +19,10 @@ class AnimalMapperTest {
 
     private static AnimalRequest request(String nome, UUID tutorId) {
         return new AnimalRequest(nome, "Vira-lata", "CAO", "MEDIO", "Caramelo",
-                SexoAnimal.MACHO, LocalDate.of(2020, 1, 15), "sem observacoes", tutorId);
+                SexoAnimal.MACHO, LocalDate.of(2020, 1, 15), "sem observacoes", tutorId,
+                // microchip e castrado entraram na V6: o chip identifica o
+                // animal no balcao, e a castracao compoe o resumo de seguranca.
+                null, null);
     }
 
     private static Tutor tutor(String nome) {

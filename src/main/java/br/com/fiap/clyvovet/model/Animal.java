@@ -43,4 +43,16 @@ public class Animal {
     /** Compoe o resumo de seguranca. Nulo = nao informado, que nao e o mesmo que nao. */
     @Convert(converter = NumericBooleanConverter.class)
     private Boolean castrado;
+
+    /**
+     * O tutor pode desligar o resumo de seguranca (nivel 1).
+     *
+     * Nasce LIGADO: o valor do resumo esta justamente em estar disponivel na
+     * emergencia, e um opt-in silencioso significaria que quase ninguem o teria
+     * quando precisasse. Mas forcar seria paternalista — o dado e do tutor —,
+     * entao desligar e possivel, com aviso do que se perde.
+     */
+    @Convert(converter = NumericBooleanConverter.class)
+    @Column(name = "resumo_seguranca_ativo")
+    private Boolean resumoDeSegurancaAtivo = Boolean.TRUE;
 }

@@ -56,6 +56,7 @@ public class AgendamentoService {
     private final EventoClinicoMapper eventoClinicoMapper;
     private final AgendaService agendaService;
     private final SegurancaService seguranca;
+    private final AutorizacaoService autorizacaoService;
 
     /**
      * Marca o atendimento. Entrada, decisao, resultado.
@@ -88,7 +89,23 @@ public class AgendamentoService {
         evento.setStatusEvento(StatusEvento.AGENDADO);                    // A11
         evento.setDescricao(servico.getNome());
 
-        return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
+        EventoClinico salvo = eventoClinicoRepository.save(evento);
+
+        // O CONSENTIMENTO E O AGENDAMENTO (spec 08, regras C8 a C11).
+        //
+        // Nao ha endpoint de concessao, e isso e o desenho: o tutor ja esta
+        // decidindo onde atender, e liberar o historico e parte da mesma
+        // escolha. Some um ciclo inteiro de pedir-esperar-aprovar, e com ele
+        // uma tela e uma espera -- sem que a decisao saia das maos do tutor.
+        //
+        // Recusar e permitido e nao impede nada: o atendimento acontece com os
+        // niveis 0 e 1. E o que faz o consentimento ser real em vez de um
+        // pedagio na tela de agendamento.
+        if (request.consentiu()) {
+            autorizacaoService.conceder(animal, servico.getClinica(), salvo);
+        }
+
+        return eventoClinicoMapper.toResponse(salvo);
     }
 
     /**

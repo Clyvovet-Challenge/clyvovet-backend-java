@@ -114,7 +114,12 @@ CREATE TABLE alerta_clinico (
     origem       VARCHAR2(15)  NOT NULL,
     registrado_em DATE         DEFAULT SYSDATE NOT NULL,
     ativo        NUMBER(1)     DEFAULT 1 NOT NULL,
-    CONSTRAINT fk_alerta_animal FOREIGN KEY (animal_id) REFERENCES animal(id),
+    -- ON DELETE CASCADE: estas linhas nao tem vida propria sem o animal.
+    -- Sem isso, DELETE /animais/{id} passaria a falhar em todo animal que
+    -- ja tivesse alerta, autorizacao ou acesso registrado -- e o erro
+    -- chegaria como 409 generico de integridade, sem dizer o que travou.
+    CONSTRAINT fk_alerta_animal FOREIGN KEY (animal_id)
+        REFERENCES animal(id) ON DELETE CASCADE,
     CONSTRAINT chk_alerta_tipo  CHECK (tipo IN
         ('ALERGIA','CONDICAO_CRONICA','MEDICACAO_CONTINUA','CRITICO')),
     -- A origem nao e decoracao: "o tutor disse que tem alergia a dipirona"

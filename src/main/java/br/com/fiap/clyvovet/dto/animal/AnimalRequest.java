@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.dto.animal;
 import br.com.fiap.clyvovet.model.SexoAnimal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,4 +42,18 @@ public class AnimalRequest {
     private String observacao;
     @NotNull
     private UUID tutorId;
+
+    /**
+     * Numero do microchip, padrao ISO 11784/11785.
+     *
+     * Opcional: animal sem chip e comum, e o indice unico do banco ignora
+     * nulos, entao varios convivem. Dois com o MESMO chip, nao -- seriam dois
+     * animais com a mesma identidade no balcao, e o resumo de seguranca do
+     * errado.
+     */
+    @Pattern(regexp = "\\d{15}", message = "Microchip deve ter 15 dígitos")
+    private String microchip;
+
+    /** Compoe o resumo de seguranca. Nulo = nao informado, que nao e o mesmo que nao. */
+    private Boolean castrado;
 }

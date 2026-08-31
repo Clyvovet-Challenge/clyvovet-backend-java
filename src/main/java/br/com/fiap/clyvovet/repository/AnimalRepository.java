@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface AnimalRepository extends RepositorioBase<Animal> {
@@ -32,6 +33,9 @@ public interface AnimalRepository extends RepositorioBase<Animal> {
             @Param("especie") String especie,
             @Param("tutorId") UUID tutorId,
             Pageable pageable);
+
+    /** Identificacao no balcao. O chip diz QUAL animal e; nao autoriza nada. */
+    Optional<Animal> findByMicrochip(String microchip);
 
     default Animal obterPorId(UUID id) {
         return obterPorId(id, Recurso.ANIMAL);

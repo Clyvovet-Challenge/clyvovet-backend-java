@@ -21,6 +21,18 @@ public class RecursoNaoEncontradoException extends RuntimeException {
     }
 
     /**
+     * Versao com mensagem propria, para quando a busca nao foi por id.
+     *
+     * A mensagem padrao termina em "com ID: <uuid>", o que seria enganoso ao
+     * procurar por microchip: o numero informado nao e um id, e ecoa-lo como se
+     * fosse mandaria quem le atras da chave errada.
+     */
+    public RecursoNaoEncontradoException(Recurso recurso, String mensagem) {
+        super(mensagem);
+        this.recurso = recurso;
+    }
+
+    /**
      * Versao para {@code Optional.orElseThrow}, que espera um fornecedor:
      * {@code findById(id).orElseThrow(naoEncontrado(Recurso.ANIMAL, id))}.
      */

@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.dto.animal;
 
 import br.com.fiap.clyvovet.model.SexoAnimal;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -42,6 +43,20 @@ public class AnimalPatchRequest {
     private LocalDate dataNascimento;
 
     // Limite igual ao da coluna, VARCHAR2(1000).
+    @Pattern(regexp = "\\d{15}", message = "Microchip deve ter 15 dígitos")
+    private String microchip;
+
+    private Boolean castrado;
+
+    /**
+     * O interruptor do resumo de seguranca (nivel 1), na mao do tutor.
+     *
+     * Desligar e escolha dele -- o dado e seu --, mas nasce ligado: o valor do
+     * resumo esta justamente em estar disponivel na emergencia, e um opt-in
+     * silencioso significaria que quase ninguem o teria quando precisasse.
+     */
+    private Boolean resumoDeSegurancaAtivo;
+
     @Size(max = 1000)
     private String observacao;
 

@@ -15,6 +15,7 @@ public enum Recurso {
 
     ALERTA_CLINICO("Alerta clínico não encontrado"),
     ANIMAL("Animal não encontrado"),
+    AUTORIZACAO("Autorização não encontrada"),
     BLOQUEIO("Bloqueio não encontrado"),
     CLINICA("Clínica não encontrada"),
     EVENTO_CLINICO("Evento clínico não encontrado"),

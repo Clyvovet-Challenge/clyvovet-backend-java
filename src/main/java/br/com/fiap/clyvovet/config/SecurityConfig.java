@@ -136,6 +136,23 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, api("/eventos-clinicos/marcar-faltas")).hasAnyRole(VETERINARIO, ADMIN)
             .requestMatchers(HttpMethod.GET,  api("/eventos-clinicos/retornos-vencidos")).hasAnyRole(VETERINARIO, ADMIN)
 
+            // --- Historico clinico: os tres niveis ---
+            //
+            // O resumo de seguranca (nivel 1) e alcancado por QUALQUER
+            // veterinario autenticado, sem consentimento e sem vinculo previo --
+            // e o caso do animal que chega numa clinica que nunca o atendeu. O
+            // service confere o perfil; a rota apenas exige autenticacao,
+            // porque e a autenticacao que credencia.
+            //
+            // A quebra de vidro fica restrita ao corpo clinico: um tutor
+            // acionando "emergencia" sobre o pet de outro seria o contrario do
+            // que ela existe para resolver.
+            .requestMatchers(HttpMethod.POST, api("/animais/*/acesso-emergencial"))
+                .hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(api("/animais/resumo", "/animais/*/historico",
+                                 "/animais/*/acessos", "/animais/*/alertas",
+                                 "/alertas/**", "/autorizacoes/**")).authenticated()
+
             // --- Agendamento: e do tutor, e a excecao ao paragrafo abaixo ---
             // O tutor marca a propria consulta (regra A1). O que ele NAO pode e
             // registrar um atendimento como acontecido -- por isso a rota de

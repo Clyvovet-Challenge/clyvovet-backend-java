@@ -116,6 +116,30 @@ public class SegurancaService {
         return usuario != null ? usuario.getTutorId() : null;
     }
 
+    /**
+     * O usuario corrente, ou null.
+     *
+     * Publico porque o HistoricoService precisa resolver NIVEL de acesso, e nao
+     * apenas sim-ou-nao: a pergunta dele nao e "pode?", e "quanto?". Manter a
+     * resolucao de identidade aqui evita que ele leia o SecurityContextHolder
+     * por conta propria e passe a existir uma segunda nocao de "quem esta
+     * logado" no sistema.
+     */
+    public UsuarioAutenticado autenticadoOuNulo() {
+        return autenticado();
+    }
+
+    public UUID usuarioAutenticadoId() {
+        UsuarioAutenticado usuario = autenticado();
+        return usuario != null ? usuario.getId() : null;
+    }
+
+    /** Clinica do veterinario logado. Sustenta a regra C0b — a guarda do proprio registro. */
+    public UUID clinicaDoUsuario() {
+        UsuarioAutenticado usuario = autenticado();
+        return usuario != null ? usuario.getClinicaId() : null;
+    }
+
     private UsuarioAutenticado autenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof UsuarioAutenticado usuario)) {
