@@ -18,11 +18,13 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
     @Query("SELECT e FROM EventoClinico e WHERE " +
             "(:tipoEvento IS NULL OR e.tipoEvento = :tipoEvento) AND " +
             "(:animalNome IS NULL OR LOWER(e.animal.nome) LIKE LOWER(CONCAT('%', :animalNome, '%')) ESCAPE '\\') AND " +
-            "(:tutorId IS NULL OR e.animal.tutor.id = :tutorId)")
+            "(:tutorId IS NULL OR e.animal.tutor.id = :tutorId) AND " +
+            "(:clinicaId IS NULL OR e.clinica.id = :clinicaId)")
     Page<EventoClinico> buscarPorFiltros(
             @Param("tipoEvento") TipoEvento tipoEvento,
             @Param("animalNome") String animalNome,
             @Param("tutorId") UUID tutorId,
+            @Param("clinicaId") UUID clinicaId,
             Pageable pageable);
 
     /**

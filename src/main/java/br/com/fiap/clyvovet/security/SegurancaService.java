@@ -7,7 +7,10 @@ import br.com.fiap.clyvovet.model.Perfil;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
+import br.com.fiap.clyvovet.repository.AutorizacaoAcessoRepository;
 import br.com.fiap.clyvovet.repository.PagamentoRepository;
+
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +36,7 @@ public class SegurancaService {
     private final AnimalRepository animalRepository;
     private final EventoClinicoRepository eventoClinicoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final AutorizacaoAcessoRepository autorizacaoRepository;
 
     /**
      * Id do tutor a usar como filtro nas listagens.
@@ -45,6 +49,22 @@ public class SegurancaService {
             return null;
         }
         return usuario.getTutorId();
+    }
+
+    /**
+     * Clinica a usar como recorte nas listagens de atendimento e pagamento.
+     *
+     * Devolve null para TUTOR (que ja e recortado por tutorIdParaFiltro) e para
+     * ADMIN. Para o veterinario devolve a clinica dele: sem isso,
+     * GET /eventos-clinicos entrega o historico de atendimento de todas as
+     * clinicas da plataforma, inclusive concorrentes.
+     */
+    public UUID clinicaParaFiltro() {
+        UsuarioAutenticado usuario = autenticado();
+        if (usuario == null || usuario.getUsuario().getPerfil() != Perfil.VETERINARIO) {
+            return null;
+        }
+        return usuario.getClinicaId();
     }
 
     public boolean podeAcessarTutor(UUID tutorId) {
@@ -70,19 +90,66 @@ public class SegurancaService {
                 .map(Tutor::getId));
     }
 
+    /**
+     * O atendimento e registro clinico: o veterinario nao alcanca o de qualquer
+     * animal, so o da propria clinica (regra C0b) ou o que o tutor autorizou.
+     *
+     * Diferente de podeAcessarAnimal, que continua liberando todo VETERINARIO:
+     * o CADASTRO do animal e nivel 0, e o profissional precisa dele para
+     * atender. O que muda aqui e o HISTORICO.
+     */
     public boolean podeAcessarEvento(UUID eventoId) {
-        return podeAcessar(() -> eventoClinicoRepository.findById(eventoId)
-                .map(EventoClinico::getAnimal)
-                .map(Animal::getTutor)
-                .map(Tutor::getId));
+        return eventoClinicoRepository.findById(eventoId)
+                .map(this::podeAlcancarOAtendimento)
+                // Recurso inexistente PASSA: a autorizacao nao decide sobre o
+                // que nao existe, e quem responde 404 e o service. Com false
+                // aqui, apagar um evento e busca-lo em seguida devolveria 403 --
+                // o que sugere que ele existe e nao e seu.
+                .orElse(true);
     }
 
     public boolean podeAcessarPagamento(UUID pagamentoId) {
-        return podeAcessar(() -> pagamentoRepository.findById(pagamentoId)
+        return pagamentoRepository.findById(pagamentoId)
                 .map(Pagamento::getEventoClinico)
-                .map(EventoClinico::getAnimal)
-                .map(Animal::getTutor)
-                .map(Tutor::getId));
+                .map(this::podeAlcancarOAtendimento)
+                .orElse(true);   // ver a nota em podeAcessarEvento
+    }
+
+    /**
+     * Tutor dono, ADMIN da plataforma, a clinica onde o atendimento aconteceu,
+     * ou clinica com consentimento vigente sobre aquele animal.
+     */
+    private boolean podeAlcancarOAtendimento(EventoClinico evento) {
+        if (evento == null) {
+            return false;
+        }
+        UsuarioAutenticado usuario = autenticado();
+        if (usuario == null) {
+            return false;
+        }
+        if (usuario.getUsuario().getPerfil() == Perfil.ADMIN) {
+            return true;
+        }
+
+        UUID meuTutorId = usuario.getTutorId();
+        if (meuTutorId != null) {
+            return evento.getAnimal() != null && evento.getAnimal().getTutor() != null
+                    && meuTutorId.equals(evento.getAnimal().getTutor().getId());
+        }
+
+        UUID minhaClinica = usuario.getClinicaId();
+        if (minhaClinica == null) {
+            return false;
+        }
+        // C0b: a clinica sempre ve o que foi realizado nela.
+        if (evento.getClinica() != null && minhaClinica.equals(evento.getClinica().getId())) {
+            return true;
+        }
+        // Fora dela, so com consentimento do tutor.
+        return evento.getAnimal() != null
+                && autorizacaoRepository.findByAnimalIdAndClinicaId(evento.getAnimal().getId(), minhaClinica)
+                        .filter(a -> a.vigenteEm(LocalDate.now()))
+                        .isPresent();
     }
 
     /**

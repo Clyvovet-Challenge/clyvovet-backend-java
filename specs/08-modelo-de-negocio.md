@@ -19,16 +19,14 @@ ser concedido no agendamento (Partes 5 e 6).
 > | 4 — documentos | ❌ depende de storage no Azure | — |
 > | 5 — planos e painel | ❌ depende de 4 | — |
 >
-> **O que ficou fora da onda 3, e por quê.** A ruptura B1 — inverter `temVisaoAmpla()` para as
-> rotas **já existentes** (`GET /eventos-clinicos`, `podeAcessarEvento`, `podeAcessarPagamento`)
-> — não foi feita. O acesso em três níveis está implementado e testado no **objeto novo**
-> (`GET /animais/{id}/historico` e `GET /animais/resumo`), que é onde o dado sensível de fato
-> mora e é o que sustenta a conversa com Compliance.
+> **A ruptura B1 foi feita em 31/08/2026**, em commit próprio, como a
+> [Parte 12](#12--sequenciamento) recomendava. O veterinário deixou de enxergar a base inteira:
+> `GET /eventos-clinicos` é recortado pela clínica dele, e `podeAcessarEvento` /
+> `podeAcessarPagamento` exigem a própria clínica (C0b) ou consentimento vigente.
 >
-> Retrofitar as listagens antigas muda a semântica de endpoints dos quais a suíte inteira
-> depende e merece commit próprio, com a reescrita das expectativas antes da mudança — que é
-> exatamente a mitigação recomendada na [Parte 12](#12--sequenciamento). Fazer as duas coisas
-> no mesmo commit era o cenário de suíte vermelha de origem ambígua.
+> **A linha que separou as duas coisas:** o *cadastro* do animal continua acessível — é nível 0,
+> e o profissional precisa dele para atender um paciente que chega pela primeira vez. O
+> *atendimento* é registro clínico e passou a ser recortado.
 >
 > **Dois defeitos de integridade encontrados ao implementar**, ambos corrigidos: a FK
 > `origem_evento_id` bloqueava a remoção de eventos (virou `ON DELETE SET NULL` — o

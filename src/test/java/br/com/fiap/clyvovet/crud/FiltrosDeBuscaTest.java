@@ -117,11 +117,18 @@ class FiltrosDeBuscaTest extends TesteDeApi {
         String veterinaria = tokenVeterinaria();
         int total = totalDe(buscar("/api/v1/eventos-clinicos", veterinaria));
 
+        // Desde a inversao do acesso, a veterinaria ve so os atendimentos da
+        // propria clinica -- e nesse recorte um filtro pode alcancar TODAS as
+        // linhas visiveis. O que o filtro precisa provar e que ele recorta, e
+        // nao que sobra alguma coisa de fora dele.
         int doBolinha = totalDe(buscar("/api/v1/eventos-clinicos?animalNome=Bolinha", veterinaria));
-        assertThat(doBolinha).isPositive().isLessThan(total);
+        assertThat(doBolinha).isPositive().isLessThanOrEqualTo(total);
 
         int consultas = totalDe(buscar("/api/v1/eventos-clinicos?tipoEvento=CONSULTA", veterinaria));
-        assertThat(consultas).isPositive().isLessThan(total);
+        assertThat(consultas).isPositive().isLessThanOrEqualTo(total);
+
+        int inexistente = totalDe(buscar("/api/v1/eventos-clinicos?animalNome=NaoExiste", veterinaria));
+        assertThat(inexistente).isZero();
     }
 
     @Test

@@ -110,12 +110,19 @@ class OwnershipTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("veterinario enxerga a base inteira")
-    void veterinarioEnxergaTudo() throws Exception {
+    @DisplayName("veterinario alcanca o cadastro de qualquer animal, mas nao o historico de qualquer clinica")
+    void veterinarioAlcancaOCadastroMasNaoOHistorico() throws Exception {
         String veterinaria = tokenVeterinaria();
 
+        // O CADASTRO do animal e nivel 0: o profissional precisa dele para
+        // atender, inclusive um paciente que chega pela primeira vez.
         assertThat(totalDe(listarAnimais(veterinaria))).isEqualTo(6);
         buscar("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA, veterinaria).andExpect(status().isOk());
+
+        // O ATENDIMENTO e registro clinico, e so alcanca o da propria clinica
+        // ou o que o tutor autorizou.
+        assertThat(totalDe(buscar("/api/v1/eventos-clinicos", veterinaria)))
+                .isLessThan(11);
     }
 
     @Test
@@ -134,7 +141,10 @@ class OwnershipTest extends TesteDeApi {
         int totalVet = totalDe(buscar("/api/v1/eventos-clinicos", tokenVeterinaria()).andExpect(status().isOk()));
 
         assertThat(totalLucas).isEqualTo(6);   // apenas os eventos do Bolinha
-        assertThat(totalVet).isEqualTo(11);    // todos
-        assertThat(totalLucas).isLessThan(totalVet);
+        // O veterinario ve os 6 atendimentos da VetCare, e nao os 11 da
+        // plataforma. Antes da inversao do acesso ele via todos, inclusive os de
+        // clinicas concorrentes -- o historico de atendimento de quem nao e
+        // paciente dele.
+        assertThat(totalVet).isEqualTo(6);
     }
 }

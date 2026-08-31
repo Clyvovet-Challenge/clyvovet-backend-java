@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoPatchRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
+import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
 import br.com.fiap.clyvovet.mapper.RelacionamentosDoEvento;
 import br.com.fiap.clyvovet.model.EventoClinico;
@@ -38,9 +39,14 @@ public class EventoClinicoService {
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
     @Cacheable(value = "eventos",
-            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
+            // A clinica entra na chave junto com o tutor. Sem ela, a pagina montada
+            // para um veterinario seria servida ao de outra clinica na mesma
+            // consulta -- o recorte existiria na query e vazaria pelo cache.
+            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.tutorIdParaFiltro()"
+                    + " + '-' + @seguranca.clinicaParaFiltro() + '-' + #pageable")
     public Page<EventoClinicoResponse> listarTodos(TipoEvento tipoEvento, String animalNome, Pageable pageable) {
-        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome, seguranca.tutorIdParaFiltro(), pageable)
+        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome,
+                        seguranca.tutorIdParaFiltro(), seguranca.clinicaParaFiltro(), pageable)
                 .map(eventoClinicoMapper::toResponse);
     }
 
@@ -51,6 +57,7 @@ public class EventoClinicoService {
     @Transactional
     @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public EventoClinicoResponse criar(EventoClinicoRequest request) {
+        garantirQueEDaPropriaClinica(request.getClinicaId());
         EventoClinico evento = eventoClinicoMapper.toEntity(request, resolverRelacionamentos(request));
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
@@ -82,6 +89,25 @@ public class EventoClinicoService {
      * Criar e atualizar precisam das mesmas tres entidades, com a mesma regra de
      * "existe ou 404". Estava escrito duas vezes, doze linhas cada.
      */
+    /**
+     * O veterinario registra atendimento na clinica onde trabalha.
+     *
+     * Sem isso ele podia criar um evento numa clinica qualquer e, desde a
+     * inversao do acesso (B1), ficar sem conseguir le-lo em seguida — criava e
+     * perdia. E o espelho da regra A3 do agendamento, que ja exigia o
+     * veterinario pertencer a clinica do servico.
+     *
+     * O ADMIN da plataforma passa: e ele quem corrige registro de qualquer
+     * clinica.
+     */
+    private void garantirQueEDaPropriaClinica(UUID clinicaId) {
+        UUID minhaClinica = seguranca.clinicaParaFiltro();
+        if (minhaClinica != null && !minhaClinica.equals(clinicaId)) {
+            throw new RegraDeNegocioException("clinicaId",
+                    "O atendimento precisa ser registrado na clínica onde o veterinário atende");
+        }
+    }
+
     private RelacionamentosDoEvento resolverRelacionamentos(EventoClinicoRequest request) {
         return new RelacionamentosDoEvento(
                 veterinarioRepository.obterPorId(request.getVeterinarioId()),

@@ -72,7 +72,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
         for (String horaInvalida : new String[]{"14:30:00", "", "25:00", "9:00", "manha"}) {
             criar("/api/v1/eventos-clinicos", vet,
                     EVENTO.formatted(horaInvalida, SeedV2.VET_CAMILA,
-                            SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_PETMED))
+                            SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -85,7 +85,7 @@ class ValidacaoDeEntradaTest extends TesteDeApi {
         for (String horaValida : new String[]{"00:00", "23:59"}) {
             String id = corpoDe(criar("/api/v1/eventos-clinicos", vet,
                     EVENTO.formatted(horaValida, SeedV2.VET_CAMILA,
-                            SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_PETMED))
+                            SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE))
                     .andExpect(status().isCreated())).get("id").asText();
             removerDepois("/api/v1/eventos-clinicos/" + id);
         }

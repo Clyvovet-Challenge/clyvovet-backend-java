@@ -33,9 +33,12 @@ public class PagamentoService {
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
     @Cacheable(value = "pagamentos",
-            key = "#statusPagamento + '-' + #formaPagamento + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
+            // Ver a nota sobre a clinica na chave em EventoClinicoService.
+            key = "#statusPagamento + '-' + #formaPagamento + '-' + @seguranca.tutorIdParaFiltro()"
+                    + " + '-' + @seguranca.clinicaParaFiltro() + '-' + #pageable")
     public Page<PagamentoResponse> listarTodos(StatusPagamento statusPagamento, FormaPagamento formaPagamento, Pageable pageable) {
-        return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento, seguranca.tutorIdParaFiltro(), pageable)
+        return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento,
+                        seguranca.tutorIdParaFiltro(), seguranca.clinicaParaFiltro(), pageable)
                 .map(pagamentoMapper::toResponse);
     }
 

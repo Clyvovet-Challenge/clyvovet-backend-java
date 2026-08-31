@@ -44,7 +44,7 @@ class AtendimentoCrudTest extends TesteDeApi {
     private String eventoDeTeste(String token, String animalId) throws Exception {
         String id = corpoDe(criar("/api/v1/eventos-clinicos", token,
                 EVENTO.formatted("14:30", "Consulta de rotina", "CONSULTA",
-                        SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_PETMED))
+                        SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isCreated())).get("id").asText();
         removerDepois("/api/v1/eventos-clinicos/" + id);
         return id;
@@ -116,7 +116,7 @@ class AtendimentoCrudTest extends TesteDeApi {
 
         JsonNode criado = corpoDe(criar("/api/v1/eventos-clinicos", vet,
                 EVENTO.formatted("14:30", "Consulta de rotina", "CONSULTA",
-                        SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_PETMED))
+                        SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
         removerDepois("/api/v1/eventos-clinicos/" + id);
@@ -125,7 +125,10 @@ class AtendimentoCrudTest extends TesteDeApi {
         assertThat(criado.get("tipoEvento").asText()).isEqualTo("CONSULTA");
         assertThat(criado.get("animalNome").asText()).isEqualTo("Pipoca");
         assertThat(criado.get("veterinarioNome").asText()).isEqualTo("Camila Ferreira");
-        assertThat(criado.get("clinicaNome").asText()).isEqualTo("PetMed Centro");
+        // A Camila atende na VetCare. Registrar em outra clinica e recusado
+        // desde a inversao do acesso: ela criaria um evento que nao conseguiria
+        // ler em seguida.
+        assertThat(criado.get("clinicaNome").asText()).isEqualTo("VetCare Prime");
 
         buscar("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isOk());
 
@@ -147,7 +150,7 @@ class AtendimentoCrudTest extends TesteDeApi {
     void eventoComAnimalInexistenteResponde404() throws Exception {
         criar("/api/v1/eventos-clinicos", tokenVeterinaria(),
                 EVENTO.formatted("14:30", "Consulta", "CONSULTA",
-                        SeedV2.VET_CAMILA, SeedV2.ID_INEXISTENTE, SeedV2.CLINICA_PETMED))
+                        SeedV2.VET_CAMILA, SeedV2.ID_INEXISTENTE, SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isNotFound());
     }
 
