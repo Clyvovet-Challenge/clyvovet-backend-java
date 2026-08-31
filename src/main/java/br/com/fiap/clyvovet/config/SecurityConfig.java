@@ -136,6 +136,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, api("/eventos-clinicos/marcar-faltas")).hasAnyRole(VETERINARIO, ADMIN)
             .requestMatchers(HttpMethod.GET,  api("/eventos-clinicos/retornos-vencidos")).hasAnyRole(VETERINARIO, ADMIN)
 
+            // --- Revisao de tetos: so o administrador da plataforma ---
+            // A lista diz quais profissionais leram muitos prontuarios e quem
+            // aciona quebra de vidro com frequencia. Nas maos do corpo clinico
+            // ela seria o proprio mapa de como nao ser notado.
+            .requestMatchers(api("/auditoria/**")).hasRole(ADMIN)
+
             // --- Historico clinico: os tres niveis ---
             //
             // O resumo de seguranca (nivel 1) e alcancado por QUALQUER

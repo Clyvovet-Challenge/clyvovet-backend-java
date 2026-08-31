@@ -59,6 +59,20 @@ public class GlobalExceptionHandler {
      * o nome da constraint na resposta — o que expoe a estrutura interna. Por
      * isso a causa vai para o log, e nao para o cliente.
      */
+    /**
+     * Teto de leitura do historico clinico atingido.
+     *
+     * 429, e nao 403, de proposito: 403 diria "voce nao pode ver isto", o que e
+     * falso -- o veterinario podia, e ate agora vinha podendo. O que aconteceu
+     * foi um limite de VOLUME, e a distincao muda o que quem recebe faz a
+     * seguir.
+     */
+    @ExceptionHandler(LimiteDeAcessoExcedidoException.class)
+    public ResponseEntity<ErroValidacao> handleLimiteDeAcesso(LimiteDeAcessoExcedidoException ex) {
+        log.warn("Teto de acesso ao historico atingido: {}", ex.getMessage());
+        return respostaDe(HttpStatus.TOO_MANY_REQUESTS, ex.getCampo(), ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErroValidacao> handleIntegridade(DataIntegrityViolationException ex) {
         log.warn("Violacao de integridade ao gravar", ex);

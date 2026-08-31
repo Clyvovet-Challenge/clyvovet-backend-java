@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.historico.*;
 import br.com.fiap.clyvovet.exception.RecursoNaoEncontradoException;
 import br.com.fiap.clyvovet.exception.Recurso;
+import br.com.fiap.clyvovet.exception.LimiteDeAcessoExcedidoException;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.model.*;
 import br.com.fiap.clyvovet.repository.*;
@@ -44,6 +45,39 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class HistoricoService {
 
+    /**
+     * OS DOIS TETOS DA REGRA C6 — e por que sao dois, e nao um.
+     *
+     * TETO_DE_ALERTA e o volume clinico plausivel de um dia cheio. Passar dele
+     * nao bloqueia: sinaliza. Um plantao de feriado, um mutirao de castracao ou
+     * um surto de parvovirose produzem picos legitimos, e travar o profissional
+     * no meio deles seria transformar uma medida de privacidade em risco ao
+     * paciente.
+     *
+     * TETO_ABSOLUTO e o volume que nenhuma jornada clinica alcanca. Passar dele
+     * bloqueia, porque a essa altura ja nao ha leitura de boa-fe a proteger.
+     *
+     * Um teto so obrigaria a escolher entre bloquear cedo demais (e atrapalhar
+     * atendimento) ou tarde demais (e nao proteger ninguem).
+     */
+    private static final int TETO_DE_ALERTA_POR_DIA = 30;
+    private static final int TETO_ABSOLUTO_POR_DIA = 150;
+
+    /**
+     * O teto da regra C22 — quebra de vidro.
+     *
+     * ELE NUNCA BLOQUEIA, e essa e a decisao mais importante deste arquivo.
+     * Quebra de vidro e o caminho do animal que chega atropelado, sem
+     * agendamento e sem o tutor por perto. Bloquear no limite significaria que,
+     * em algum atendimento, o veterinario abriria a tela e receberia um 429 no
+     * lugar do historico — e a conta desse erro e paga pelo paciente, nao pelo
+     * atacante.
+     *
+     * O controle e outro: o acesso passa, e o alarme sobe. Auditoria depois do
+     * fato e a resposta certa para excecao de emergencia; bloqueio nao e.
+     */
+    private static final int QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR = 5;
+
     private final AnimalRepository animalRepository;
     private final EventoClinicoRepository eventoClinicoRepository;
     private final AlertaClinicoRepository alertaRepository;
@@ -67,6 +101,7 @@ public class HistoricoService {
 
         garantirQueEVeterinario();
         garantirQueOResumoEstaLigado(animal);
+        aplicarTetoDiario(animal);                                     // C6
 
         registrarAcesso(animal, NivelAcesso.RESUMO_DE_SEGURANCA, false, null);
         return montarResumo(animal);
@@ -116,6 +151,7 @@ public class HistoricoService {
         log.warn("QUEBRA DE VIDRO: usuario {} acessou o historico do animal {} sem consentimento. Motivo: {}",
                 seguranca.usuarioAutenticadoId(), animalId, motivo);
         notificarTutor(animal, "Acesso emergencial ao histórico de " + animal.getNome());
+        alarmarSeQuebraDeVidroVirouRotina();                           // C22
 
         return montarHistorico(animal, NivelAcesso.COMPLETO);
     }
@@ -296,6 +332,71 @@ public class HistoricoService {
     }
 
     // ------------------------------------------------------------------
+
+    /**
+     * O teto de leitura do nivel 1 (regra C6).
+     *
+     * Conta ANIMAIS DISTINTOS no dia, nao requisicoes — a tabela de auditoria ja
+     * agrega por (usuario, animal, dia), entao a contagem de linhas e exatamente
+     * a metrica certa e sai de graca. Reabrir o mesmo prontuario nao consome
+     * teto; e o que separa este controle do rate limit por IP, que protege a
+     * infraestrutura contra rajada e nao sabe nada sobre pacientes.
+     *
+     * O animal ja consultado hoje nao entra na conta de novo: sem isso, um
+     * atendimento longo com varias consultas ao resumo poderia esbarrar no teto
+     * sem que nenhum paciente novo tivesse sido aberto.
+     */
+    private void aplicarTetoDiario(Animal animal) {
+        UUID usuarioId = seguranca.usuarioAutenticadoId();
+        if (usuarioId == null) {
+            return;
+        }
+        LocalDate hoje = LocalDate.now();
+
+        boolean jaConsultouEsteAnimalHoje = acessoRepository
+                .findByAnimalIdAndUsuarioIdAndDiaAndEmergencial(animal.getId(), usuarioId, hoje, false)
+                .isPresent();
+        if (jaConsultouEsteAnimalHoje) {
+            return;
+        }
+
+        long animaisHoje = acessoRepository.countByUsuarioIdAndDiaAndEmergencial(usuarioId, hoje, false);
+
+        if (animaisHoje >= TETO_ABSOLUTO_POR_DIA) {
+            log.error("COLETA EM MASSA BLOQUEADA: usuario {} tentou o {}o animal distinto hoje",
+                    usuarioId, animaisHoje + 1);
+            throw new LimiteDeAcessoExcedidoException("microchip",
+                    "Limite diário de consultas ao resumo de segurança atingido. "
+                            + "Procure o administrador da plataforma");
+        }
+        if (animaisHoje == TETO_DE_ALERTA_POR_DIA) {
+            // Uma vez, na travessia do limiar — e nao a cada consulta acima
+            // dele. Repetir transformaria o alerta em ruido, e ruido nao e lido.
+            log.warn("VOLUME ATIPICO: usuario {} passou de {} animais distintos hoje. "
+                            + "Visivel em GET /auditoria/excessos",
+                    usuarioId, TETO_DE_ALERTA_POR_DIA);
+        }
+    }
+
+    /**
+     * A quebra de vidro que virou rotina (regra C22).
+     *
+     * Alarma; nao bloqueia. Ver a nota em QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR.
+     */
+    private void alarmarSeQuebraDeVidroVirouRotina() {
+        UUID usuarioId = seguranca.usuarioAutenticadoId();
+        if (usuarioId == null) {
+            return;
+        }
+        long noMes = acessoRepository.countByUsuarioIdAndEmergencialTrueAndDiaGreaterThanEqual(
+                usuarioId, LocalDate.now().minusMonths(1));
+
+        if (noMes > QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR) {
+            log.error("QUEBRA DE VIDRO RECORRENTE: usuario {} acionou {} vezes em 30 dias. "
+                            + "Excecao virou rotina — revisar",
+                    usuarioId, noMes);
+        }
+    }
 
     private void garantirQueEVeterinario() {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();

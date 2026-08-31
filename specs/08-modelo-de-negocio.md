@@ -301,7 +301,7 @@ Valem em qualquer nível e não dependem de consentimento.
 | **C3** | O conteúdo é **derivado**, nunca digitado à parte: alertas ativos, vacinas dos eventos, último `peso_kg`, castração. Resumo mantido à mão envelhece e mata |
 | **C4** | **Todo acesso de nível 1 notifica o tutor** no momento em que acontece, com o nome do veterinário e da clínica |
 | **C5** | O tutor pode desligar o nível 1, com aviso explícito do que perde. Nasce **ligado** |
-| **C6** | Teto de consultas por veterinário e por dia. Quem passa do teto é sinalizado ao admin da plataforma — leitura em massa é coleta, não atendimento |
+| **C6** | **Dois** tetos diários, contando **animais distintos** e não requisições: alerta em 30 (só sinaliza) e bloqueio em 150. Reabrir o mesmo prontuário não consome teto |
 | **C7** | O nível 1 **não** expõe CPF, endereço, histórico de eventos, documentos nem valores. Só telefone de emergência |
 
 > **Por que o microchip não é chave.** Ele está impresso na carteira de vacinação e no contrato
@@ -371,7 +371,7 @@ importa é "a Dra. Camila leu o histórico do Thor em 12/09", não quantas vezes
 | # | Regra |
 |---|---|
 | **C21** | Emergência sem agendamento e sem consentimento acessa o **nível 2** com: motivo obrigatório, janela de **12 horas**, vínculo com a clínica do veterinário, notificação imediata ao tutor e marcação destacada na auditoria |
-| **C22** | Teto por veterinário e por período. Acionar com frequência é sinalizado ao admin da plataforma |
+| **C22** | **Nunca bloqueia.** Toda quebra de vidro entra na lista de revisão do admin; acima de 5 em 30 dias, alarme no log. Travar o acesso numa emergência cobraria a conta do paciente, não de quem abusa |
 
 Com os três níveis, a quebra de vidro cobre um vão bem menor — o nível 1 já resolve a maior
 parte da urgência clínica. Por isso ela pode ser apertada sem travar o atendimento.
@@ -398,6 +398,8 @@ GET   /api/v1/autorizacoes/minhas
 POST  /api/v1/autorizacoes/{id}/revogar
 POST  /api/v1/animais/{id}/alertas                 { tipo, descricao }
 POST  /api/v1/animais/{id}/acesso-emergencial      { motivo }           (C21)
+GET   /api/v1/auditoria/excessos                   ?dias=              (C6,  só ADMIN)
+GET   /api/v1/auditoria/quebras-de-vidro           ?dias=              (C22, só ADMIN)
 POST  /api/v1/animais/{id}/correcoes               { campo, valorSugerido }
 PATCH /api/v1/correcoes/{id}                       { decisao }
 ```
