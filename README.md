@@ -113,6 +113,148 @@ cache, cuja chave inclui o `tutorId`.
 
 ---
 
+## Funcionalidades
+
+São **74 endpoints** em 14 controllers. O que os separa não é o volume: **42 são
+CRUD** sobre seis recursos, e os outros **32 são regra de negócio** — fluxos que
+consultam o estado do domínio e recusam com um motivo.
+
+A regra do Challenge é explícita sobre isso: *"a implementação apenas de operações
+de CRUD não será considerada suficiente"*. A Sprint 3 pede dois fluxos completos;
+existem quatro.
+
+### CRUD e autenticação
+
+Seis recursos de domínio — **tutores, animais, clínicas, veterinários, eventos
+clínicos e pagamentos** — com listagem paginada e dois filtros cada, busca por id,
+POST, PUT, PATCH e DELETE.
+
+Autenticação por **JWT**: access de 15 min, refresh de 7 dias com revogação,
+lockout de conta após tentativas falhas e rate limit por IP.
+
+### Os quatro fluxos de negócio
+
+#### 1. Agendamento pelo tutor
+
+O tutor era o único perfil que **não** podia criar atendimento. Agora ele marca a
+própria consulta — e o sistema decide se pode.
+
+```
+GET  /api/v1/agendamentos/vagas          vagas livres no período
+POST /api/v1/agendamentos                marca a consulta
+POST /api/v1/agendamentos/{id}/cancelar  motivo obrigatório
+GET  /api/v1/agendamentos/meus
+```
+
+Entre a entrada e a gravação há uma decisão que atravessa **sete entidades**: o
+serviço está ativo? o veterinário atende nessa clínica? há antecedência mínima? o
+horário cai na grade? colide com bloqueio? colide com outro atendimento? O evento
+nasce `AGENDADO`, com o preço vindo do catálogo.
+
+A busca de vagas devolve o que **pode** ser marcado, já descontando grade,
+bloqueio e colisão — é a consulta que um calendário consome.
+
+#### 2. Retorno e falta
+
+Responde ao tema do Challenge — continuidade do cuidado. O modelo episódico
+registra que a consulta aconteceu; este fluxo registra que ela **devia ter tido
+sequência e não teve**.
+
+```
+POST /api/v1/eventos-clinicos/{id}/concluir      peso, desfecho, retorno previsto
+POST /api/v1/eventos-clinicos/{id}/retorno       ligado à consulta de origem
+GET  /api/v1/eventos-clinicos/retornos-vencidos  os pets que sumiram
+POST /api/v1/eventos-clinicos/marcar-faltas      varredura
+```
+
+A conclusão é o **único** caminho para `REALIZADO` — o status não é editável por
+PATCH, senão um `{"statusEvento":"REALIZADO"}` marcaria como feito um atendimento
+futuro. Variação de peso acima de 20% volta como **aviso na resposta**, nunca como
+bloqueio: um filhote que sai de 2 kg para 3 kg está saudável, e quem distingue é o
+veterinário.
+
+A lista de vencidos traz nome e telefone do tutor porque ela existe para virar
+ligação.
+
+#### 3. Histórico clínico em três níveis
+
+O acesso ao prontuário deixou de ser tudo-ou-nada.
+
+| Nível | Quem alcança | O que vê |
+|---|---|---|
+| **0** operacional | quem tem agendamento | nome, espécie, raça, porte, idade |
+| **1** resumo de segurança | qualquer veterinário autenticado | alergias, condições crônicas, medicação contínua, vacinas, último peso, contato |
+| **2** histórico completo | só com consentimento do tutor | linha do tempo, laudos, desfechos, dados do tutor |
+
+```
+GET  /api/v1/animais/resumo?microchip=          nível 1
+GET  /api/v1/animais/{id}/historico             nível conforme o solicitante
+POST /api/v1/animais/{id}/acesso-emergencial    quebra de vidro
+GET  /api/v1/animais/{id}/acessos               quem leu, e quando
+GET  /api/v1/autorizacoes/minhas
+POST /api/v1/autorizacoes/{id}/revogar
+POST /api/v1/animais/{id}/alertas
+```
+
+**O microchip identifica; nunca autoriza.** Ele está impresso na carteira de
+vacinação e qualquer leitor de pet shop o lê — quem credencia o nível 1 é a
+autenticação do veterinário.
+
+O consentimento do nível 2 nasce **no próprio agendamento**, sem ciclo de pedir e
+aprovar, e vale 2 anos após o último atendimento naquela clínica: quem continua
+indo mantém, quem parou de ir expira sozinho. Toda leitura é registrada — uma
+linha por profissional, por dia — e o tutor revoga quando quiser.
+
+A **quebra de vidro** existe porque o consentimento nasce no agendamento: todo
+atendimento sem agendamento ficaria sem caminho. Ela nunca é bloqueada — travar
+numa emergência cobraria a conta do paciente —, mas exige motivo, avisa o tutor na
+hora e entra destacada na auditoria.
+
+#### 4. Cobrança
+
+Máquina de estados, e não campo editável.
+
+```
+POST /api/v1/pagamentos/{id}/confirmar     PENDENTE -> PAGO
+POST /api/v1/pagamentos/{id}/estornar      PAGO -> REEMBOLSADO
+GET  /api/v1/eventos-clinicos/{id}/saldo
+GET  /api/v1/pagamentos/inadimplencia
+GET  /api/v1/tutores/{id}/extrato
+```
+
+`CANCELADO` e `REEMBOLSADO` são terminais, e nada volta para `PENDENTE`. O estorno
+é o único jeito de desfazer um pagamento: `DELETE` apagaria a receita do histórico.
+A soma dos pagamentos confirmados não passa do preço do serviço, e o parcial é
+permitido — parcelamento é comum em cirurgia.
+
+### O que sustenta os fluxos
+
+**Catálogo e agenda** respondem às duas perguntas que o agendamento precisa fazer:
+
+```
+GET    /api/v1/clinicas/{id}/servicos      o que a clínica oferece
+POST   /api/v1/servicos                    preço e duração
+GET    /api/v1/veterinarios/{id}/disponibilidades
+POST   /api/v1/disponibilidades            grade semanal
+POST   /api/v1/bloqueios                   férias, folga, almoço
+```
+
+O **preço do serviço** é de onde sai o valor do atendimento — é contra ele que a
+cobrança compara o recebido. A **duração** define o tamanho da vaga na agenda.
+
+**Auditoria**, restrita ao administrador da plataforma:
+
+```
+GET /api/v1/auditoria/excessos           quem leu muitos prontuários num dia
+GET /api/v1/auditoria/quebras-de-vidro   toda ocorrência entra na lista
+```
+
+Os tetos contam **animais distintos por profissional por dia**, não requisições:
+reabrir o mesmo prontuário não consome teto. É o que separa atendimento de coleta,
+e o que o rate limit por IP não sabe fazer.
+
+---
+
 ## Endpoints
 
 ### Autenticação — `/api/v1/auth`
@@ -122,7 +264,7 @@ cache, cuja chave inclui o `tutorId`.
 | POST | `/api/v1/auth/login` | público |
 | POST | `/api/v1/auth/refresh` | público |
 | POST | `/api/v1/auth/logout` | público |
-| POST | `/api/v1/auth/registrar` | público — o perfil é sempre TUTOR |
+| POST | `/api/v1/auth/registrar` | público — exige `nome`; o perfil é sempre TUTOR e o registro de tutor é criado junto |
 | POST | `/api/v1/auth/usuarios` | ADMIN — cria com perfil arbitrário |
 | GET | `/api/v1/auth/me` | autenticado |
 
@@ -174,15 +316,64 @@ curl -X PATCH http://localhost:8080/api/v1/clinicas/{id} \
 
 Um campo omitido não é apagado: para limpar um campo opcional, use PUT.
 
+### Fluxos de negócio
+
+| Método | Rota | Acesso |
+|---|---|---|
+| GET | `/agendamentos/vagas` | autenticado |
+| POST | `/agendamentos` | tutor do animal, ou corpo clínico |
+| POST | `/agendamentos/{id}/cancelar` | quem alcança o evento |
+| GET | `/agendamentos/meus` | TUTOR |
+| POST | `/eventos-clinicos/{id}/concluir` | VETERINARIO, ADMIN |
+| POST | `/eventos-clinicos/{id}/retorno` | VETERINARIO, ADMIN |
+| GET | `/eventos-clinicos/retornos-vencidos` | VETERINARIO, ADMIN |
+| POST | `/eventos-clinicos/marcar-faltas` | VETERINARIO, ADMIN |
+| GET | `/animais/resumo?microchip=` | VETERINARIO |
+| GET | `/animais/{id}/historico` | nível conforme o solicitante |
+| POST | `/animais/{id}/acesso-emergencial` | VETERINARIO, ADMIN |
+| GET | `/animais/{id}/acessos` | tutor dono, ADMIN |
+| POST | `/animais/{id}/alertas` | tutor dono, corpo clínico |
+| DELETE | `/alertas/{id}` | quem alcança o animal |
+| GET | `/autorizacoes/minhas` | TUTOR |
+| POST | `/autorizacoes/{id}/revogar` | tutor dono |
+| POST | `/pagamentos/{id}/confirmar` | VETERINARIO, ADMIN |
+| POST | `/pagamentos/{id}/estornar` | VETERINARIO, ADMIN |
+| GET | `/eventos-clinicos/{id}/saldo` | quem alcança o evento |
+| GET | `/pagamentos/inadimplencia` | VETERINARIO, ADMIN |
+| GET | `/tutores/{id}/extrato` | tutor dono, corpo clínico |
+
+### Catálogo, agenda e auditoria
+
+| Método | Rota | Acesso |
+|---|---|---|
+| GET | `/clinicas/{id}/servicos` | autenticado |
+| POST · PUT · DELETE | `/servicos` · `/servicos/{id}` | ADMIN |
+| GET | `/veterinarios/{id}/disponibilidades` | autenticado |
+| POST · DELETE | `/disponibilidades` · `/{id}` | o próprio veterinário, ou ADMIN |
+| POST · DELETE | `/bloqueios` · `/{id}` | o próprio veterinário, ou ADMIN |
+| GET | `/auditoria/excessos` | ADMIN |
+| GET | `/auditoria/quebras-de-vidro` | ADMIN |
+
 ### Quem pode o quê
 
 | Operação | TUTOR | VETERINARIO | ADMIN |
 |---|:---:|:---:|:---:|
-| Ler animais | só os próprios | ✅ | ✅ |
+| Ler o **cadastro** de animais | só os próprios | ✅ | ✅ |
 | Criar e editar animais | só os próprios | ✅ | ✅ |
+| Ler **atendimentos e pagamentos** | só os próprios | só da própria clínica, ou com consentimento | ✅ |
+| Marcar consulta | só para os próprios pets | ✅ | ✅ |
+| Concluir atendimento e registrar retorno | — | ✅ | ✅ |
 | Listar e criar tutores | — | ✅ | ✅ |
 | Criar e editar eventos e pagamentos | — | ✅ | ✅ |
-| Criar e editar clínicas e veterinários | — | — | ✅ |
+| Resumo de segurança pelo microchip | — | ✅ | ✅ |
+| Histórico completo de um animal | só os próprios | só com consentimento | ✅ |
+| Criar e editar clínicas, veterinários e serviços | — | — | ✅ |
+| Auditoria de acesso | — | — | ✅ |
+
+> **O veterinário não enxerga a base inteira.** O *cadastro* do animal continua
+> acessível — é o que ele precisa para atender um paciente que chega pela primeira
+> vez. O *atendimento* é registro clínico: alcança o da própria clínica, ou o que o
+> tutor autorizou.
 
 Contratos completos, códigos de status e exemplos de payload estão em
 [`docs/03-api-rest.md`](docs/03-api-rest.md). A matriz de autorização detalhada está
@@ -198,6 +389,12 @@ em [`docs/08-seguranca.md`](docs/08-seguranca.md).
 | `sexo` (tutor, veterinário) | `MASCULINO` `FEMININO` `OUTRO` |
 | `sexo` (animal) | `MACHO` `FEMEA` `DESCONHECIDO` |
 | `porte` | `PEQUENO` `MEDIO` `GRANDE` |
+| `statusEvento` | `AGENDADO` `REALIZADO` `FALTOU` `CANCELADO` |
+| `desfecho` | `MELHORA` `ESTAVEL` `PIORA` `OBITO` `INDEFINIDO` |
+| `tipo` (alerta clínico) | `ALERGIA` `CONDICAO_CRONICA` `MEDICACAO_CONTINUA` `CRITICO` |
+| `origem` (alerta clínico) | `TUTOR` `VETERINARIO` |
+| `status` (autorização) | `VIGENTE` `REVOGADA` `EXPIRADA` |
+| `diaSemana` | `SEGUNDA` … `DOMINGO` |
 
 ---
 
@@ -289,6 +486,10 @@ acesso ao histórico. É onde está a regra, e não o CRUD.
 | Schema versionado | ✅ Flyway, um conjunto por banco |
 | Versionamento da API | ✅ prefixo `/api/v1` |
 | Atualização parcial | ✅ PATCH nos 6 recursos |
+| **Fluxos completos, exceto CRUD** | ✅ **quatro** — agendamento, retorno, histórico e cobrança |
+| Pipeline de CI | ✅ GitHub Actions e Azure DevOps |
+| DDL em arquivo separado | ✅ `documentos/script_bd.sql`, gerado das migrations |
+| Probe de saúde para deploy | ✅ `/actuator/health` |
 
 ---
 
