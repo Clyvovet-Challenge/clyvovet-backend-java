@@ -191,12 +191,23 @@ case "${MVNW_PASSWORD:+has-password}" in
 has-password) [ -n "${MVNW_USERNAME-}" ] || MVNW_USERNAME='' MVNW_PASSWORD='' ;;
 esac
 
-if [ -z "${MVNW_USERNAME-}" ] && command -v wget >/dev/null; then
-  verbose "Found wget ... using wget"
-  wget ${__MVNW_QUIET_WGET:+"$__MVNW_QUIET_WGET"} "$distributionUrl" -O "$TMP_DOWNLOAD_DIR/$distributionUrlName" || die "wget: Failed to fetch $distributionUrl"
-elif [ -z "${MVNW_USERNAME-}" ] && command -v curl >/dev/null; then
-  verbose "Found curl ... using curl"
-  curl ${__MVNW_QUIET_CURL:+"$__MVNW_QUIET_CURL"} -f -L -o "$TMP_DOWNLOAD_DIR/$distributionUrlName" "$distributionUrl" || die "curl: Failed to fetch $distributionUrl"
+# ALTERADO EM RELACAO AO ARQUIVO GERADO PELO MAVEN -- ver .mvn/README.md
+#
+# O original escolhia o baixador pela EXISTENCIA da ferramenta e abortava com
+# "|| die" se ela falhasse, entao um wget quebrado derrubava o build mesmo com
+# curl e Java disponiveis. Foi o que aconteceu: o wget do Git Bash no Windows
+# (C:\WINDOWS\wget) falha nesta URL, e o build parava antes de compilar.
+#
+# Aqui o proprio comando esta na condicao do if: se ele falhar, a condicao e
+# falsa e o proximo baixador assume. Tres tentativas de verdade, e a ultima --
+# o downloader em Java -- funciona em qualquer maquina que rode Maven, porque
+# toda uma tem JDK.
+if [ -z "${MVNW_USERNAME-}" ] && command -v curl >/dev/null &&
+  curl ${__MVNW_QUIET_CURL:+"$__MVNW_QUIET_CURL"} -f -L -o "$TMP_DOWNLOAD_DIR/$distributionUrlName" "$distributionUrl"; then
+  verbose "Downloaded with curl"
+elif [ -z "${MVNW_USERNAME-}" ] && command -v wget >/dev/null &&
+  wget ${__MVNW_QUIET_WGET:+"$__MVNW_QUIET_WGET"} "$distributionUrl" -O "$TMP_DOWNLOAD_DIR/$distributionUrlName"; then
+  verbose "Downloaded with wget"
 elif set_java_home; then
   verbose "Falling back to use Java to download"
   javaSource="$TMP_DOWNLOAD_DIR/Downloader.java"
@@ -219,7 +230,9 @@ elif set_java_home; then
   verbose " - Compiling Downloader.java ..."
   "$(native_path "$JAVACCMD")" "$(native_path "$javaSource")" || die "Failed to compile Downloader.java"
   verbose " - Running Downloader.java ..."
-  "$(native_path "$JAVACMD")" -cp "$(native_path "$TMP_DOWNLOAD_DIR")" Downloader "$distributionUrl" "$(native_path "$targetZip")"
+  "$(native_path "$JAVACMD")" -cp "$(native_path "$TMP_DOWNLOAD_DIR")" Downloader "$distributionUrl" "$(native_path "$targetZip")" || die "Java downloader: Failed to fetch $distributionUrl"
+else
+  die "Failed to fetch $distributionUrl - tried curl, wget and the Java downloader"
 fi
 
 # If specified, validate the SHA-256 sum of the Maven distribution zip file
