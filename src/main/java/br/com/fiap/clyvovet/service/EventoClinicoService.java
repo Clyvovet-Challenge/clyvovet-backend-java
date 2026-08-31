@@ -9,6 +9,7 @@ import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.TipoEvento;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
+import br.com.fiap.clyvovet.repository.ServicoRepository;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
@@ -31,6 +32,7 @@ public class EventoClinicoService {
     private final VeterinarioRepository veterinarioRepository;
     private final AnimalRepository animalRepository;
     private final ClinicaRepository clinicaRepository;
+    private final ServicoRepository servicoRepository;
     private final EventoClinicoMapper eventoClinicoMapper;
     private final SegurancaService seguranca;
 
@@ -84,7 +86,8 @@ public class EventoClinicoService {
         return new RelacionamentosDoEvento(
                 veterinarioRepository.obterPorId(request.getVeterinarioId()),
                 animalRepository.obterPorId(request.getAnimalId()),
-                clinicaRepository.obterPorId(request.getClinicaId()));
+                clinicaRepository.obterPorId(request.getClinicaId()),
+                request.getServicoId() == null ? null : servicoRepository.obterPorId(request.getServicoId()));
     }
 
     /**
@@ -96,6 +99,7 @@ public class EventoClinicoService {
         return new RelacionamentosDoEvento(
                 patch.getVeterinarioId() == null ? null : veterinarioRepository.obterPorId(patch.getVeterinarioId()),
                 patch.getAnimalId() == null ? null : animalRepository.obterPorId(patch.getAnimalId()),
-                patch.getClinicaId() == null ? null : clinicaRepository.obterPorId(patch.getClinicaId()));
+                patch.getClinicaId() == null ? null : clinicaRepository.obterPorId(patch.getClinicaId()),
+                patch.getServicoId() == null ? null : servicoRepository.obterPorId(patch.getServicoId()));
     }
 }

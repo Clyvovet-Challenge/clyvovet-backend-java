@@ -27,7 +27,11 @@ public class PagamentoRequest {
     @Digits(integer = 9, fraction = 2, message = "Valor inválido: máximo 9 dígitos inteiros e 2 decimais")
     private BigDecimal valor;
 
-    @NotNull(message = "Data de pagamento é obrigatória")
+    /**
+     * Opcional (regra P1). Era @NotNull, o que obrigava um pagamento PENDENTE a
+     * declarar uma data de pagamento que nao aconteceu -- o proprio seed da V2
+     * grava pendentes com data nula. A data entra na confirmacao.
+     */
     @PastOrPresent(message = "Data de pagamento não pode ser futura")
     private LocalDate dataPagamento;
 
@@ -40,6 +44,10 @@ public class PagamentoRequest {
     @NotNull(message = "ID do evento clínico é obrigatório")
     private UUID eventoClinicoId;
 
+    /**
+     * Um pagamento nasce PENDENTE ou PAGO. As demais transicoes sao acoes
+     * proprias -- CANCELADO e REEMBOLSADO nao se declaram no cadastro.
+     */
     @NotNull(message = "Status de pagamento é obrigatório")
     private StatusPagamento statusPagamento;
 }

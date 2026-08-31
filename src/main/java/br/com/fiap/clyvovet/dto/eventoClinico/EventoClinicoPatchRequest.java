@@ -38,5 +38,7 @@ public class EventoClinicoPatchRequest {
 
     private UUID clinicaId;
 
+    private UUID servicoId;
+
     private TipoEvento tipoEvento;
 }

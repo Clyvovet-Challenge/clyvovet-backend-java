@@ -29,6 +29,7 @@ public class EventoClinicoMapper {
         evento.setVeterinario(relacionamentos.veterinario());
         evento.setAnimal(relacionamentos.animal());
         evento.setClinica(relacionamentos.clinica());
+        evento.setServico(relacionamentos.servico());
     }
 
     /** Aplica so os campos presentes no corpo do PATCH. */

@@ -9,6 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public interface PagamentoRepository extends RepositorioBase<Pagamento> {
@@ -23,6 +26,26 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
             @Param("formaPagamento") FormaPagamento formaPagamento,
             @Param("tutorId") UUID tutorId,
             Pageable pageable);
+
+    /** Soma dos pagamentos de um evento num status. Null se nao houver nenhum. */
+    @Query("""
+            SELECT SUM(p.valor) FROM Pagamento p
+            WHERE p.eventoClinico.id = :eventoId AND p.statusPagamento = :status
+            """)
+    BigDecimal totalPorStatus(
+            @Param("eventoId") UUID eventoId,
+            @Param("status") StatusPagamento status);
+
+    @Query("""
+            SELECT p FROM Pagamento p
+            WHERE p.eventoClinico.animal.tutor.id = :tutorId
+              AND p.eventoClinico.data BETWEEN :de AND :ate
+            ORDER BY p.eventoClinico.data DESC
+            """)
+    List<Pagamento> doTutorNoPeriodo(
+            @Param("tutorId") UUID tutorId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
 
     default Pagamento obterPorId(UUID id) {
         return obterPorId(id, Recurso.PAGAMENTO);

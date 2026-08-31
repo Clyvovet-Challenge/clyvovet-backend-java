@@ -110,6 +110,14 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH,  api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
 
+            // --- Cobranca: as transicoes de pagamento sao do corpo clinico ---
+            // O extrato e o saldo ficam de fora: o tutor precisa ver a propria
+            // conta, e o ownership por recurso ja resolve quem ve o que.
+            .requestMatchers(HttpMethod.POST, api("/pagamentos/*/confirmar", "/pagamentos/*/estornar"))
+                .hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.GET, api("/pagamentos/inadimplencia"))
+                .hasAnyRole(VETERINARIO, ADMIN)
+
             // --- Catalogo de servicos: quem define o que a clinica oferece ---
             // Preco e duracao decidem quanto se cobra e como a agenda e ocupada.
             // Ate existir o perfil ADMIN_CLINICA (spec 08, N2), isso e da plataforma.

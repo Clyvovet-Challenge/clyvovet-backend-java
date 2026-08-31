@@ -42,6 +42,12 @@ public class EventoClinicoRequest {
     @NotNull
     private UUID clinicaId;
 
+    /**
+     * Opcional. Liga o atendimento ao catalogo, e e de onde sai o valor cobrado
+     * — sem ele o evento fica fora da inadimplencia, por nao ter preco.
+     */
+    private UUID servicoId;
+
     @NotNull
     private TipoEvento tipoEvento;
 }

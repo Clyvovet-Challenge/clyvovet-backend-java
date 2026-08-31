@@ -35,7 +35,6 @@ public class PagamentoMapper {
         aplicarSePresente(patch.getDataPagamento(), pagamento::setDataPagamento);
         aplicarSePresente(patch.getDescricao(), pagamento::setDescricao);
         aplicarSePresente(patch.getObservacao(), pagamento::setObservacao);
-        aplicarSePresente(patch.getStatusPagamento(), pagamento::setStatusPagamento);
         aplicarSePresente(eventoClinico, pagamento::setEventoClinico);
     }
 

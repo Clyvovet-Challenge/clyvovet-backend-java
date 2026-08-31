@@ -44,5 +44,8 @@ public class PagamentoPatchRequest {
 
     private UUID eventoClinicoId;
 
-    private StatusPagamento statusPagamento;
+    // O statusPagamento SAIU daqui (regra P14). Enquanto ele estivesse no
+    // corpo do PATCH, um {"statusPagamento":"PAGO"} contornaria as transicoes
+    // de uma vez, e as regras P1 a P13 seriam decorativas. As transicoes
+    // acontecem em POST /pagamentos/{id}/confirmar e /estornar.
 }

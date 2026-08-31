@@ -20,8 +20,10 @@ class EventoClinicoMapperTest {
     private final EventoClinicoMapper mapper = new EventoClinicoMapper();
 
     private static EventoClinicoRequest request(String descricao, TipoEvento tipo) {
+        // O ultimo null e o servicoId, opcional: evento registrado direto pelo
+        // veterinario pode nao ter catalogo por tras.
         return new EventoClinicoRequest(LocalDate.of(2026, 3, 10), "14:30", descricao,
-                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), tipo);
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null, tipo);
     }
 
     private static RelacionamentosDoEvento relacionamentos() {
@@ -37,7 +39,7 @@ class EventoClinicoMapperTest {
         clinica.setId(UUID.randomUUID());
         clinica.setNome("PetMed Centro");
 
-        return new RelacionamentosDoEvento(veterinario, animal, clinica);
+        return new RelacionamentosDoEvento(veterinario, animal, clinica, null);
     }
 
     @Test
@@ -91,7 +93,7 @@ class EventoClinicoMapperTest {
     @DisplayName("relacionamentos nulos nao derrubam a resposta")
     void relacionamentosNulos() {
         EventoClinico evento = mapper.toEntity(request("Consulta", TipoEvento.CONSULTA),
-                new RelacionamentosDoEvento(null, null, null));
+                new RelacionamentosDoEvento(null, null, null, null));
 
         EventoClinicoResponse response = mapper.toResponse(evento);
 
