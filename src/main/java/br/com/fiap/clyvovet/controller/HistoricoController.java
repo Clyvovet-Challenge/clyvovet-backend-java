@@ -68,9 +68,17 @@ public class HistoricoController {
         return ResponseEntity.ok(historicoService.acessoEmergencial(id, request.getMotivo()));
     }
 
-    /** A transparencia e o que torna o acesso sem consentimento aceitavel. */
+    /**
+     * A transparencia e o que torna o acesso sem consentimento aceitavel — e ela
+     * e do TUTOR.
+     *
+     * Usa ehDonoOuAdministrador, e nao podeAcessarAnimal: aquele passa por
+     * temVisaoAmpla e liberaria todo veterinario a ler a auditoria de qualquer
+     * animal, expondo o e-mail dos profissionais de outras clinicas e revelando
+     * quais delas atenderam aquele paciente.
+     */
     @GetMapping("/animais/{id}/acessos")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id)")
     @Operation(summary = "Quem leu o histórico deste animal, e quando")
     public ResponseEntity<List<AcessoResponse>> acessos(@PathVariable UUID id) {
         return ResponseEntity.ok(historicoService.acessos(id));

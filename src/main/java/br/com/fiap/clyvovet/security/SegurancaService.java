@@ -117,6 +117,52 @@ public class SegurancaService {
     }
 
     /**
+     * O tutor dono do animal, ou o ADMIN da plataforma. E so.
+     *
+     * DIFERENTE de podeAcessarAnimal, e a diferenca e o ponto: aquele passa por
+     * temVisaoAmpla e libera todo VETERINARIO. Serve para o cadastro do animal,
+     * que o profissional precisa ler para atender — mas nao serve para o que e
+     * do dono e so dele.
+     *
+     * Hoje sustenta a auditoria de acesso ao historico: a lista de quem leu o
+     * prontuario e a ferramenta de transparencia DO TUTOR. Aberta ao corpo
+     * clinico, ela vira o contrario disso — expoe o e-mail dos profissionais de
+     * outras clinicas e revela quais delas atenderam aquele paciente.
+     */
+    public boolean ehDonoOuAdministrador(UUID animalId) {
+        if (ehAdministradorDaPlataforma()) {
+            return true;
+        }
+        UUID meuTutorId = tutorIdDoUsuario();
+        return meuTutorId != null && animalRepository.findById(animalId)
+                .map(Animal::getTutor)
+                .map(Tutor::getId)
+                .filter(meuTutorId::equals)
+                .isPresent();
+    }
+
+    /**
+     * O usuario pode mexer na agenda deste veterinario?
+     *
+     * A grade e do profissional. Sem esta checagem, a regra de rota
+     * hasAnyRole(VETERINARIO, ADMIN) libera qualquer veterinario a apagar a
+     * grade de qualquer outro — inclusive de clinica concorrente, o que tira a
+     * clinica inteira da busca por vagas.
+     */
+    public boolean podeGerenciarAgendaDe(UUID veterinarioId) {
+        if (ehAdministradorDaPlataforma()) {
+            return true;
+        }
+        UsuarioAutenticado usuario = autenticado();
+        return usuario != null && veterinarioId.equals(usuario.getVeterinarioId());
+    }
+
+    public boolean ehAdministradorDaPlataforma() {
+        UsuarioAutenticado usuario = autenticado();
+        return usuario != null && usuario.getUsuario().getPerfil() == Perfil.ADMIN;
+    }
+
+    /**
      * O usuario corrente, ou null.
      *
      * Publico porque o HistoricoService precisa resolver NIVEL de acesso, e nao

@@ -11,6 +11,8 @@ import br.com.fiap.clyvovet.model.Veterinario;
 import br.com.fiap.clyvovet.repository.BloqueioRepository;
 import br.com.fiap.clyvovet.repository.DisponibilidadeVeterinarioRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
+import br.com.fiap.clyvovet.security.SegurancaService;
+import org.springframework.security.access.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class AgendaCadastroService {
     private final DisponibilidadeVeterinarioRepository disponibilidadeRepository;
     private final BloqueioRepository bloqueioRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final SegurancaService seguranca;
 
     public List<DisponibilidadeResponse> gradeDe(UUID veterinarioId) {
         veterinarioRepository.garantirQueExiste(veterinarioId);
@@ -46,6 +49,7 @@ public class AgendaCadastroService {
     @Transactional
     public DisponibilidadeResponse criarFaixa(DisponibilidadeRequest request) {
         Veterinario veterinario = veterinarioRepository.obterPorId(request.getVeterinarioId());
+        garantirQueEDonoDaAgenda(veterinario.getId());
         garantirFaixaCoerente(request);
         garantirQueNaoSobrepoe(request);
 
@@ -62,12 +66,15 @@ public class AgendaCadastroService {
 
     @Transactional
     public void removerFaixa(UUID id) {
-        disponibilidadeRepository.delete(disponibilidadeRepository.obterPorId(id));
+        DisponibilidadeVeterinario faixa = disponibilidadeRepository.obterPorId(id);
+        garantirQueEDonoDaAgenda(faixa.getVeterinario().getId());
+        disponibilidadeRepository.delete(faixa);
     }
 
     @Transactional
     public BloqueioResponse criarBloqueio(BloqueioRequest request) {
         Veterinario veterinario = veterinarioRepository.obterPorId(request.getVeterinarioId());
+        garantirQueEDonoDaAgenda(veterinario.getId());
         garantirBloqueioCoerente(request);
 
         Bloqueio bloqueio = new Bloqueio();
@@ -83,10 +90,31 @@ public class AgendaCadastroService {
 
     @Transactional
     public void removerBloqueio(UUID id) {
-        bloqueioRepository.delete(bloqueioRepository.obterPorId(id));
+        Bloqueio bloqueio = bloqueioRepository.obterPorId(id);
+        garantirQueEDonoDaAgenda(bloqueio.getVeterinario().getId());
+        bloqueioRepository.delete(bloqueio);
     }
 
     // ------------------------------------------------------------------
+
+    /**
+     * A grade e do profissional.
+     *
+     * A regra de rota so alcanca "e do corpo clinico?", e isso e grosso demais
+     * para esta decisao: sem a checagem por recurso, um veterinario apagava a
+     * grade de qualquer outro — inclusive de clinica concorrente, o que a tira
+     * inteira da busca por vagas. Pelo POST, dava para criar disponibilidade
+     * falsa no nome de outro profissional e gerar agendamentos que ninguem
+     * atenderia.
+     *
+     * O ADMIN da plataforma passa: e ele quem monta a agenda inicial da clinica
+     * e quem corrige quando o profissional nao tem mais acesso a conta.
+     */
+    private void garantirQueEDonoDaAgenda(UUID veterinarioId) {
+        if (!seguranca.podeGerenciarAgendaDe(veterinarioId)) {
+            throw new AccessDeniedException("A agenda é do próprio veterinário");
+        }
+    }
 
     private void garantirFaixaCoerente(DisponibilidadeRequest request) {
         if (!LocalTime.parse(request.getHoraFim()).isAfter(LocalTime.parse(request.getHoraInicio()))) {
