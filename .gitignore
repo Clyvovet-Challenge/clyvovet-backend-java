@@ -40,3 +40,7 @@ application-prod.properties
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json
+
+# Canvas publicado do Claude Design: 2,2 MB de editor embutido, regeravel a
+# partir dos .dc.html ao lado. Fonte entra no git; saida de build nao.
+design/clyvovet-telas.html

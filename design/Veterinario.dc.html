@@ -1,0 +1,541 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap">
+  <style>
+    /* Mesmos tokens de clyvo-rn/src/theme/tokens.ts. Nada novo foi inventado —
+       só a densidade muda, porque o veterinário trabalha numa estação. */
+    :root {
+      --teal: #008060; --teal-dark: #005a44; --teal-light: #cce8df; --teal-mid: #5fa893;
+      --seafoam: #a0d0c2; --seafoam-bg: #ebf6f1;
+      --orange: #d97a3d; --orange-light: #fdebdb;
+      --red: #c64a36; --red-light: #fbe1db;
+      --text: #0f1521; --text-mid: #475569; --text-light: #94a3b8;
+      --white: #ffffff; --card-bg: #fafdfb; --border: #dceadf; --bg-page: #eff5f1;
+      --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-pill: 999px;
+      --sh-card: 0 2px 6px rgba(0, 80, 64, 0.06);
+      --sh-elevated: 0 6px 14px rgba(0, 80, 64, 0.16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", -apple-system, system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { color: var(--teal-dark); }
+  </style>
+</helmet>
+
+<div style="width: 1200px; height: 800px; background: var(--bg-page); display: flex; overflow: hidden">
+
+  <div style="width: 196px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--border); padding: 18px 14px; display: flex; flex-direction: column; gap: 20px">
+    <div>
+      <div style="font-size: 19px; font-weight: 800; color: var(--teal)">Clyvo Vet</div>
+      <div style="font-size: 11px; color: var(--text-light); margin-top: 1px">VetCare Prime</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <sc-for list="{{menu}}" as="m" hint-placeholder-count="4">
+        <div onClick="{{m.ir}}" style="{{m.estilo}}">
+          <div style="{{m.ico}}"></div>
+          <span style="flex-grow: 1">{{m.nome}}</span>
+          <sc-if value="{{m.temBadge}}" hint-placeholder-val="{{true}}">
+            <span style="{{m.estiloBadge}}">{{m.badge}}</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 9px; padding-top: 14px; border-top: 1px solid var(--border)">
+      <div style="width: 34px; height: 34px; border-radius: var(--r-pill); background: var(--teal-light); display: flex; align-items: center; justify-content: center">
+        <span style="font-size: 12px; font-weight: 700; color: var(--teal-dark)">CF</span>
+      </div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700">Dra. Camila</div>
+        <div style="font-size: 10px; color: var(--text-light)">CRMV-SP 14320</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AGENDA ===== -->
+  <sc-if value="{{telaAgenda}}" hint-placeholder-val="{{true}}">
+    <div style="flex-grow: 1; display: flex; overflow: hidden">
+      <div style="width: 344px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 18px 16px; display: flex; flex-direction: column; gap: 13px">
+        <div>
+          <div style="font-size: 20px; font-weight: 800">Terça, 15 de setembro</div>
+          <div style="font-size: 12px; color: var(--text-light); margin-top: 1px">{{contagem}}</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 7px">
+          <sc-for list="{{consultas}}" as="c" hint-placeholder-count="5">
+            <div onClick="{{c.abrir}}" style="{{c.estilo}}">
+              <div style="font-size: 13px; font-weight: 800; width: 42px; flex-shrink: 0; color: {{c.corHora}}">{{c.hora}}</div>
+              <div style="flex-grow: 1; min-width: 0">
+                <div style="font-size: 13px; font-weight: 700">{{c.animal}}</div>
+                <div style="font-size: 11px; color: var(--text-light)">{{c.servico}} · {{c.tutor}}</div>
+              </div>
+              <div style="{{c.selo}}">{{c.status}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px">
+          <div>
+            <div style="font-size: 24px; font-weight: 800">{{atual.animal}}</div>
+            <div style="font-size: 12px; color: var(--text-mid); margin-top: 2px">{{atual.detalhe}}</div>
+          </div>
+          <div style="background: var(--teal-light); border-radius: var(--r-pill); padding: 6px 13px">
+            <span style="font-size: 11px; font-weight: 700; color: var(--teal-dark)">Histórico completo</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <sc-for list="{{atual.alertas}}" as="a" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 7px; background: {{a.bg}}; border-radius: var(--r-pill); padding: 7px 13px">
+              <div style="width: 12px; height: 12px; border-radius: 3px; background: {{a.cor}}"></div>
+              <span style="font-size: 12px; font-weight: 700; color: {{a.cor}}">{{a.texto}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 18px; box-shadow: var(--sh-card); display: flex; flex-direction: column; gap: 16px">
+          <div style="font-size: 14px; font-weight: 700">Concluir atendimento</div>
+          <div style="display: flex; gap: 20px">
+            <div style="width: 148px; flex-shrink: 0">
+              <div style="font-size: 12px; color: var(--text-mid); margin-bottom: 6px">Peso aferido</div>
+              <div style="display: flex; align-items: baseline; gap: 5px">
+                <span style="font-size: 30px; font-weight: 800">{{peso}}</span>
+                <span style="font-size: 13px; color: var(--text-light)">kg</span>
+              </div>
+              <div style="display: flex; gap: 5px; margin-top: 9px">
+                <sc-for list="{{pesos}}" as="p" hint-placeholder-count="3">
+                  <div onClick="{{p.escolher}}" style="{{p.estilo}}">{{p.valor}}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex-grow: 1">
+              <div style="font-size: 12px; color: var(--text-mid); margin-bottom: 6px">Desfecho</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                <sc-for list="{{desfechos}}" as="d" hint-placeholder-count="5">
+                  <div onClick="{{d.escolher}}" style="{{d.estilo}}">{{d.nome}}</div>
+                </sc-for>
+              </div>
+              <div style="font-size: 12px; color: var(--text-mid); margin: 13px 0 6px">Retorno previsto</div>
+              <div style="display: flex; gap: 6px">
+                <sc-for list="{{retornos}}" as="r" hint-placeholder-count="4">
+                  <div onClick="{{r.escolher}}" style="{{r.estilo}}">{{r.nome}}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{temAviso}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 11px; align-items: flex-start; background: var(--orange-light); border-radius: var(--r-md); padding: 12px 14px">
+              <div style="width: 16px; height: 16px; border-radius: 4px; background: var(--orange); flex-shrink: 0; margin-top: 1px"></div>
+              <div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--orange)">{{aviso}}</div>
+                <div style="font-size: 11px; color: var(--text-mid); margin-top: 2px">Avaliar se é esperado. O registro não é bloqueado.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; gap: 9px">
+            <div onClick="{{concluir}}" style="{{estiloConcluir}}">{{textoConcluir}}</div>
+            <div style="padding: 12px 18px; border: 1px solid var(--border); border-radius: var(--r-md); font-size: 13px; font-weight: 600; cursor: pointer; background: var(--white); color: var(--text-mid)">Marcar falta</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== RETORNOS ===== -->
+  <sc-if value="{{telaRetornos}}" hint-placeholder-val="{{false}}">
+    <div style="flex-grow: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div>
+          <div style="font-size: 24px; font-weight: 800">Pets que não voltaram</div>
+          <div style="font-size: 12px; color: var(--text-mid); margin-top: 3px; max-width: 540px; line-height: 1.4">O retorno foi previsto no atendimento e a data passou. A lista traz o telefone porque ela existe para virar ligação.</div>
+        </div>
+        <div style="display: flex; gap: 7px">
+          <sc-for list="{{filtros}}" as="f" hint-placeholder-count="3">
+            <div onClick="{{f.escolher}}" style="{{f.estilo}}">{{f.nome}}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{numeros}}" as="n" hint-placeholder-count="4">
+          <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; box-shadow: var(--sh-card)">
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-light)">{{n.rotulo}}</div>
+            <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 5px">
+              <span style="font-size: 26px; font-weight: 800; color: {{n.cor}}">{{n.valor}}</span>
+              <span style="font-size: 11px; color: var(--text-light)">{{n.unidade}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-card); overflow: hidden">
+        <div style="display: grid; grid-template-columns: 1.2fr 1.3fr 1fr 1fr 0.7fr 0.9fr; gap: 14px; padding: 11px 18px; border-bottom: 1px solid var(--border); background: var(--seafoam-bg)">
+          <sc-for list="{{colunas}}" as="c" hint-placeholder-count="6">
+            <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-mid)">{{c}}</div>
+          </sc-for>
+        </div>
+        <sc-for list="{{linhas}}" as="l" hint-placeholder-count="5">
+          <div style="{{l.estilo}}">
+            <div>
+              <div style="font-size: 13px; font-weight: 700">{{l.animal}}</div>
+              <div style="font-size: 11px; color: var(--text-light)">{{l.especie}}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px">{{l.tutor}}</div>
+              <div style="font-size: 12px; font-weight: 600; color: var(--teal)">{{l.telefone}}</div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-mid)">{{l.atendimento}}</div>
+            <div style="font-size: 12px; color: var(--text-mid)">{{l.previsto}}</div>
+            <div><span style="{{l.seloAtraso}}">{{l.atraso}}</span></div>
+            <div style="{{l.botao}}">Ligar</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== MICROCHIP ===== -->
+  <sc-if value="{{telaChip}}" hint-placeholder-val="{{false}}">
+    <div style="flex-grow: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+      <div>
+        <div style="font-size: 24px; font-weight: 800">Identificar pelo microchip</div>
+        <div style="font-size: 12px; color: var(--text-mid); margin-top: 3px; max-width: 600px; line-height: 1.4">Para o animal que chega sem agendamento. Devolve o resumo de segurança sem consentimento — o chip identifica, quem credencia é o seu CRMV. O tutor é avisado da leitura.</div>
+      </div>
+
+      <div style="display: flex; gap: 9px; align-items: center">
+        <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 15px; font-size: 14px; width: 230px; color: var(--text-mid)">900 0000 0001 2345</div>
+        <div onClick="{{buscar}}" style="{{estiloBuscar}}">Buscar</div>
+        <div onClick="{{limpar}}" style="padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--r-md); font-size: 13px; font-weight: 600; cursor: pointer; background: var(--white); color: var(--text-mid)">Limpar</div>
+      </div>
+
+      <sc-if value="{{achou}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; gap: 16px; overflow: hidden">
+          <div style="width: 380px; flex-shrink: 0; border-radius: var(--r-xl); padding: 18px; box-shadow: var(--sh-elevated); background: linear-gradient(135deg, var(--teal) 0%, #2c9a7e 100%)">
+            <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8)">RESUMO DE SEGURANÇA · NÍVEL 1</div>
+            <div style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 8px">Bolinha</div>
+            <div style="font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.78); margin-top: 2px">Golden Retriever · macho · 3 anos · castrado</div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 16px">
+              <sc-for list="{{vitais}}" as="v" hint-placeholder-count="4">
+                <div style="background: rgba(255,255,255,0.16); border-radius: var(--r-md); padding: 10px 12px">
+                  <div style="font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.75)">{{v.rotulo}}</div>
+                  <div style="font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px">{{v.valor}}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.22)">
+              <div style="font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.75)">CONTATO DE EMERGÊNCIA</div>
+              <div style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 3px">Lucas M. Santos</div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.85)">(11) 98000-0001</div>
+            </div>
+          </div>
+
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 9px">
+            <sc-for list="{{alertasChip}}" as="a" hint-placeholder-count="3">
+              <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 13px 15px; box-shadow: var(--sh-card); display: flex; gap: 12px; align-items: center">
+                <div style="width: 36px; height: 36px; border-radius: var(--r-md); background: {{a.bg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                  <div style="width: 15px; height: 15px; border-radius: 4px; background: {{a.cor}}"></div>
+                </div>
+                <div style="flex-grow: 1">
+                  <div style="font-size: 10px; font-weight: 700; color: {{a.cor}}">{{a.tipo}}</div>
+                  <div style="font-size: 14px; font-weight: 600; margin-top: 2px">{{a.descricao}}</div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-light)">{{a.origem}}</div>
+              </div>
+            </sc-for>
+
+            <div style="background: var(--red-light); border-radius: var(--r-lg); padding: 14px 16px; margin-top: auto">
+              <div style="font-size: 13px; font-weight: 700; color: var(--red)">Precisa do histórico completo?</div>
+              <div style="font-size: 12px; color: var(--text-mid); margin-top: 4px; line-height: 1.4">Este animal não tem agendamento aqui, então não há consentimento. Em emergência, a quebra de vidro libera — com motivo obrigatório, aviso imediato ao tutor e registro destacado na auditoria.</div>
+              <div onClick="{{quebrarVidro}}" style="{{estiloQuebra}}">{{textoQuebra}}</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{semBusca}}" hint-placeholder-val="{{false}}">
+        <div style="border: 1px dashed var(--border); border-radius: var(--r-lg); padding: 46px; text-align: center; color: var(--text-light); font-size: 13px; background: var(--white)">Passe o leitor ou digite os 15 dígitos.</div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ===== GRADE ===== -->
+  <sc-if value="{{telaGrade}}" hint-placeholder-val="{{false}}">
+    <div style="flex-grow: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+      <div>
+        <div style="font-size: 24px; font-weight: 800">Minha grade</div>
+        <div style="font-size: 12px; color: var(--text-mid); margin-top: 3px; max-width: 600px; line-height: 1.4">É esta grade que gera as vagas que o tutor enxerga ao agendar. Fora dela, o sistema recusa a marcação.</div>
+      </div>
+
+      <div style="display: flex; gap: 8px">
+        <sc-for list="{{dias}}" as="d" hint-placeholder-count="7">
+          <div onClick="{{d.alternar}}" style="{{d.estilo}}">
+            <div style="font-size: 11px; font-weight: 700">{{d.sigla}}</div>
+            <div style="font-size: 11px; margin-top: 5px; font-weight: 500">{{d.faixa}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px; box-shadow: var(--sh-card)">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px">Bloqueios</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{bloqueios}}" as="b" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: {{b.bg}}; border-radius: var(--r-md)">
+              <div style="width: 10px; height: 10px; border-radius: 5px; background: {{b.cor}}; flex-shrink: 0"></div>
+              <div style="flex-grow: 1">
+                <div style="font-size: 13px; font-weight: 700">{{b.motivo}}</div>
+                <div style="font-size: 11px; color: var(--text-mid); margin-top: 1px">{{b.periodo}}</div>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: {{b.cor}}">{{b.tipo}}</div>
+            </div>
+          </sc-for>
+          <div style="border: 1px dashed var(--border); border-radius: var(--r-md); padding: 12px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-light); cursor: pointer">+ Bloquear período</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1200,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tela: 'agenda', consulta: 'c2', peso: '28,4', desfecho: 'MELHORA', retorno: '30',
+      concluido: false, filtro: 'todos', buscou: false, quebrou: false,
+      diasAtivos: { SEG: true, TER: true, QUA: true, QUI: true, SEX: true, SAB: false, DOM: false }
+    };
+  }
+
+  renderVals() {
+    const T = {
+      teal: '#008060', tealDark: '#005a44', tealLight: '#cce8df',
+      orange: '#d97a3d', orangeLight: '#fdebdb',
+      red: '#c64a36', redLight: '#fbe1db',
+      text: '#0f1521', textMid: '#475569', textLight: '#94a3b8',
+      white: '#ffffff', border: '#dceadf', seafoamBg: '#ebf6f1'
+    };
+    const t = this.state.tela;
+
+    const menu = [
+      { id: 'agenda', nome: 'Agenda', badge: '5' },
+      { id: 'retornos', nome: 'Retornos', badge: '5' },
+      { id: 'chip', nome: 'Microchip', badge: '' },
+      { id: 'grade', nome: 'Minha grade', badge: '' }
+    ].map((m) => {
+      const ativo = t === m.id;
+      return {
+        nome: m.nome, temBadge: m.badge !== '', badge: m.badge,
+        estilo: 'display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 12px; cursor: pointer;'
+          + ' font-size: 13px; font-weight: ' + (ativo ? '700' : '500')
+          + '; background: ' + (ativo ? T.tealLight : 'transparent')
+          + '; color: ' + (ativo ? T.tealDark : T.textMid) + ';',
+        ico: 'width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; border: 2px solid '
+          + (ativo ? T.teal : T.textLight) + ';',
+        estiloBadge: 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: '
+          + (ativo ? T.teal : '#e6ecea') + '; color: ' + (ativo ? '#fff' : T.textMid) + ';',
+        ir: () => this.setState({ tela: m.id })
+      };
+    });
+
+    const dados = [
+      { id: 'c1', hora: '08:00', animal: 'Mimi', tutor: 'Maria Oliveira', servico: 'Vacina V10', status: 'Realizado' },
+      { id: 'c2', hora: '09:30', animal: 'Bolinha', tutor: 'Lucas Santos', servico: 'Consulta clínica', status: 'Agora' },
+      { id: 'c3', hora: '10:30', animal: 'Thor', tutor: 'Lucas Santos', servico: 'Retorno', status: 'Agendado' },
+      { id: 'c4', hora: '11:00', animal: 'Rex', tutor: 'Maria Oliveira', servico: 'Exame', status: 'Agendado' },
+      { id: 'c5', hora: '11:30', animal: 'Nina', tutor: 'Carlos Lima', servico: 'Consulta clínica', status: 'Agendado' }
+    ];
+    const consultas = dados.map((c) => {
+      const ativa = this.state.consulta === c.id;
+      let cor = T.textMid, fundo = '#eef3f1';
+      if (c.status === 'Realizado') { cor = T.teal; fundo = T.tealLight; }
+      if (c.status === 'Agora') { cor = T.orange; fundo = T.orangeLight; }
+      return {
+        ...c,
+        corHora: ativa ? T.teal : T.text,
+        estilo: 'display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: 14px; cursor: pointer;'
+          + ' background: ' + T.white + '; box-shadow: 0 2px 6px rgba(0, 80, 64, 0.06);'
+          + ' border: 1px solid ' + (ativa ? T.teal : T.border) + ';',
+        selo: 'font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; color: '
+          + cor + '; background: ' + fundo + ';',
+        abrir: () => this.setState({ consulta: c.id, concluido: false })
+      };
+    });
+
+    const pesos = ['27,1', '28,4', '34,5'].map((v) => ({
+      valor: v,
+      estilo: 'padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer;'
+        + ' border: 1px solid ' + (this.state.peso === v ? T.teal : T.border)
+        + '; background: ' + (this.state.peso === v ? T.tealLight : T.white)
+        + '; color: ' + (this.state.peso === v ? T.tealDark : T.textMid) + ';',
+      escolher: () => this.setState({ peso: v, concluido: false })
+    }));
+
+    const desfechos = ['MELHORA', 'ESTAVEL', 'PIORA', 'OBITO', 'INDEFINIDO'].map((d) => ({
+      nome: d,
+      estilo: 'padding: 7px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; cursor: pointer;'
+        + ' border: 1px solid ' + (this.state.desfecho === d ? T.teal : T.border)
+        + '; background: ' + (this.state.desfecho === d ? T.teal : T.white)
+        + '; color: ' + (this.state.desfecho === d ? '#fff' : T.textMid) + ';',
+      escolher: () => this.setState({ desfecho: d, concluido: false })
+    }));
+
+    const retornos = [
+      { id: '15', nome: '15 dias' }, { id: '30', nome: '30 dias' },
+      { id: '90', nome: '90 dias' }, { id: 'sem', nome: 'Sem retorno' }
+    ].map((r) => ({
+      nome: r.nome,
+      estilo: 'padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer;'
+        + ' border: 1px solid ' + (this.state.retorno === r.id ? T.teal : T.border)
+        + '; background: ' + (this.state.retorno === r.id ? T.tealLight : T.white)
+        + '; color: ' + (this.state.retorno === r.id ? T.tealDark : T.textMid) + ';',
+      escolher: () => this.setState({ retorno: r.id, concluido: false })
+    }));
+
+    const atualDados = dados.filter((c) => c.id === this.state.consulta)[0];
+    const pesoAtual = parseFloat(this.state.peso.replace(',', '.'));
+    const temAviso = Math.abs(pesoAtual - 27.1) / 27.1 > 0.2;
+
+    const filtros = [
+      { id: 'todos', nome: 'Todos' }, { id: 'meus', nome: 'Meus pacientes' }, { id: 'graves', nome: '+30 dias' }
+    ].map((f) => ({
+      nome: f.nome,
+      estilo: 'padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer;'
+        + ' border: 1px solid ' + (this.state.filtro === f.id ? T.teal : T.border)
+        + '; background: ' + (this.state.filtro === f.id ? T.teal : T.white)
+        + '; color: ' + (this.state.filtro === f.id ? '#fff' : T.textMid) + ';',
+      escolher: () => this.setState({ filtro: f.id })
+    }));
+
+    const todas = [
+      { animal: 'Rex', especie: 'Pastor alemão', tutor: 'Maria Oliveira', telefone: '(11) 98000-0002', atendimento: '10 jun', previsto: '10 jul', dias: 67, meu: true },
+      { animal: 'Nina', especie: 'Felina SRD', tutor: 'Carlos Lima', telefone: '(11) 98000-0003', atendimento: '02 jul', previsto: '01 ago', dias: 45, meu: false },
+      { animal: 'Bolinha', especie: 'Golden Retriever', tutor: 'Lucas Santos', telefone: '(11) 98000-0001', atendimento: '20 jul', previsto: '19 ago', dias: 27, meu: true },
+      { animal: 'Mel', especie: 'Poodle', tutor: 'Ana Ribeiro', telefone: '(11) 98000-0004', atendimento: '01 ago', previsto: '31 ago', dias: 15, meu: false },
+      { animal: 'Simba', especie: 'Siamês', tutor: 'Fernanda Souza', telefone: '(11) 98000-0005', atendimento: '10 ago', previsto: '09 set', dias: 6, meu: true }
+    ];
+    let visiveis = todas;
+    if (this.state.filtro === 'meus') { visiveis = todas.filter((l) => l.meu); }
+    if (this.state.filtro === 'graves') { visiveis = todas.filter((l) => l.dias > 30); }
+
+    const linhas = visiveis.map((l) => {
+      let cor = T.textMid, fundo = '#eef3f1';
+      if (l.dias > 30) { cor = T.red; fundo = T.redLight; }
+      else if (l.dias > 14) { cor = T.orange; fundo = T.orangeLight; }
+      return {
+        ...l,
+        atraso: l.dias + ' d',
+        estilo: 'display: grid; grid-template-columns: 1.2fr 1.3fr 1fr 1fr 0.7fr 0.9fr; gap: 14px; padding: 13px 18px;'
+          + ' border-bottom: 1px solid ' + T.border + '; align-items: center;',
+        seloAtraso: 'font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; color: '
+          + cor + '; background: ' + fundo + ';',
+        botao: 'padding: 7px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer;'
+          + ' text-align: center; color: #fff; background: ' + T.teal + ';'
+      };
+    });
+
+    const dias = [
+      { sigla: 'SEG', faixa: '08–12' }, { sigla: 'TER', faixa: '08–12' }, { sigla: 'QUA', faixa: '13–18' },
+      { sigla: 'QUI', faixa: '08–12' }, { sigla: 'SEX', faixa: '13–18' }, { sigla: 'SAB', faixa: '—' }, { sigla: 'DOM', faixa: '—' }
+    ].map((d) => {
+      const ativo = this.state.diasAtivos[d.sigla] === true;
+      return {
+        sigla: d.sigla,
+        faixa: ativo ? d.faixa : 'Fechado',
+        estilo: 'flex-grow: 1; text-align: center; padding: 14px 8px; border-radius: 14px; cursor: pointer;'
+          + ' box-shadow: 0 2px 6px rgba(0, 80, 64, 0.06);'
+          + ' background: ' + (ativo ? T.white : '#e9efec')
+          + '; border: 1px solid ' + (ativo ? T.teal : T.border)
+          + '; color: ' + (ativo ? T.text : T.textLight) + ';',
+        alternar: () => {
+          const p = { ...this.state.diasAtivos }; p[d.sigla] = !ativo;
+          this.setState({ diasAtivos: p });
+        }
+      };
+    });
+
+    return {
+      menu: menu,
+      telaAgenda: t === 'agenda', telaRetornos: t === 'retornos',
+      telaChip: t === 'chip', telaGrade: t === 'grade',
+
+      contagem: dados.length + ' atendimentos · 1 concluído',
+      consultas: consultas,
+      atual: {
+        animal: atualDados.animal,
+        detalhe: atualDados.servico + ' · ' + atualDados.tutor + ' · Golden Retriever, 3 anos',
+        alertas: [
+          { texto: 'Anafilaxia a dipirona', cor: T.red, bg: T.redLight },
+          { texto: 'Cardiopatia leve', cor: T.orange, bg: T.orangeLight }
+        ]
+      },
+      peso: this.state.peso, pesos: pesos, desfechos: desfechos, retornos: retornos,
+      temAviso: temAviso,
+      aviso: 'Peso variou mais de 20% desde a última aferição (27,1 kg para ' + this.state.peso + ' kg)',
+      concluir: () => this.setState({ concluido: true }),
+      textoConcluir: this.state.concluido ? 'Atendimento concluído ✓' : 'Concluir atendimento',
+      estiloConcluir: 'padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;'
+        + ' color: #fff; box-shadow: 0 6px 14px rgba(0, 80, 64, 0.16); background: '
+        + (this.state.concluido ? T.tealDark : T.teal) + ';',
+
+      filtros: filtros,
+      colunas: ['Animal', 'Tutor', 'Atendimento', 'Previsto', 'Atraso', ''],
+      linhas: linhas,
+      numeros: [
+        { rotulo: 'Em atraso agora', valor: visiveis.length, unidade: 'pets', cor: T.orange },
+        { rotulo: 'Mais de 30 dias', valor: todas.filter((l) => l.dias > 30).length, unidade: 'pets', cor: T.red },
+        { rotulo: 'Retorno cumprido', valor: '68', unidade: '%', cor: T.teal },
+        { rotulo: 'Taxa de falta', valor: '11', unidade: '%', cor: T.textMid }
+      ],
+
+      buscar: () => this.setState({ buscou: true }),
+      limpar: () => this.setState({ buscou: false, quebrou: false }),
+      estiloBuscar: 'padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;'
+        + ' color: #fff; box-shadow: 0 2px 6px rgba(0, 80, 64, 0.06); background: ' + T.teal + ';',
+      achou: this.state.buscou,
+      semBusca: !this.state.buscou,
+      vitais: [
+        { rotulo: 'ÚLTIMO PESO', valor: '28,4 kg' },
+        { rotulo: 'CASTRADO', valor: 'Sim' },
+        { rotulo: 'ANTIRRÁBICA', valor: '02 ago 2026' },
+        { rotulo: 'V10', valor: '02 ago 2026' }
+      ],
+      alertasChip: [
+        { tipo: 'ALERGIA', descricao: 'Anafilaxia a dipirona', origem: 'Veterinário', cor: T.red, bg: T.redLight },
+        { tipo: 'CONDIÇÃO CRÔNICA', descricao: 'Cardiopatia leve', origem: 'Veterinário', cor: T.orange, bg: T.orangeLight },
+        { tipo: 'MEDICAÇÃO CONTÍNUA', descricao: 'Benazepril 5 mg, 1x ao dia', origem: 'Tutor', cor: T.teal, bg: T.tealLight }
+      ],
+      quebrarVidro: () => this.setState({ quebrou: true }),
+      textoQuebra: this.state.quebrou ? 'Acesso liberado · tutor avisado ✓' : 'Acionar quebra de vidro',
+      estiloQuebra: 'margin-top: 12px; padding: 11px; border-radius: 12px; text-align: center; font-size: 12px;'
+        + ' font-weight: 700; cursor: pointer; color: #fff; background: '
+        + (this.state.quebrou ? T.teal : T.red) + ';',
+
+      dias: dias,
+      bloqueios: [
+        { motivo: 'Férias', periodo: '20 dez 2026 — 05 jan 2027', tipo: 'Dias inteiros', cor: T.red, bg: T.redLight },
+        { motivo: 'Almoço', periodo: 'Todo dia · 12:00 — 13:00', tipo: 'Faixa diária', cor: T.orange, bg: T.orangeLight },
+        { motivo: 'Congresso CRMV', periodo: '18 out — 20 out 2026', tipo: 'Dias inteiros', cor: T.teal, bg: T.tealLight }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

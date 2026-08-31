@@ -1,0 +1,30 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Tutor · app" },
+    { "file": "Veterinario.dc.html", "x": 500, "y": 0, "w": 1200, "h": 800, "title": "Veterinário · estação" }
+  ],
+  "annotations": [
+    {
+      "id": "nota-tokens",
+      "x": 0,
+      "y": 920,
+      "w": 390,
+      "text": "Tokens do seu projeto, sem arredondar nada.\n\nteal #008060, tealDark #005a44, tealLight #cce8df, orange #d97a3d, red #c64a36, border #dceadf, bgPage #eff5f1.\n\nDM Sans 400–800. Raios 8/12/16/20/999. Sombras 0 2px 6px e 0 6px 14px em rgba(0,80,64,·).\n\nCopiados de clyvo-rn/src/theme/tokens.ts."
+    },
+    {
+      "id": "nota-vet",
+      "x": 1770,
+      "y": 0,
+      "w": 310,
+      "text": "O lado do veterinário não existia no seu design.\n\nEstendi o mesmo vocabulário para densidade de desktop: os mesmos tokens, os mesmos cartões brancos com borda #dceadf, as mesmas pílulas de status. Nada de identidade nova.\n\nÉ o que a API já implementa e o app do tutor não cobre: concluir atendimento, retornos vencidos, busca por microchip e a grade que gera as vagas."
+    },
+    {
+      "id": "nota-navegar",
+      "x": 500,
+      "y": 880,
+      "w": 560,
+      "text": "Navegue.\n\nTutor: a barra de baixo troca de tela. Em Agendar, escolha um dia (os pontinhos são a disponibilidade, como no seu Step4DateTime) e ligue o consentimento. Em Cartão, as três abas. Em Acessos, revogue uma clínica.\n\nVeterinário: mude o peso para 34,5 e o aviso de variação aparece. Em Microchip, clique Buscar e depois acione a quebra de vidro. Em Minha grade, ligue e desligue os dias."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
