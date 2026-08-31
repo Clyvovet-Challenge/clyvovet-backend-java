@@ -80,8 +80,32 @@ public abstract class TesteDeApi {
         String admin = tokenAdmin();
         while (!aRemover.isEmpty()) {
             // Sem verificar o status: o proprio teste pode ja ter removido.
-            remover(aRemover.pop(), admin);
+            String url = aRemover.pop();
+            if (remover(url, admin).andReturn().getResponse().getStatus() >= 400) {
+                estornarERemover(url, admin);
+            }
         }
+    }
+
+    /**
+     * Pagamento confirmado nao sai por DELETE (regra P9) -- e o pagamento preso
+     * segura o evento junto, pela FK e por R19.
+     *
+     * A limpeza entao desfaz o pagamento pelo caminho que a regra oferece, em
+     * vez de contorna-la. Vale a pena escrever isto aqui: sem a segunda
+     * tentativa, cada teste que confirma um pagamento deixa evento e pagamento
+     * para tras, e as contagens de OwnershipTest passam a depender da ordem em
+     * que as classes rodaram.
+     */
+    private void estornarERemover(String url, String admin) throws Exception {
+        if (!url.contains("/pagamentos/")) {
+            return;
+        }
+        mockMvc.perform(post(url + "/estornar")
+                .header("Authorization", "Bearer " + admin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"limpeza do cenario de teste\"}"));
+        remover(url, admin);
     }
 
     /**

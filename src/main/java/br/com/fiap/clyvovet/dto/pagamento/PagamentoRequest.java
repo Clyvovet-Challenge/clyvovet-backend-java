@@ -1,7 +1,6 @@
 package br.com.fiap.clyvovet.dto.pagamento;
 
 import br.com.fiap.clyvovet.model.FormaPagamento;
-import br.com.fiap.clyvovet.model.StatusPagamento;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,10 +43,11 @@ public class PagamentoRequest {
     @NotNull(message = "ID do evento clínico é obrigatório")
     private UUID eventoClinicoId;
 
-    /**
-     * Um pagamento nasce PENDENTE ou PAGO. As demais transicoes sao acoes
-     * proprias -- CANCELADO e REEMBOLSADO nao se declaram no cadastro.
-     */
-    @NotNull(message = "Status de pagamento é obrigatório")
-    private StatusPagamento statusPagamento;
+    // O statusPagamento SAIU do corpo (spec 08, P14 e ruptura B3).
+    //
+    // Enquanto esteve aqui, P1-P13 eram decorativas: um POST com
+    // {"statusPagamento":"PAGO"} criava um pago de qualquer valor sem passar
+    // pelo teto do preco do servico (P7), e um PUT devolvia um REEMBOLSADO ao
+    // estado PAGO, furando o terminal de P11. Todo pagamento nasce PENDENTE e
+    // muda por /confirmar e /estornar, onde as regras sao verificadas.
 }

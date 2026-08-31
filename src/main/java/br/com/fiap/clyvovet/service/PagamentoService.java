@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoPatchRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoRequest;
 import br.com.fiap.clyvovet.dto.pagamento.PagamentoResponse;
+import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.mapper.PagamentoMapper;
 import br.com.fiap.clyvovet.model.FormaPagamento;
 import br.com.fiap.clyvovet.model.Pagamento;
@@ -74,10 +75,21 @@ public class PagamentoService {
         return pagamentoMapper.toResponse(pagamentoRepository.save(pagamento));
     }
 
+    /**
+     * P9 — pagamento confirmado nao se apaga, se estorna.
+     *
+     * DELETE apagaria a receita do historico junto com a linha, e com ela a
+     * resposta para "quanto essa clinica faturou". O estorno deixa as duas
+     * pontas registradas: entrou e voltou, com o motivo.
+     */
     @Transactional
     @CacheEvict(value = "pagamentos", allEntries = true)
     public void deletar(UUID id) {
-        pagamentoRepository.garantirQueExiste(id);
+        Pagamento pagamento = pagamentoRepository.obterPorId(id);
+        if (pagamento.getStatusPagamento() == StatusPagamento.PAGO) {
+            throw new RegraDeNegocioException("statusPagamento",
+                    "Um pagamento confirmado não é removido. Use POST /pagamentos/" + id + "/estornar");
+        }
         pagamentoRepository.deleteById(id);
     }
 }

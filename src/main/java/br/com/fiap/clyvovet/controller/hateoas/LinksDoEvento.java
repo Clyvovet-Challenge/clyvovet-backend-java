@@ -10,14 +10,17 @@ import br.com.fiap.clyvovet.model.StatusEvento;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Links de um evento clinico, condicionais ao estado:
  *
- *   AGENDADO   -> cancelar, concluir
- *   REALIZADO  -> marcar-retorno, se houver retorno previsto
+ *   AGENDADO   -> cancelar; concluir, se a data ja chegou
+ *   REALIZADO  -> concluir, enquanto o prontuario nao foi fechado;
+ *                 marcar-retorno, se houver retorno previsto
  *   FALTOU     -> so navegacao
  *   CANCELADO  -> so navegacao
  *
@@ -55,10 +58,20 @@ public class LinksDoEvento {
             case AGENDADO -> {
                 modelo.add(linkTo(methodOn(AgendamentoController.class)
                         .cancelar(evento.id(), null)).withRel("cancelar"));
-                modelo.add(linkTo(methodOn(RetornoController.class)
-                        .concluir(evento.id(), null)).withRel("concluir"));
+                // Concluir o futuro seria registrar consulta que nao houve (R2).
+                if (!evento.data().isAfter(LocalDate.now())) {
+                    modelo.add(linkTo(methodOn(RetornoController.class)
+                            .concluir(evento.id(), null)).withRel("concluir"));
+                }
             }
             case REALIZADO -> {
+                // O atendimento lancado retroativamente nasce REALIZADO (R1) e
+                // ainda espera peso e desfecho: quem responde se cabe concluir
+                // e concluidoEm, nao o status.
+                if (evento.concluidoEm() == null) {
+                    modelo.add(linkTo(methodOn(RetornoController.class)
+                            .concluir(evento.id(), null)).withRel("concluir"));
+                }
                 if (evento.dataRetornoPrevisto() != null) {
                     modelo.add(linkTo(methodOn(RetornoController.class)
                             .agendarRetorno(evento.id(), null)).withRel("marcar-retorno"));

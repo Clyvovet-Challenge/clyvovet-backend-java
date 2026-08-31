@@ -4,6 +4,7 @@ import br.com.fiap.clyvovet.dto.autorizacao.AutorizacaoResponse;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.model.*;
 import br.com.fiap.clyvovet.repository.AutorizacaoAcessoRepository;
+import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class AutorizacaoService {
     private static final int ANOS_DE_VIGENCIA = 2;
 
     private final AutorizacaoAcessoRepository autorizacaoRepository;
+    private final EventoClinicoRepository eventoClinicoRepository;
     private final SegurancaService seguranca;
 
     /**
@@ -67,6 +69,42 @@ public class AutorizacaoService {
         autorizacaoRepository.save(autorizacao);
         log.info("Consentimento registrado: animal {} liberado para a clinica {} ate {}",
                 animal.getId(), clinica.getId(), autorizacao.getValidoAte());
+    }
+
+    /**
+     * C14 — cancelar o agendamento revoga o consentimento SE nunca houve
+     * atendimento naquela clinica.
+     *
+     * As duas metades importam. Sem a revogacao, consentir e cancelar em
+     * seguida deixava a clinica com dois anos de acesso ao historico de um
+     * animal que ela nunca viu — bastava induzir um agendamento para comprar o
+     * prontuario. Com a revogacao incondicional, cancelar uma consulta depois
+     * de tres anos de relacao apagaria o acesso construido nesses tres anos,
+     * no meio de um tratamento.
+     *
+     * Silenciosa quando nao ha o que revogar: o cancelamento nao pode falhar
+     * porque o consentimento nunca existiu.
+     */
+    @Transactional
+    public void revogarSeNuncaHouveAtendimento(EventoClinico cancelado) {
+        if (cancelado.getAnimal() == null || cancelado.getClinica() == null) {
+            return;
+        }
+        UUID animalId = cancelado.getAnimal().getId();
+        UUID clinicaId = cancelado.getClinica().getId();
+
+        if (eventoClinicoRepository.houveAtendimento(animalId, clinicaId)) {
+            return;
+        }
+        autorizacaoRepository.findByAnimalIdAndClinicaId(animalId, clinicaId)
+                .filter(a -> a.getStatus() == StatusAutorizacao.VIGENTE)
+                .ifPresent(autorizacao -> {
+                    autorizacao.setStatus(StatusAutorizacao.REVOGADA);
+                    autorizacao.setRevogadaEm(LocalDate.now());
+                    autorizacaoRepository.save(autorizacao);
+                    log.info("Consentimento revogado com o cancelamento: animal {} nunca foi atendido na clinica {}",
+                            animalId, clinicaId);
+                });
     }
 
     /** O que o tutor ve quando pergunta quem tem acesso aos animais dele. */

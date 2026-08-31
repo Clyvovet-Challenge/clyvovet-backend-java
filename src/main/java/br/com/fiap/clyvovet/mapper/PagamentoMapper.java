@@ -24,7 +24,9 @@ public class PagamentoMapper {
         pagamento.setDataPagamento(request.getDataPagamento());
         pagamento.setDescricao(request.getDescricao());
         pagamento.setObservacao(request.getObservacao());
-        pagamento.setStatusPagamento(request.getStatusPagamento());
+        // O status NAO vem do corpo (P14): nasce PENDENTE na entidade e muda
+        // por /confirmar e /estornar. No PUT, nao mexer nele preserva o que a
+        // transicao ja gravou.
         pagamento.setEventoClinico(eventoClinico);
     }
 

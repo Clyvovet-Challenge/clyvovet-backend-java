@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
+
 /**
  * CRUD da cadeia clinica: animal → evento clinico → pagamento.
  *
@@ -28,10 +30,12 @@ class AtendimentoCrudTest extends TesteDeApi {
             {"data":"2026-03-10","hora":"%s","descricao":"%s","tipoEvento":"%s",
              "veterinarioId":"%s","animalId":"%s","clinicaId":"%s"}""";
 
+    // Sem statusPagamento: ele saiu do corpo (P14). Todo pagamento nasce
+    // PENDENTE e muda por /confirmar e /estornar.
     private static final String PAGAMENTO = """
-            {"formaPagamento":"%s","valor":%s,"dataPagamento":"2026-03-10",
+            {"formaPagamento":"%s","valor":%s,
              "descricao":"Consulta de teste","observacao":"registro de teste",
-             "statusPagamento":"%s","eventoClinicoId":"%s"}""";
+             "eventoClinicoId":"%s"}""";
 
     /** Cria um animal do Lucas e ja agenda a remocao. Devolve o id. */
     private String animalDeTeste(String token) throws Exception {
@@ -132,13 +136,15 @@ class AtendimentoCrudTest extends TesteDeApi {
 
         buscar("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isOk());
 
+        // EXAME, e nao RETORNO: virar RETORNO por PUT deixaria o evento sem a
+        // consulta de origem que R9 exige -- ver o teste logo abaixo.
         JsonNode alterado = corpoDe(atualizar("/api/v1/eventos-clinicos/" + id, vet,
-                EVENTO.formatted("09:00", "Retorno pos-consulta", "RETORNO",
+                EVENTO.formatted("09:00", "Exame pos-consulta", "EXAME",
                         SeedV2.VET_CAMILA, animalId, SeedV2.CLINICA_VETCARE))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("id").asText()).isEqualTo(id);
         assertThat(alterado.get("hora").asText()).isEqualTo("09:00");
-        assertThat(alterado.get("tipoEvento").asText()).isEqualTo("RETORNO");
+        assertThat(alterado.get("tipoEvento").asText()).isEqualTo("EXAME");
         assertThat(alterado.get("clinicaNome").asText()).isEqualTo("VetCare Prime");
 
         remover("/api/v1/eventos-clinicos/" + id, vet).andExpect(status().isNoContent());
@@ -163,26 +169,27 @@ class AtendimentoCrudTest extends TesteDeApi {
         String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
 
         JsonNode criado = corpoDe(criar("/api/v1/pagamentos", vet,
-                PAGAMENTO.formatted("PIX", "250.75", "PAGO", eventoId))
+                PAGAMENTO.formatted("PIX", "250.75", eventoId))
                 .andExpect(status().isCreated()));
         String id = criado.get("id").asText();
         removerDepois("/api/v1/pagamentos/" + id);
 
         assertThat(criado.get("formaPagamento").asText()).isEqualTo("PIX");
         assertThat(criado.get("valor").decimalValue()).isEqualByComparingTo("250.75");
-        assertThat(criado.get("statusPagamento").asText()).isEqualTo("PAGO");
+        assertThat(criado.get("statusPagamento").asText()).isEqualTo("PENDENTE");
         assertThat(criado.get("eventoClinicoId").asText()).isEqualTo(eventoId);
 
         buscar("/api/v1/pagamentos/" + id, vet).andExpect(status().isOk());
 
         JsonNode alterado = corpoDe(atualizar("/api/v1/pagamentos/" + id, vet,
-                PAGAMENTO.formatted("BOLETO", "300.00", "PENDENTE", eventoId))
+                PAGAMENTO.formatted("BOLETO", "300.00", eventoId))
                 .andExpect(status().isOk()));
         assertThat(alterado.get("id").asText()).isEqualTo(id);
         assertThat(alterado.get("formaPagamento").asText()).isEqualTo("BOLETO");
         assertThat(alterado.get("valor").decimalValue()).isEqualByComparingTo("300.00");
         assertThat(alterado.get("statusPagamento").asText()).isEqualTo("PENDENTE");
 
+        // PENDENTE sai por DELETE. O PAGO nao (P9) -- ver CobrancaFluxoTest.
         remover("/api/v1/pagamentos/" + id, vet).andExpect(status().isNoContent());
         buscar("/api/v1/pagamentos/" + id, vet).andExpect(status().isNotFound());
     }
@@ -199,9 +206,20 @@ class AtendimentoCrudTest extends TesteDeApi {
         String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
 
         String id = corpoDe(criar("/api/v1/pagamentos", vet,
-                PAGAMENTO.formatted("CARTAO", "120.00", "REEMBOLSADO", eventoId))
+                PAGAMENTO.formatted("CARTAO", "120.00", eventoId))
                 .andExpect(status().isCreated())).get("id").asText();
         removerDepois("/api/v1/pagamentos/" + id);
+
+        // O REEMBOLSADO nao se declara mais no cadastro (P14): chega-se a ele
+        // pelo caminho real, PENDENTE -> PAGO -> REEMBOLSADO. O que o teste
+        // guarda continua sendo o mesmo -- que o check do banco aceita o valor
+        // que o enum escreve.
+        criar("/api/v1/pagamentos/" + id + "/confirmar", vet, """
+                {"formaPagamento":"CARTAO","dataPagamento":"%s"}""".formatted(LocalDate.now()))
+                .andExpect(status().isOk());
+        criar("/api/v1/pagamentos/" + id + "/estornar", vet,
+                "{\"motivo\":\"cobranca duplicada no cartao\"}")
+                .andExpect(status().isOk());
 
         assertThat(corpoDe(buscar("/api/v1/pagamentos/" + id, vet)).get("statusPagamento").asText())
                 .isEqualTo("REEMBOLSADO");
@@ -211,7 +229,7 @@ class AtendimentoCrudTest extends TesteDeApi {
     @DisplayName("pagamento: evento clinico inexistente responde 404")
     void pagamentoComEventoInexistenteResponde404() throws Exception {
         criar("/api/v1/pagamentos", tokenVeterinaria(),
-                PAGAMENTO.formatted("PIX", "10.00", "PAGO", SeedV2.ID_INEXISTENTE))
+                PAGAMENTO.formatted("PIX", "10.00", SeedV2.ID_INEXISTENTE))
                 .andExpect(status().isNotFound());
     }
 }

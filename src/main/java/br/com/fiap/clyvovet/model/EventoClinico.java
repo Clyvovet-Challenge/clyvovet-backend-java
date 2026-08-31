@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
@@ -44,6 +45,17 @@ public class EventoClinico {
     @Enumerated(EnumType.STRING)
     @Column(name = "status_evento", nullable = false)
     private StatusEvento statusEvento = StatusEvento.AGENDADO;
+
+    /**
+     * Quando o prontuario foi fechado. Nulo enquanto nao foi (V8).
+     *
+     * Pergunta diferente de statusEvento: aquele diz se o pet apareceu, este
+     * diz se o registro clinico do atendimento esta encerrado. Um atendimento
+     * lancado retroativamente ja nasce REALIZADO e ainda precisa receber peso e
+     * desfecho.
+     */
+    @Column(name = "concluido_em")
+    private LocalDateTime concluidoEm;
 
     @Column(name = "data_retorno_previsto")
     private LocalDate dataRetornoPrevisto;

@@ -7,6 +7,7 @@ import br.com.fiap.clyvovet.model.StatusEvento;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record EventoClinicoResponse(
@@ -29,5 +30,13 @@ public record EventoClinicoResponse(
         String servicoNome,
         BigDecimal valor,
         Desfecho desfecho,
-        String motivoCancelamento
+        String motivoCancelamento,
+        /**
+         * Quando o prontuario foi fechado; nulo enquanto nao foi.
+         *
+         * Nao e redundante com statusEvento: desde a V8 um atendimento lancado
+         * retroativamente ja nasce REALIZADO e ainda espera peso e desfecho. E
+         * este campo, e nao o status, que diz se ainda cabe concluir.
+         */
+        LocalDateTime concluidoEm
 ) {}

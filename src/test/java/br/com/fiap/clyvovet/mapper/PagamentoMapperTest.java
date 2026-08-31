@@ -19,15 +19,14 @@ class PagamentoMapperTest {
 
     private final PagamentoMapper mapper = new PagamentoMapper();
 
-    private static PagamentoRequest request(FormaPagamento forma, StatusPagamento status, String valor) {
+    private static PagamentoRequest request(FormaPagamento forma, String valor) {
         return new PagamentoRequest(
                 forma,
                 new BigDecimal(valor),
                 LocalDate.of(2026, 3, 10),
                 "Consulta",
                 "pago na recepcao",
-                UUID.randomUUID(),
-                status);
+                UUID.randomUUID());
     }
 
     private static EventoClinico evento() {
@@ -41,31 +40,36 @@ class PagamentoMapperTest {
     void toEntityCopiaCampos() {
         EventoClinico evento = evento();
 
-        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.PIX, StatusPagamento.PAGO, "250.75"), evento);
+        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.PIX, "250.75"), evento);
 
         assertThat(pagamento.getFormaPagamento()).isEqualTo(FormaPagamento.PIX);
         assertThat(pagamento.getValor()).isEqualByComparingTo("250.75");
         assertThat(pagamento.getDataPagamento()).isEqualTo(LocalDate.of(2026, 3, 10));
         assertThat(pagamento.getDescricao()).isEqualTo("Consulta");
         assertThat(pagamento.getObservacao()).isEqualTo("pago na recepcao");
-        assertThat(pagamento.getStatusPagamento()).isEqualTo(StatusPagamento.PAGO);
+        // O status nao vem do request (P14): a entidade nasce PENDENTE e so
+        // /confirmar e /estornar a movem.
+        assertThat(pagamento.getStatusPagamento()).isEqualTo(StatusPagamento.PENDENTE);
         assertThat(pagamento.getEventoClinico()).isSameAs(evento);
     }
 
     @Test
-    @DisplayName("atualizar troca forma, valor e status e preserva o id")
+    @DisplayName("atualizar troca forma e valor, preserva o id e NAO mexe no status")
     void atualizarPreservaId() {
-        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.PIX, StatusPagamento.PAGO, "250.75"), evento());
+        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.PIX, "250.75"), evento());
         pagamento.setId(UUID.randomUUID());
         UUID idOriginal = pagamento.getId();
+        pagamento.setStatusPagamento(StatusPagamento.PAGO);
 
         EventoClinico outroEvento = evento();
-        mapper.atualizar(pagamento, request(FormaPagamento.BOLETO, StatusPagamento.PENDENTE, "300.00"), outroEvento);
+        mapper.atualizar(pagamento, request(FormaPagamento.BOLETO, "300.00"), outroEvento);
 
         assertThat(pagamento.getId()).isEqualTo(idOriginal);
         assertThat(pagamento.getFormaPagamento()).isEqualTo(FormaPagamento.BOLETO);
         assertThat(pagamento.getValor()).isEqualByComparingTo("300.00");
-        assertThat(pagamento.getStatusPagamento()).isEqualTo(StatusPagamento.PENDENTE);
+        // Um PUT que reescrevesse o status devolveria um REEMBOLSADO ao estado
+        // PAGO, furando o terminal de P11.
+        assertThat(pagamento.getStatusPagamento()).isEqualTo(StatusPagamento.PAGO);
         assertThat(pagamento.getEventoClinico()).isSameAs(outroEvento);
     }
 
@@ -75,7 +79,7 @@ class PagamentoMapperTest {
         EventoClinico evento = evento();
 
         PagamentoResponse response = mapper.toResponse(
-                mapper.toEntity(request(FormaPagamento.CARTAO, StatusPagamento.PAGO, "99.90"), evento));
+                mapper.toEntity(request(FormaPagamento.CARTAO, "99.90"), evento));
 
         assertThat(response.eventoClinicoId()).isEqualTo(evento.getId());
         assertThat(response.formaPagamento()).isEqualTo(FormaPagamento.CARTAO);
@@ -85,7 +89,7 @@ class PagamentoMapperTest {
     @Test
     @DisplayName("pagamento sem evento responde com o id do evento nulo")
     void pagamentoSemEvento() {
-        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.DINHEIRO, StatusPagamento.PENDENTE, "10.00"), null);
+        Pagamento pagamento = mapper.toEntity(request(FormaPagamento.DINHEIRO, "10.00"), null);
 
         assertThat(mapper.toResponse(pagamento).eventoClinicoId()).isNull();
     }

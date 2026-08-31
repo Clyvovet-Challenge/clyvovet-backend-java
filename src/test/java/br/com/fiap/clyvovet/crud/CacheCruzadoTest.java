@@ -54,7 +54,10 @@ class CacheCruzadoTest extends TesteDeApi {
 
         buscar("/api/v1/eventos-clinicos?size=50", vet).andExpect(status().isOk());
 
-        atualizarParcialmente("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, vet, """
+        // O rename vai pelo admin: o veterinario le o cadastro do animal, mas
+        // nao o escreve (C17). O objeto do teste e a invalidacao cruzada do
+        // cache, e ela nao muda com quem gravou.
+        atualizarParcialmente("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin(), """
                 {"nome":"Bolinha Renomeado"}""")
                 .andExpect(status().isOk());
 
@@ -68,7 +71,7 @@ class CacheCruzadoTest extends TesteDeApi {
         }
         assertThat(achou).isTrue();
 
-        atualizarParcialmente("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, vet, """
+        atualizarParcialmente("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, tokenAdmin(), """
                 {"nome":"Bolinha"}""")
                 .andExpect(status().isOk());
     }

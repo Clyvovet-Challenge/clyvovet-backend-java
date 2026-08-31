@@ -69,7 +69,8 @@ public class EventoClinicoMapper {
                 // divergirem.
                 Referencias.de(evento.getServico(), Servico::getPreco),
                 evento.getDesfecho(),
-                evento.getMotivoCancelamento()
+                evento.getMotivoCancelamento(),
+                evento.getConcluidoEm()
         );
     }
 }

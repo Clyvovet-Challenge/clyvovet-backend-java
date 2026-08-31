@@ -93,6 +93,14 @@ public class HistoricoService {
             throw new RegraDeNegocioException("animalId",
                     "Sem acesso ao histórico deste animal");
         }
+        // C6 fala de TODO acesso de nivel 1, e nao so do que entra pelo
+        // microchip. Sem o teto aqui, quem quisesse varrer a base trocava
+        // /animais/resumo?microchip= por /animais/{id}/historico e lia o mesmo
+        // conteudo sem limite nenhum. O dono e o ADMIN nao consomem teto: o
+        // controle e contra coleta em massa por terceiro.
+        if (nivel == NivelAcesso.RESUMO_DE_SEGURANCA) {
+            aplicarTetoDiario(animal);
+        }
         registrarAcesso(animal, nivel, false, null);
         return montarHistorico(animal, nivel);
     }

@@ -7,11 +7,14 @@ import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
 import br.com.fiap.clyvovet.mapper.RelacionamentosDoEvento;
 import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.StatusEvento;
+import br.com.fiap.clyvovet.model.StatusPagamento;
 import br.com.fiap.clyvovet.model.TipoEvento;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.ServicoRepository;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
+import br.com.fiap.clyvovet.repository.PagamentoRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -30,6 +34,7 @@ import java.util.UUID;
 public class EventoClinicoService {
 
     private final EventoClinicoRepository eventoClinicoRepository;
+    private final PagamentoRepository pagamentoRepository;
     private final VeterinarioRepository veterinarioRepository;
     private final AnimalRepository animalRepository;
     private final ClinicaRepository clinicaRepository;
@@ -58,7 +63,11 @@ public class EventoClinicoService {
     @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public EventoClinicoResponse criar(EventoClinicoRequest request) {
         garantirQueEDaPropriaClinica(request.getClinicaId());
+        garantirQueRetornoVemPelaRotaDeRetorno(request.getTipoEvento());   // R9
+
         EventoClinico evento = eventoClinicoMapper.toEntity(request, resolverRelacionamentos(request));
+        evento.setStatusEvento(statusPelaData(evento.getData()));          // R1
+
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
@@ -67,6 +76,7 @@ public class EventoClinicoService {
     public EventoClinicoResponse atualizar(UUID id, EventoClinicoRequest request) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
         eventoClinicoMapper.atualizar(evento, request, resolverRelacionamentos(request));
+        garantirQueORetornoTemOrigem(evento);                              // R9
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
@@ -75,6 +85,7 @@ public class EventoClinicoService {
     public EventoClinicoResponse atualizarParcialmente(UUID id, EventoClinicoPatchRequest patch) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
         eventoClinicoMapper.aplicarPatch(evento, patch, resolverRelacionamentos(patch));
+        garantirQueORetornoTemOrigem(evento);                              // R9
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
@@ -82,7 +93,59 @@ public class EventoClinicoService {
     @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public void deletar(UUID id) {
         eventoClinicoRepository.garantirQueExiste(id);
+        // R19: a FK de pagamento ja barrava a remocao, mas com erro de
+        // integridade -- que fala do banco, e nao da regra, e barra igual
+        // quando o pagamento e apenas PENDENTE.
+        if (pagamentoRepository.existsByEventoClinicoIdAndStatusPagamento(id, StatusPagamento.PAGO)) {
+            throw new RegraDeNegocioException("id",
+                    "Este atendimento tem pagamento confirmado. Estorne o pagamento antes de removê-lo");
+        }
         eventoClinicoRepository.deleteById(id);
+    }
+
+    /**
+     * R1 — a data decide o estado inicial.
+     *
+     * Data futura e marcacao; data de hoje ou passada e registro do que ja
+     * aconteceu. Nascer sempre AGENDADO fazia o atendimento lancado
+     * retroativamente entrar na varredura de faltas de R18 e ser marcado
+     * FALTOU no dia seguinte — o pet foi atendido e o sistema registrava que
+     * ele nao apareceu.
+     */
+    private StatusEvento statusPelaData(LocalDate data) {
+        return data != null && data.isAfter(LocalDate.now())
+                ? StatusEvento.AGENDADO
+                : StatusEvento.REALIZADO;
+    }
+
+    /**
+     * R9 — RETORNO exige o evento de origem, e este corpo nao tem onde
+     * declara-lo.
+     *
+     * Sem a recusa, POST /eventos-clinicos criava retorno orfao: contava como
+     * retorno nas metricas sem estar ligado a consulta nenhuma, e a consulta
+     * que deveria te-lo gerado seguia como vencida em R17. A rota que faz isso
+     * direito e POST /eventos-clinicos/{origemId}/retorno.
+     */
+    private void garantirQueRetornoVemPelaRotaDeRetorno(TipoEvento tipoEvento) {
+        if (tipoEvento == TipoEvento.RETORNO) {
+            throw new RegraDeNegocioException("tipoEvento",
+                    "Um retorno precisa apontar para a consulta que o gerou. "
+                            + "Use POST /eventos-clinicos/{id}/retorno");
+        }
+    }
+
+    /**
+     * A mesma regra pela porta da edicao: um PUT ou PATCH que apenas troque o
+     * tipo para RETORNO deixaria orfao um evento que nasceu CONSULTA. O retorno
+     * criado pela rota propria passa, porque la a origem e gravada.
+     */
+    private void garantirQueORetornoTemOrigem(EventoClinico evento) {
+        if (evento.getTipoEvento() == TipoEvento.RETORNO && evento.getEventoOrigem() == null) {
+            throw new RegraDeNegocioException("tipoEvento",
+                    "Um retorno precisa apontar para a consulta que o gerou. "
+                            + "Use POST /eventos-clinicos/{id}/retorno");
+        }
     }
 
     /**

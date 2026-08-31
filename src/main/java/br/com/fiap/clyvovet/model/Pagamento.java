@@ -25,7 +25,11 @@ public class Pagamento {
     @ManyToOne
     @JoinColumn(name = "evento_id")
     private EventoClinico eventoClinico;
+    /**
+     * Todo pagamento nasce PENDENTE. As transicoes sao acoes proprias --
+     * /confirmar e /estornar --, onde P2, P4, P7 e P11 sao verificadas.
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "status_pagamento")
-    private StatusPagamento statusPagamento;
+    private StatusPagamento statusPagamento = StatusPagamento.PENDENTE;
 }

@@ -21,7 +21,10 @@ class AtualizacaoParcialTest extends TesteDeApi {
     @Test
     @DisplayName("PATCH altera so o campo enviado e preserva o resto")
     void patchAlteraApenasOCampoEnviado() throws Exception {
-        String vet = tokenVeterinaria();
+        // Admin, e nao veterinaria: escrever no cadastro do animal e do dono ou
+        // do administrador da plataforma (C17). O objeto do teste e o
+        // comportamento do PATCH, nao quem pode chama-lo.
+        String vet = tokenAdmin();
         String url = "/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS;
 
         JsonNode antes = corpoDe(buscar(url, vet).andExpect(status().isOk()));
@@ -49,7 +52,7 @@ class AtualizacaoParcialTest extends TesteDeApi {
         String url = "/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS;
 
         JsonNode depois = corpoDe(
-                atualizarParcialmente(url, tokenVeterinaria(), """
+                atualizarParcialmente(url, tokenAdmin(), """
                         {"observacao":"retorno em 30 dias"}""").andExpect(status().isOk()));
 
         assertThat(depois.get("tutorId").asText()).isEqualTo(SeedV2.TUTOR_LUCAS);

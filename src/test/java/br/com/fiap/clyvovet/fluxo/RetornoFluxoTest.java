@@ -124,16 +124,17 @@ class RetornoFluxoTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("concluir é o único caminho para REALIZADO: o PATCH não muda status")
+    @DisplayName("o status não é editável por PATCH: as transições são ações próprias")
     void patchNaoAlteraStatus() throws Exception {
-        // Se o status fosse editavel por PATCH, bastaria um
-        // {"statusEvento":"REALIZADO"} para contornar R2, R4 e R5 de uma vez.
-        // O DTO de patch nao tem o campo, entao o Jackson o descarta.
+        // Se o status viesse do corpo, um {"statusEvento":"CANCELADO"} num
+        // atendimento ja realizado apagaria o registro clinico da agenda sem
+        // passar por R4 nem pela checagem de pagamento de R19. O DTO de patch
+        // nao tem o campo, entao o Jackson o descarta.
         atualizarParcialmente("/api/v1/eventos-clinicos/" + eventoDeOntem, tokenVeterinaria(),
                 """
-                {"statusEvento":"REALIZADO"}""")
+                {"statusEvento":"CANCELADO"}""")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusEvento").value("AGENDADO"));
+                .andExpect(jsonPath("$.statusEvento").value("REALIZADO"));
     }
 
     @Test
@@ -206,8 +207,21 @@ class RetornoFluxoTest extends TesteDeApi {
     @Test
     @DisplayName("não marca retorno de atendimento que não aconteceu")
     void naoMarcaRetornoDeAtendimentoNaoRealizado() throws Exception {
-        criar("/api/v1/eventos-clinicos/" + eventoDeOntem + "/retorno", tokenVeterinaria(),
-                corpoDeRetorno(primeiraSegunda, "08:00"))
+        String vet = tokenVeterinaria();
+
+        // A origem precisa ser uma marcacao que ainda nao aconteceu, e desde a
+        // V8 isso quer dizer data FUTURA: com data passada o evento nasce
+        // REALIZADO (R1) e o caso deixaria de existir.
+        ResultActions futuro = criar("/api/v1/eventos-clinicos", vet, """
+                {"data":"%s","hora":"09:00","descricao":"Consulta marcada","tipoEvento":"CONSULTA",
+                 "veterinarioId":"%s","animalId":"%s","clinicaId":"%s"}"""
+                .formatted(primeiraSegunda, SeedV2.VET_CAMILA,
+                        SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE));
+        String id = idDe(futuro.andExpect(status().isCreated()));
+        removerDepois("/api/v1/eventos-clinicos/" + id);
+
+        criar("/api/v1/eventos-clinicos/" + id + "/retorno", vet,
+                corpoDeRetorno(segundaSegunda, "08:00"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.mensagem")
                         .value("Só é possível marcar retorno de um atendimento que aconteceu"));
@@ -293,13 +307,31 @@ class RetornoFluxoTest extends TesteDeApi {
     @Test
     @DisplayName("a varredura marca como FALTOU o agendamento que venceu")
     void marcarFaltas() throws Exception {
-        // eventoDeOntem nasceu AGENDADO (default da entidade) com data de
-        // ontem: e exatamente o caso que a varredura procura.
-        criar("/api/v1/eventos-clinicos/marcar-faltas", tokenVeterinaria(), "")
+        String vet = tokenVeterinaria();
+
+        // O alvo da varredura e um AGENDADO cuja data passou, e desde a V8 nao
+        // da para criar isso direto: data passada nasce REALIZADO (R1). O
+        // caminho e o mesmo da vida real -- marca-se para o futuro e o dia
+        // chega sem ninguem concluir. O PATCH recua a data para simular isso
+        // sem esperar.
+        ResultActions marcado = criar("/api/v1/eventos-clinicos", vet, """
+                {"data":"%s","hora":"14:00","descricao":"Consulta marcada","tipoEvento":"CONSULTA",
+                 "veterinarioId":"%s","animalId":"%s","clinicaId":"%s"}"""
+                .formatted(primeiraSegunda, SeedV2.VET_CAMILA,
+                        SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE));
+        String id = idDe(marcado.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.statusEvento").value("AGENDADO")));
+        removerDepois("/api/v1/eventos-clinicos/" + id);
+
+        atualizarParcialmente("/api/v1/eventos-clinicos/" + id, vet, """
+                {"data":"%s"}""".formatted(LocalDate.now().minusDays(1)))
+                .andExpect(status().isOk());
+
+        criar("/api/v1/eventos-clinicos/marcar-faltas", vet, "")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.marcados").isNumber());
 
-        buscar("/api/v1/eventos-clinicos/" + eventoDeOntem, tokenVeterinaria())
+        buscar("/api/v1/eventos-clinicos/" + id, vet)
                 .andExpect(jsonPath("$.statusEvento").value("FALTOU"));
     }
 

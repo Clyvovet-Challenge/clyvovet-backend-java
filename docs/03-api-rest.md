@@ -398,11 +398,11 @@ customizadas em português.
 |---|---|---|---|---|
 | `formaPagamento` | enum | sim | `PIX` `CARTAO` `DINHEIRO` `BOLETO` | "Forma de pagamento é obrigatória" |
 | `valor` | decimal | sim | positivo, máx. 9 inteiros + 2 decimais | "Valor deve ser positivo" |
-| `dataPagamento` | date | sim | não pode ser futura | "Data de pagamento não pode ser futura" |
+| `dataPagamento` | date | **não** | não pode ser futura | "Data de pagamento não pode ser futura" |
 | `descricao` | string | não | máx. 255 caracteres | "Descrição deve ter no máximo 255 caracteres" |
 | `observacao` | string | não | máx. 500 caracteres | "Observação deve ter no máximo 500 caracteres" |
 | `eventoClinicoId` | UUID | sim | deve existir → senão 404 | "ID do evento clínico é obrigatório" |
-| `statusPagamento` | enum | sim | `PENDENTE` `PAGO` `CANCELADO` `REEMBOLSADO` | "Status de pagamento é obrigatório" |
+| ~~`statusPagamento`~~ | — | — | **saiu do corpo** — ver a nota abaixo | — |
 
 ### Response
 
@@ -418,17 +418,27 @@ Content-Type: application/json
 {
   "formaPagamento": "PIX",
   "valor": 150.00,
-  "dataPagamento": "2025-05-20",
   "descricao": "Pagamento consulta de rotina",
-  "statusPagamento": "PAGO",
   "eventoClinicoId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-> Duas ressalvas registradas em
-> [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md):
-> `dataPagamento` é obrigatória mesmo para status `PENDENTE`, e `REEMBOLSADO` é
-> rejeitado pelo check constraint do Oracle.
+> **O status não vem do corpo** (regra P14 da
+> [spec 08](../specs/08-modelo-de-negocio.md)). Todo pagamento nasce `PENDENTE`;
+> as transições são ações próprias, e é nelas que as regras são verificadas:
+>
+> ```http
+> POST /api/v1/pagamentos/{id}/confirmar   { formaPagamento, dataPagamento }
+> POST /api/v1/pagamentos/{id}/estornar    { motivo }
+> ```
+>
+> `PENDENTE → PAGO → REEMBOLSADO`. `CANCELADO` e `REEMBOLSADO` são terminais e
+> nada volta para `PENDENTE`. Enquanto o campo esteve no corpo, um
+> `{"statusPagamento":"PAGO"}` no POST ou no PUT contornava todas elas de uma
+> vez — inclusive o teto da soma contra o preço do serviço.
+>
+> `dataPagamento` também deixou de ser obrigatória: ela entra na confirmação,
+> porque um pagamento pendente não tem data de pagamento.
 
 ---
 

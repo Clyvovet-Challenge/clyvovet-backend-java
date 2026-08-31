@@ -70,12 +70,26 @@ class HateoasTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("evento AGENDADO oferece cancelar e concluir")
+    @DisplayName("evento AGENDADO oferece concluir só depois que o dia chega")
     void agendadoOfereceAsDuasTransicoes() throws Exception {
         String id = agendar();
+        String vet = tokenVeterinaria();
 
-        buscar("/api/v1/eventos-clinicos/" + id, tokenVeterinaria())
+        // Marcado para daqui a dias: cancelar sim, concluir nao. Concluir o
+        // futuro e registrar consulta que nao houve (R2), e o link seria o
+        // botao que so falha depois do clique.
+        buscar("/api/v1/eventos-clinicos/" + id, vet)
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusEvento").value("AGENDADO"))
+                .andExpect(jsonPath("$._links.cancelar.href").exists())
+                .andExpect(jsonPath("$._links.concluir").doesNotExist());
+
+        // O dia chega: a transicao aparece.
+        atualizarParcialmente("/api/v1/eventos-clinicos/" + id, vet, """
+                {"data":"%s"}""".formatted(LocalDate.now()))
+                .andExpect(status().isOk());
+
+        buscar("/api/v1/eventos-clinicos/" + id, vet)
                 .andExpect(jsonPath("$.statusEvento").value("AGENDADO"))
                 .andExpect(jsonPath("$._links.cancelar.href").exists())
                 .andExpect(jsonPath("$._links.concluir.href").exists());

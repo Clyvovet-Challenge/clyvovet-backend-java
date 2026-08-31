@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
@@ -62,6 +63,7 @@ public class RetornoService {
         evento.setDesfecho(request.getDesfecho());
         evento.setDataRetornoPrevisto(request.getDataRetornoPrevisto());
         evento.setStatusEvento(StatusEvento.REALIZADO);
+        evento.setConcluidoEm(LocalDateTime.now());
         if (request.getDescricao() != null) {
             evento.setDescricao(request.getDescricao());
         }
@@ -153,12 +155,21 @@ public class RetornoService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * A segunda checagem olha concluidoEm, e nao o status.
+     *
+     * Desde a V8 um atendimento com data passada nasce REALIZADO (R1), entao
+     * "ja esta REALIZADO" deixou de significar "ja foi concluido" — significaria
+     * apenas "o pet apareceu", e recusar por isso tirava do veterinario a unica
+     * forma de gravar peso e desfecho do que ele registrou retroativamente.
+     * O que nao se faz duas vezes e fechar o prontuario.
+     */
     private void garantirQuePodeConcluir(EventoClinico evento) {
         if (evento.getStatusEvento() == StatusEvento.CANCELADO) {          // R4
             throw new RegraDeNegocioException("statusEvento",
                     "Um atendimento cancelado não pode ser concluído");
         }
-        if (evento.getStatusEvento() == StatusEvento.REALIZADO) {          // R5
+        if (evento.getConcluidoEm() != null) {                             // R5
             throw new RegraDeNegocioException("statusEvento",
                     "Este atendimento já foi concluído");
         }

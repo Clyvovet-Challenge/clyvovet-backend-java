@@ -41,6 +41,7 @@ public class AgendamentoService {
     private static final int HORAS_PARA_CANCELAR_SEM_MARCA = 24;
 
     private final EventoClinicoRepository eventoClinicoRepository;
+    private final PagamentoRepository pagamentoRepository;
     private final AnimalRepository animalRepository;
     private final ServicoRepository servicoRepository;
     private final VeterinarioRepository veterinarioRepository;
@@ -73,6 +74,8 @@ public class AgendamentoService {
         evento.setStatusEvento(StatusEvento.AGENDADO);                    // A11
         evento.setDescricao(servico.getNome());
 
+        garantirQueOConsentimentoEDeQuemPodeDar(animal, request);         // C10
+
         EventoClinico salvo = eventoClinicoRepository.save(evento);
 
         // O consentimento e o proprio agendamento (spec 08, C8-C11). Recusar e
@@ -97,6 +100,7 @@ public class AgendamentoService {
             throw new RegraDeNegocioException("statusEvento",
                     "Só é possível cancelar um atendimento que ainda está agendado");
         }
+        garantirQueNaoHaDinheiroPreso(evento);                             // R19, P12
 
         // Cancelar em cima da hora e permitido, mas fica anotado: recusar
         // empurraria o tutor a simplesmente nao aparecer, o que e pior.
@@ -104,7 +108,10 @@ public class AgendamentoService {
         evento.setStatusEvento(StatusEvento.CANCELADO);
         evento.setMotivoCancelamento(marca + motivo);
 
-        return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
+        EventoClinico salvo = eventoClinicoRepository.save(evento);
+        autorizacaoService.revogarSeNuncaHouveAtendimento(salvo);          // C14
+
+        return eventoClinicoMapper.toResponse(salvo);
     }
 
     /** Devolve o que PODE ser marcado: dia sem vaga nao aparece. */
@@ -154,6 +161,35 @@ public class AgendamentoService {
         }
     }
 
+    /**
+     * C10 — consentir e ato do tutor, e de mais ninguem.
+     *
+     * A rota exige podeAcessarAnimal, que libera todo VETERINARIO para que o
+     * profissional possa marcar pelo balcao. Sem esta checagem, o mesmo
+     * caminho deixava a clinica marcar consentimentoHistorico=true e conceder A
+     * SI MESMA dois anos de acesso ao historico — sem motivo, sem aviso ao
+     * tutor e sem a marca de quebra de vidro que C21 existe para cobrar.
+     *
+     * Recusa em vez de ignorar em silencio: um pedido que diz ter consentimento
+     * e e gravado sem ele deixaria a clinica convencida de ter acesso que nao
+     * tem, e o tutor sem saber que alguem tentou.
+     */
+    private void garantirQueOConsentimentoEDeQuemPodeDar(Animal animal, AgendamentoRequest request) {
+        if (!request.consentiu()) {
+            return;
+        }
+        UUID tutorAutenticado = seguranca.tutorIdParaFiltro();
+        boolean ehODono = tutorAutenticado != null
+                && animal.getTutor() != null
+                && tutorAutenticado.equals(animal.getTutor().getId());
+
+        if (!ehODono) {
+            throw new RegraDeNegocioException("consentimentoHistorico",
+                    "Só o tutor do animal libera o histórico clínico. "
+                            + "Marque o atendimento sem o consentimento e peça que ele autorize pelo aplicativo");
+        }
+    }
+
     private void garantirVeterinarioDaClinica(Veterinario veterinario, Servico servico) {
         if (veterinario.getClinica() == null
                 || !veterinario.getClinica().getId().equals(servico.getClinica().getId())) {
@@ -186,6 +222,23 @@ public class AgendamentoService {
         String impedimento = agendaService.porQueNaoEstaLivre(veterinario.getId(), request.getData(), janela);
         if (impedimento != null) {
             throw new RegraDeNegocioException("hora", impedimento);
+        }
+    }
+
+    /**
+     * R19 e P12 — o mesmo fato pelos dois lados: nao se cancela um atendimento
+     * que ja recebeu dinheiro sem devolver o dinheiro primeiro.
+     *
+     * Cancelar antes do estorno deixaria o pagamento preso a um evento que nao
+     * vai acontecer: ele nao entra na inadimplencia (o evento nao e REALIZADO)
+     * e nao aparece como devido a ninguem. O valor sumiria do painel sem sair
+     * do caixa.
+     */
+    private void garantirQueNaoHaDinheiroPreso(EventoClinico evento) {
+        if (pagamentoRepository.existsByEventoClinicoIdAndStatusPagamento(
+                evento.getId(), StatusPagamento.PAGO)) {
+            throw new RegraDeNegocioException("statusEvento",
+                    "Este atendimento tem pagamento confirmado. Estorne o pagamento antes de cancelar");
         }
     }
 

@@ -38,6 +38,9 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
             @Param("eventoId") UUID eventoId,
             @Param("status") StatusPagamento status);
 
+    /** Ha dinheiro recebido preso neste atendimento? Sustenta R19 e P12. */
+    boolean existsByEventoClinicoIdAndStatusPagamento(UUID eventoClinicoId, StatusPagamento status);
+
     @Query("""
             SELECT p FROM Pagamento p
             WHERE p.eventoClinico.animal.tutor.id = :tutorId

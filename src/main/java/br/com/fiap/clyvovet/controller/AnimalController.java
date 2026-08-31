@@ -76,8 +76,16 @@ public class AnimalController {
     // Duas verificacoes, porque sao duas perguntas diferentes: o pet e meu
     // (#id) e o dono que estou gravando continua sendo eu (#request.tutorId).
     // Sem a segunda, um tutor transferia o proprio pet para outro tutor.
+    //
+    // A primeira e ehDonoOuAdministrador, e nao podeAcessarAnimal: aquele
+    // libera todo VETERINARIO, o que e certo para LER o cadastro (nivel 0,
+    // necessario para atender) e errado para escreve-lo. Com ele aqui,
+    // qualquer veterinario da plataforma renomeava ou apagava o pet de
+    // qualquer tutor -- inclusive de clinica que nunca o atendeu. Pela spec 08
+    // (C17), a correcao vinda do corpo clinico e uma PROPOSTA que o tutor
+    // confirma; enquanto esse fluxo nao existe, a escrita fica com o dono.
     @PutMapping("/{id}")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
     @Operation(summary = "Atualizar animal existente")
     public ResponseEntity<AnimalResponse> atualizar(
             @PathVariable UUID id,
@@ -88,7 +96,7 @@ public class AnimalController {
     @PatchMapping("/{id}")
     // O patch sem tutorId nao troca o dono, e ai a segunda checagem
     // nao se aplica -- ver SegurancaService.podeAtribuirTutor.
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAtribuirTutor(#patch.tutorId)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id) and @seguranca.podeAtribuirTutor(#patch.tutorId)")
     @Operation(summary = "Atualizar parcialmente um animal: envie apenas os campos que mudam")
     public ResponseEntity<AnimalResponse> atualizarParcialmente(
             @PathVariable UUID id,
@@ -97,7 +105,7 @@ public class AnimalController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id)")
     @Operation(summary = "Remover animal")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         animalService.deletar(id);

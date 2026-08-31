@@ -675,6 +675,22 @@ própria. Fica registrado para não ser reinventado depois.
 | — | Quem marca `status_evento` e quando *(decisão 4 do backlog)* | R1, A11 |
 | — | Quem registra o óbito *(decisão 5 do backlog)* | `desfecho` em `POST /concluir` |
 
+### Fechada em 31/08/2026
+
+| # | Decisão | Onde entrou |
+|---|---|---|
+| **DEC17** | **`status_evento` e `concluido_em` são colunas diferentes** — a primeira responde "o pet apareceu?", a segunda "o prontuário foi fechado?" | migration V8, R1, R5 |
+
+DEC17 nasceu de um conflito real entre duas regras já escritas. R1 manda o evento com data
+passada nascer `REALIZADO`; `POST /concluir` — o único lugar que grava peso, desfecho e
+retorno previsto — recusava evento `REALIZADO`, para impedir a segunda conclusão. Aplicar R1
+sozinha tirava do veterinário a única forma de registrar os dados clínicos de um atendimento
+lançado retroativamente: uma regra do documento apagava uma capacidade do produto.
+
+O conflito existia porque uma coluna respondia duas perguntas. Separadas, R1 vale e R5 fica
+mais firme do que estava — antes, um `/concluir` com corpo vazio não deixava marca nenhuma, e
+a segunda chamada era barrada só pelo status.
+
 ### Ainda abertas
 
 | # | Decisão | Trava | Recomendação |

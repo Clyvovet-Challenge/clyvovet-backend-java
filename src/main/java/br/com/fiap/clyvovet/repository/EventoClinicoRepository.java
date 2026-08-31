@@ -106,6 +106,20 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
             """)
     List<EventoClinico> realizadosAte(@Param("limite") LocalDate limite);
 
+    /**
+     * Este animal ja foi atendido nesta clinica alguma vez? Sustenta C14.
+     *
+     * "Atendido" e REALIZADO: marcar e nao aparecer nao cria relacao, e e
+     * justamente o caso que a regra separa.
+     */
+    @Query("""
+            SELECT COUNT(e) > 0 FROM EventoClinico e
+            WHERE e.animal.id = :animalId
+              AND e.clinica.id = :clinicaId
+              AND e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.REALIZADO
+            """)
+    boolean houveAtendimento(@Param("animalId") UUID animalId, @Param("clinicaId") UUID clinicaId);
+
     default EventoClinico obterPorId(UUID id) {
         return obterPorId(id, Recurso.EVENTO_CLINICO);
     }
