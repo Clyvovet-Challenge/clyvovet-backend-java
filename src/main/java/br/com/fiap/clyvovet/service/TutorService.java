@@ -37,13 +37,13 @@ public class TutorService {
     }
 
     @Transactional
-    @CacheEvict(value = "tutores", allEntries = true)
+    @CacheEvict(value = {"tutores", "animais", "eventos", "pagamentos"}, allEntries = true)
     public TutorResponse criar(TutorRequest request) {
         return tutorMapper.toResponse(tutorRepository.save(tutorMapper.toEntity(request)));
     }
 
     @Transactional
-    @CacheEvict(value = "tutores", allEntries = true)
+    @CacheEvict(value = {"tutores", "animais", "eventos", "pagamentos"}, allEntries = true)
     public TutorResponse atualizar(UUID id, TutorRequest request) {
         Tutor tutor = tutorRepository.obterPorId(id);
         tutorMapper.atualizar(tutor, request);
@@ -51,7 +51,7 @@ public class TutorService {
     }
 
     @Transactional
-    @CacheEvict(value = "tutores", allEntries = true)
+    @CacheEvict(value = {"tutores", "animais", "eventos", "pagamentos"}, allEntries = true)
     public TutorResponse atualizarParcialmente(UUID id, TutorPatchRequest patch) {
         Tutor tutor = tutorRepository.obterPorId(id);
         tutorMapper.aplicarPatch(tutor, patch);
@@ -59,7 +59,7 @@ public class TutorService {
     }
 
     @Transactional
-    @CacheEvict(value = "tutores", allEntries = true)
+    @CacheEvict(value = {"tutores", "animais", "eventos", "pagamentos"}, allEntries = true)
     public void deletar(UUID id) {
         tutorRepository.garantirQueExiste(id);
         tutorRepository.deleteById(id);

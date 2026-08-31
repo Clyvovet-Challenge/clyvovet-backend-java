@@ -49,14 +49,14 @@ public class EventoClinicoService {
     }
 
     @Transactional
-    @CacheEvict(value = "eventos", allEntries = true)
+    @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public EventoClinicoResponse criar(EventoClinicoRequest request) {
         EventoClinico evento = eventoClinicoMapper.toEntity(request, resolverRelacionamentos(request));
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
     @Transactional
-    @CacheEvict(value = "eventos", allEntries = true)
+    @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public EventoClinicoResponse atualizar(UUID id, EventoClinicoRequest request) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
         eventoClinicoMapper.atualizar(evento, request, resolverRelacionamentos(request));
@@ -64,7 +64,7 @@ public class EventoClinicoService {
     }
 
     @Transactional
-    @CacheEvict(value = "eventos", allEntries = true)
+    @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public EventoClinicoResponse atualizarParcialmente(UUID id, EventoClinicoPatchRequest patch) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
         eventoClinicoMapper.aplicarPatch(evento, patch, resolverRelacionamentos(patch));
@@ -72,7 +72,7 @@ public class EventoClinicoService {
     }
 
     @Transactional
-    @CacheEvict(value = "eventos", allEntries = true)
+    @CacheEvict(value = {"eventos", "pagamentos"}, allEntries = true)
     public void deletar(UUID id) {
         eventoClinicoRepository.garantirQueExiste(id);
         eventoClinicoRepository.deleteById(id);

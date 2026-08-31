@@ -36,13 +36,13 @@ public class ClinicaService {
     }
 
     @Transactional
-    @CacheEvict(value = "clinicas", allEntries = true)
+    @CacheEvict(value = {"clinicas", "eventos"}, allEntries = true)
     public ClinicaResponse criar(ClinicaRequest request) {
         return clinicaMapper.toResponse(clinicaRepository.save(clinicaMapper.toEntity(request)));
     }
 
     @Transactional
-    @CacheEvict(value = "clinicas", allEntries = true)
+    @CacheEvict(value = {"clinicas", "eventos"}, allEntries = true)
     public ClinicaResponse atualizar(UUID id, ClinicaRequest request) {
         Clinica clinica = clinicaRepository.obterPorId(id);
         clinicaMapper.atualizar(clinica, request);
@@ -50,7 +50,7 @@ public class ClinicaService {
     }
 
     @Transactional
-    @CacheEvict(value = "clinicas", allEntries = true)
+    @CacheEvict(value = {"clinicas", "eventos"}, allEntries = true)
     public ClinicaResponse atualizarParcialmente(UUID id, ClinicaPatchRequest patch) {
         Clinica clinica = clinicaRepository.obterPorId(id);
         clinicaMapper.aplicarPatch(clinica, patch);
@@ -58,7 +58,7 @@ public class ClinicaService {
     }
 
     @Transactional
-    @CacheEvict(value = "clinicas", allEntries = true)
+    @CacheEvict(value = {"clinicas", "eventos"}, allEntries = true)
     public void deletar(UUID id) {
         clinicaRepository.garantirQueExiste(id);
         clinicaRepository.deleteById(id);

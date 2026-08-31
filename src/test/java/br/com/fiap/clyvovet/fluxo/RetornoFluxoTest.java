@@ -84,9 +84,43 @@ class RetornoFluxoTest extends TesteDeApi {
                  "descricao":"Quadro estável, retorno em 30 dias"}"""
                 .formatted(LocalDate.now().plusDays(30)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusEvento").value("REALIZADO"))
-                .andExpect(jsonPath("$.desfecho").value("MELHORA"))
-                .andExpect(jsonPath("$.pesoKg").value(12.400));
+                // A resposta virou {evento, aviso}: o aviso clinico precisa
+                // chegar a quem concluiu, e nao so ao log.
+                .andExpect(jsonPath("$.evento.statusEvento").value("REALIZADO"))
+                .andExpect(jsonPath("$.evento.desfecho").value("MELHORA"))
+                .andExpect(jsonPath("$.evento.pesoKg").value(12.400))
+                // Primeira pesagem do animal: nao ha com o que comparar.
+                .andExpect(jsonPath("$.aviso").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("variação de peso acima de 20% volta como aviso, sem bloquear")
+    void variacaoDePesoAvisa() throws Exception {
+        String vet = tokenVeterinaria();
+
+        // Primeira pesagem, 10 kg.
+        criar("/api/v1/eventos-clinicos/" + eventoDeOntem + "/concluir", vet, """
+                {"pesoKg":10.000}""").andExpect(status().isOk());
+
+        // Segunda, 13 kg num atendimento posterior: 30% de variacao.
+        ResultActions outro = criar("/api/v1/eventos-clinicos", vet, """
+                {"data":"%s","hora":"11:00","descricao":"Retorno","tipoEvento":"CONSULTA",
+                 "veterinarioId":"%s","animalId":"%s","clinicaId":"%s"}"""
+                .formatted(LocalDate.now(), SeedV2.VET_CAMILA,
+                        SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE));
+        outro.andExpect(status().isCreated());
+        String id = idDe(outro);
+        removerDepois("/api/v1/eventos-clinicos/" + id);
+
+        criar("/api/v1/eventos-clinicos/" + id + "/concluir", vet, """
+                {"pesoKg":13.000}""")
+                // Avisa, nao bloqueia: um filhote que ganha 30% esta saudavel, e
+                // quem sabe distinguir e o veterinario.
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.evento.statusEvento").value("REALIZADO"))
+                .andExpect(jsonPath("$.aviso").exists())
+                .andExpect(jsonPath("$.aviso",
+                        org.hamcrest.Matchers.containsString("aumentou")));
     }
 
     @Test

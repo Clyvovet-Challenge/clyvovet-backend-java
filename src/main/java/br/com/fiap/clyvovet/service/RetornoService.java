@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.service;
 
 import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoRequest;
+import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoResponse;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.dto.eventoClinico.RetornoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.RetornoVencidoResponse;
@@ -49,7 +50,7 @@ public class RetornoService {
      */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
-    public EventoClinicoResponse concluir(UUID id, ConclusaoRequest request) {
+    public ConclusaoResponse concluir(UUID id, ConclusaoRequest request) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
 
         garantirQuePodeConcluir(evento);                                   // R2, R4, R5
@@ -66,8 +67,9 @@ public class RetornoService {
         }
 
         EventoClinico salvo = eventoClinicoRepository.save(evento);
-        avisarSobreVariacaoDePeso(salvo);                                  // R7
-        return eventoClinicoMapper.toResponse(salvo);
+        return new ConclusaoResponse(
+                eventoClinicoMapper.toResponse(salvo),
+                avisoDeVariacaoDePeso(salvo));                             // R7
     }
 
     /**
@@ -188,27 +190,39 @@ public class RetornoService {
      * Avisa, nao bloqueia. Um filhote que sai de 2 kg para 3 kg variou 50% e
      * esta saudavel; um gato adulto que perde 25% pode estar com doenca renal.
      * A regra nao distingue os dois casos — o veterinario distingue.
+     *
+     * O aviso volta na RESPOSTA, e nao so no log: alerta clinico que o
+     * veterinario nao ve nao e alerta.
      */
-    private void avisarSobreVariacaoDePeso(EventoClinico evento) {
+    private String avisoDeVariacaoDePeso(EventoClinico evento) {
         if (evento.getPesoKg() == null || evento.getAnimal() == null) {
-            return;
+            return null;
         }
-        eventoClinicoRepository.findByAnimalIdOrderByDataAsc(evento.getAnimal().getId()).stream()
+        return eventoClinicoRepository.findByAnimalIdOrderByDataAsc(evento.getAnimal().getId()).stream()
                 .filter(anterior -> anterior.getPesoKg() != null)
                 .filter(anterior -> !anterior.getId().equals(evento.getId()))
                 .filter(anterior -> !anterior.getData().isAfter(evento.getData()))
                 .reduce((primeiro, ultimo) -> ultimo)
-                .ifPresent(anterior -> {
+                .map(anterior -> {
                     BigDecimal variacao = evento.getPesoKg()
                             .subtract(anterior.getPesoKg())
                             .abs()
                             .divide(anterior.getPesoKg(), 4, RoundingMode.HALF_UP);
-                    if (variacao.compareTo(VARIACAO_DE_PESO_QUE_ALERTA) > 0) {
-                        log.info("Animal {}: peso variou {}% desde {} ({} kg -> {} kg)",
-                                evento.getAnimal().getId(),
-                                variacao.multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP),
-                                anterior.getData(), anterior.getPesoKg(), evento.getPesoKg());
+                    if (variacao.compareTo(VARIACAO_DE_PESO_QUE_ALERTA) <= 0) {
+                        return null;
                     }
-                });
+                    BigDecimal porcento = variacao.multiply(BigDecimal.valueOf(100))
+                            .setScale(1, RoundingMode.HALF_UP);
+                    boolean subiu = evento.getPesoKg().compareTo(anterior.getPesoKg()) > 0;
+
+                    log.info("Animal {}: peso variou {}% desde {} ({} kg -> {} kg)",
+                            evento.getAnimal().getId(), porcento,
+                            anterior.getData(), anterior.getPesoKg(), evento.getPesoKg());
+
+                    return "Peso %s %s%% desde %s (%s kg para %s kg). Avalie se e esperado."
+                            .formatted(subiu ? "aumentou" : "caiu", porcento,
+                                    anterior.getData(), anterior.getPesoKg(), evento.getPesoKg());
+                })
+                .orElse(null);
     }
 }

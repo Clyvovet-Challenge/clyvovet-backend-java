@@ -39,7 +39,7 @@ public class VeterinarioService {
     }
 
     @Transactional
-    @CacheEvict(value = "veterinarios", allEntries = true)
+    @CacheEvict(value = {"veterinarios", "eventos"}, allEntries = true)
     public VeterinarioResponse criar(VeterinarioRequest request) {
         Veterinario veterinario = veterinarioMapper.toEntity(
                 request, clinicaRepository.obterPorId(request.getClinicaId()));
@@ -47,7 +47,7 @@ public class VeterinarioService {
     }
 
     @Transactional
-    @CacheEvict(value = "veterinarios", allEntries = true)
+    @CacheEvict(value = {"veterinarios", "eventos"}, allEntries = true)
     public VeterinarioResponse atualizar(UUID id, VeterinarioRequest request) {
         Veterinario veterinario = veterinarioRepository.obterPorId(id);
         veterinarioMapper.atualizar(veterinario, request, clinicaRepository.obterPorId(request.getClinicaId()));
@@ -55,7 +55,7 @@ public class VeterinarioService {
     }
 
     @Transactional
-    @CacheEvict(value = "veterinarios", allEntries = true)
+    @CacheEvict(value = {"veterinarios", "eventos"}, allEntries = true)
     public VeterinarioResponse atualizarParcialmente(UUID id, VeterinarioPatchRequest patch) {
         Veterinario veterinario = veterinarioRepository.obterPorId(id);
         Clinica clinica = patch.getClinicaId() == null ? null : clinicaRepository.obterPorId(patch.getClinicaId());
@@ -64,7 +64,7 @@ public class VeterinarioService {
     }
 
     @Transactional
-    @CacheEvict(value = "veterinarios", allEntries = true)
+    @CacheEvict(value = {"veterinarios", "eventos"}, allEntries = true)
     public void deletar(UUID id) {
         veterinarioRepository.garantirQueExiste(id);
         veterinarioRepository.deleteById(id);

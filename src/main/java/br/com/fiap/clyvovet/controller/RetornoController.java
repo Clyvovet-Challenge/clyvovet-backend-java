@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.controller;
 
 import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoRequest;
+import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoResponse;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.dto.eventoClinico.RetornoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.RetornoVencidoResponse;
@@ -35,7 +36,7 @@ public class RetornoController {
 
     @PostMapping("/{id}/concluir")
     @Operation(summary = "Concluir o atendimento: peso, desfecho e retorno previsto")
-    public ResponseEntity<EventoClinicoResponse> concluir(
+    public ResponseEntity<ConclusaoResponse> concluir(
             @PathVariable UUID id,
             @Valid @RequestBody ConclusaoRequest request) {
         return ResponseEntity.ok(retornoService.concluir(id, request));
