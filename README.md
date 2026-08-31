@@ -243,13 +243,31 @@ falhar. Ver [`docs/05-deploy.md`](docs/05-deploy.md).
 ./mvnw test
 ```
 
-São 105 testes cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
-ownership e as migrations do MySQL.
+São **205 testes** cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
+ownership, autorização por recurso, os dois fluxos não-CRUD, o acesso ao
+histórico em três níveis e as migrations do MySQL.
 
-> ⚠️ **A coleção exportada do Insomnia/Postman ainda não está no repositório.** A
-> pasta `documentos/` tem apenas as capturas de tela dos POSTs. A rubrica do
-> Challenge pede o export **na pasta `documentos/`** e vale até 10 pontos — ver
-> [`specs/06-checklist-pre-sprint-3.md`](specs/06-checklist-pre-sprint-3.md).
+---
+
+## Coleção da API
+
+[`documentos/clyvovet-api.postman_collection.json`](documentos/clyvovet-api.postman_collection.json)
+— **71 requisições em 12 pastas**, cobrindo todos os endpoints.
+
+Formato Postman v2.1. O Insomnia importa esse formato sem perda, e o contrário
+não é verdade — um arquivo só atende os dois.
+
+**Como usar:**
+
+1. Suba a aplicação com `./mvnw spring-boot:run` (perfil `dev`, H2 em memória).
+2. Rode as três requisições de `0. Autenticação`. Elas guardam os tokens de
+   admin, veterinária e tutor nas variáveis da coleção; o resto já usa o token
+   do perfil certo em cada rota.
+3. Os ids são os do seed da migration V2, então tudo funciona num banco
+   recém-criado, sem precisar cadastrar nada antes.
+
+As pastas **8, 9 e 10** são os fluxos de negócio — agendamento, retorno e
+acesso ao histórico. É onde está a regra, e não o CRUD.
 
 ---
 
@@ -258,6 +276,8 @@ ownership e as migrations do MySQL.
 | Requisito | Status |
 |---|---|
 | Bean Validation nos Requests | ✅ todas as 6 entidades |
+| HATEOAS — nível 3 de Richardson | ✅ links condicionais ao estado em animal e evento clínico |
+| Coleção da API para import | ✅ `documentos/clyvovet-api.postman_collection.json` |
 | Paginação de resultados | ✅ todas as 6 entidades |
 | Ordenação de resultados | ✅ todas as 6 entidades |
 | Busca com parâmetros | ✅ todas as 6 entidades |
@@ -301,6 +321,7 @@ clyvovet-backend-java/
 │
 │  ── Artefatos de entrega. O nome da pasta é exigido pela rubrica da FIAP.
 ├── documentos/
+│   ├── clyvovet-api.postman_collection.json   # 71 requisições, todos os endpoints
 │   ├── Cronograma_CLYVOVET.pdf
 │   ├── Diagrama_De_Classes.pdf
 │   └── Post_*.png                      # Capturas dos POSTs testados

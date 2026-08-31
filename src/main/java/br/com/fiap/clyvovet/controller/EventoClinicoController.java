@@ -4,7 +4,9 @@ import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoPatchRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.model.TipoEvento;
+import br.com.fiap.clyvovet.controller.hateoas.LinksDoEvento;
 import br.com.fiap.clyvovet.service.EventoClinicoService;
+import org.springframework.hateoas.EntityModel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class EventoClinicoController {
 
     private final EventoClinicoService eventoClinicoService;
+    private final LinksDoEvento links;
 
     @GetMapping
     @Operation(summary = "Listar eventos com paginação e filtros por tipo e nome do animal")
@@ -38,11 +41,23 @@ public class EventoClinicoController {
 
     // Escrita ja e restrita a VETERINARIO/ADMIN pela regra de rota; aqui o que
     // se protege e a leitura: um tutor so pode ver eventos dos proprios pets.
+    /**
+     * A resposta carrega os links das transicoes possiveis NESTE estado.
+     *
+     * Um evento AGENDADO traz "cancelar" e "concluir"; o mesmo evento, depois de
+     * cancelado, nao traz nenhum dos dois. E o que leva a API do nivel 2 ao
+     * nivel 3 de Richardson: o cliente descobre o que pode fazer pela resposta,
+     * em vez de carregar por fora uma copia da maquina de estados que envelhece
+     * em silencio quando a regra do servidor muda.
+     *
+     * O EntityModel serializa o conteudo inline e acrescenta "_links", entao o
+     * contrato antigo continua valendo: quem lia "$.id" continua lendo "$.id".
+     */
     @GetMapping("/{id}")
     @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
-    @Operation(summary = "Buscar evento clínico por ID")
-    public ResponseEntity<EventoClinicoResponse> buscarPorId(@PathVariable UUID id) {
-        return ResponseEntity.ok(eventoClinicoService.buscarPorId(id));
+    @Operation(summary = "Buscar evento clínico por ID, com os links das ações possíveis")
+    public ResponseEntity<EntityModel<EventoClinicoResponse>> buscarPorId(@PathVariable UUID id) {
+        return ResponseEntity.ok(links.comLinks(eventoClinicoService.buscarPorId(id)));
     }
 
     @PostMapping

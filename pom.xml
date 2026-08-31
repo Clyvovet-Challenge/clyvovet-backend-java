@@ -100,6 +100,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!--
+            HATEOAS: leva a API do nivel 2 ao nivel 3 de Richardson.
+
+            O cliente deixa de precisar saber, por fora, o que pode fazer com um
+            recurso: a propria resposta carrega os links das transicoes
+            possiveis NAQUELE estado. Um evento AGENDADO traz "cancelar" e
+            "concluir"; o mesmo evento, depois de CANCELADO, nao traz nenhum dos
+            dois. E a diferenca entre documentar a maquina de estados e
+            expressa-la.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-hateoas</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

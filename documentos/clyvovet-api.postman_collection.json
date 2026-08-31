@@ -1,0 +1,2691 @@
+{
+  "info": {
+    "name": "Clyvovet API — Challenge FIAP 2026",
+    "description": "Colecao completa da API do Clyvovet.\n\nCOMO USAR\n1. Suba a aplicacao: `./mvnw spring-boot:run` (perfil `dev`, H2 em memoria).\n2. Rode as tres requisicoes da pasta `0. Autenticacao` — elas guardam os tokens de admin, veterinaria e tutor nas variaveis da colecao.\n3. As demais pastas ja usam o token certo para cada perfil.\n\nOs ids sao os do seed da migration V2, entao tudo funciona num banco recem-criado, sem cadastrar nada antes.\n\nAS PASTAS 7 A 9 sao os fluxos nao-CRUD — e onde esta a regra de negocio.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenVet",
+      "value": ""
+    },
+    {
+      "key": "tokenTutor",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Autenticacao",
+      "description": "Rode os tres logins primeiro: eles guardam os tokens usados pelo resto da colecao.\n\nOs usuarios vem do DevDataSeeder e so existem nos perfis dev, h2 e oracle.",
+      "item": [
+        {
+          "name": "Login — ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Guarda o token em {{tokenAdmin}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@clyvovet.com\",\n  \"senha\": \"admin12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set('tokenAdmin', body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}",
+                  "pm.test('login ok', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login — VETERINARIA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Dra. Camila Ferreira, da VetCare. Guarda o token em {{tokenVet}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"camila.ferreira@vetcare.com.br\",\n  \"senha\": \"vet12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set('tokenVet', body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}",
+                  "pm.test('login ok', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login — TUTOR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Lucas Santos, dono do Bolinha. Guarda o token em {{tokenTutor}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"lucas.santos@email.com\",\n  \"senha\": \"tutor12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set('tokenTutor', body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}",
+                  "pm.test('login ok', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auto-cadastro de tutor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/registrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "registrar"
+              ]
+            },
+            "description": "Publico. O perfil e sempre TUTOR e o registro Tutor e criado junto.\n\nNao existe campo tutorId: aceita-lo aqui permitiria assumir o cadastro de outra pessoa nesta rota, que nao e autenticada.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"novo.tutor@email.com\",\n  \"senha\": \"senha12345\",\n  \"nome\": \"Novo Tutor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar usuario com perfil (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios"
+              ]
+            },
+            "description": "Unica rota que aceita perfil arbitrario. Restrita a ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"novo.vet@vetcare.com.br\",\n  \"senha\": \"senha12345\",\n  \"perfil\": \"VETERINARIO\",\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Meus dados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Renovar access token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Logout (revoga o refresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Tutores",
+      "description": "Listar tutores expoe CPF e e-mail de terceiros: e restrito a VETERINARIO e ADMIN.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tutores?nome=Lucas&cidade=Sao Paulo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Lucas"
+                },
+                {
+                  "key": "cidade",
+                  "value": "Sao Paulo"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tutores/{{id1. Tutores}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores",
+                "{{id1. Tutores}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tutores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Joana Prado\",\n  \"cpf\": \"12345678901\",\n  \"email\": \"joana@email.com\",\n  \"telefone\": \"11987654321\",\n  \"dataNascimento\": \"1992-03-14\",\n  \"sexo\": \"FEMININO\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tutores/{{id1. Tutores}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores",
+                "{{id1. Tutores}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Joana Prado\",\n  \"cpf\": \"12345678901\",\n  \"email\": \"joana@email.com\",\n  \"telefone\": \"11987654321\",\n  \"dataNascimento\": \"1992-03-14\",\n  \"sexo\": \"FEMININO\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tutores/{{id1. Tutores}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores",
+                "{{id1. Tutores}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefone\": \"11999998888\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tutores/{{id1. Tutores}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tutores",
+                "{{id1. Tutores}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Animais",
+      "description": "O tutor so enxerga os proprios pets — a listagem e recortada por dono.\n\nmicrochip e castrado entraram na V6: o chip identifica o animal no balcao e a castracao compoe o resumo de seguranca.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais?nome=Bolinha&especie=Canina",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Bolinha"
+                },
+                {
+                  "key": "especie",
+                  "value": "Canina"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/{{id2. Animais}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "{{id2. Animais}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/animais",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Thor\",\n  \"raca\": \"Border Collie\",\n  \"especie\": \"Canina\",\n  \"porte\": \"MEDIO\",\n  \"cor\": \"Preto e branco\",\n  \"sexo\": \"MACHO\",\n  \"dataNascimento\": \"2021-04-10\",\n  \"observacao\": \"Dócil\",\n  \"tutorId\": \"22222222-2222-2222-2222-000000000001\",\n  \"microchip\": \"900000000012345\",\n  \"castrado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/animais/{{id2. Animais}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "{{id2. Animais}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Thor\",\n  \"raca\": \"Border Collie\",\n  \"especie\": \"Canina\",\n  \"porte\": \"MEDIO\",\n  \"cor\": \"Preto e branco\",\n  \"sexo\": \"MACHO\",\n  \"dataNascimento\": \"2021-04-10\",\n  \"observacao\": \"Dócil\",\n  \"tutorId\": \"22222222-2222-2222-2222-000000000001\",\n  \"microchip\": \"900000000012345\",\n  \"castrado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/animais/{{id2. Animais}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "{{id2. Animais}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacao\": \"Ganhou peso desde a ultima consulta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/{{id2. Animais}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "{{id2. Animais}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Clinicas",
+      "description": "Escrita restrita a ADMIN.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas?nome=Vet&cidade=Sao Paulo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Vet"
+                },
+                {
+                  "key": "cidade",
+                  "value": "Sao Paulo"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas/{{id3. Clinicas}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas",
+                "{{id3. Clinicas}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Clinica Vida Animal\",\n  \"cnpj\": \"12345678000190\",\n  \"telefone\": \"1133334444\",\n  \"email\": \"contato@vidaanimal.com.br\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas/{{id3. Clinicas}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas",
+                "{{id3. Clinicas}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Clinica Vida Animal\",\n  \"cnpj\": \"12345678000190\",\n  \"telefone\": \"1133334444\",\n  \"email\": \"contato@vidaanimal.com.br\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas/{{id3. Clinicas}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas",
+                "{{id3. Clinicas}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefone\": \"1144445555\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas/{{id3. Clinicas}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas",
+                "{{id3. Clinicas}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Veterinarios",
+      "description": "Escrita restrita a ADMIN.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios?nome=Camila&especialidade=Clinica",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Camila"
+                },
+                {
+                  "key": "especialidade",
+                  "value": "Clinica"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios/{{id4. Veterinarios}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios",
+                "{{id4. Veterinarios}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Dr. Paulo Ramos\",\n  \"cpf\": \"98765432100\",\n  \"crmv\": \"CRMV-SP 30111\",\n  \"especialidade\": \"Clinica Geral\",\n  \"email\": \"paulo@vetcare.com.br\",\n  \"telefone\": \"11955554444\",\n  \"dataNascimento\": \"1988-07-02\",\n  \"sexo\": \"MASCULINO\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  },\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios/{{id4. Veterinarios}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios",
+                "{{id4. Veterinarios}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Dr. Paulo Ramos\",\n  \"cpf\": \"98765432100\",\n  \"crmv\": \"CRMV-SP 30111\",\n  \"especialidade\": \"Clinica Geral\",\n  \"email\": \"paulo@vetcare.com.br\",\n  \"telefone\": \"11955554444\",\n  \"dataNascimento\": \"1988-07-02\",\n  \"sexo\": \"MASCULINO\",\n  \"endereco\": {\n    \"rua\": \"R. Haddock Lobo\",\n    \"numero\": \"595\",\n    \"complemento\": \"cj 12\",\n    \"bairro\": \"Cerqueira Cesar\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01414002\"\n  },\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios/{{id4. Veterinarios}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios",
+                "{{id4. Veterinarios}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"especialidade\": \"Cardiologia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios/{{id4. Veterinarios}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios",
+                "{{id4. Veterinarios}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Eventos clinicos",
+      "description": "Registro do atendimento pelo corpo clinico.\n\nO status NAO e editavel por aqui: a transicao AGENDADO -> REALIZADO so acontece por POST /eventos-clinicos/{id}/concluir. Com o status no PATCH, bastaria um {\"statusEvento\":\"REALIZADO\"} para contornar todas as regras.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos?tipoEvento=CONSULTA&animalNome=Bolinha",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos"
+              ],
+              "query": [
+                {
+                  "key": "tipoEvento",
+                  "value": "CONSULTA"
+                },
+                {
+                  "key": "animalNome",
+                  "value": "Bolinha"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/{{id5. Eventos clinicos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "{{id5. Eventos clinicos}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"2026-08-20\",\n  \"hora\": \"09:00\",\n  \"descricao\": \"Consulta de rotina\",\n  \"tipoEvento\": \"CONSULTA\",\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\",\n  \"animalId\": \"44444444-4444-4444-4444-000000000001\",\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/{{id5. Eventos clinicos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "{{id5. Eventos clinicos}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"2026-08-20\",\n  \"hora\": \"09:00\",\n  \"descricao\": \"Consulta de rotina\",\n  \"tipoEvento\": \"CONSULTA\",\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\",\n  \"animalId\": \"44444444-4444-4444-4444-000000000001\",\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/{{id5. Eventos clinicos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "{{id5. Eventos clinicos}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Consulta de rotina — quadro estavel\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/{{id5. Eventos clinicos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "{{id5. Eventos clinicos}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Pagamentos",
+      "description": "",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos?statusPagamento=PAGO&formaPagamento=PIX",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos"
+              ],
+              "query": [
+                {
+                  "key": "statusPagamento",
+                  "value": "PAGO"
+                },
+                {
+                  "key": "formaPagamento",
+                  "value": "PIX"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/{{id6. Pagamentos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos",
+                "{{id6. Pagamentos}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formaPagamento\": \"PIX\",\n  \"valor\": 180.0,\n  \"dataPagamento\": \"2026-08-20\",\n  \"descricao\": \"Consulta de rotina\",\n  \"observacao\": \"\",\n  \"eventoClinicoId\": \"55555555-5555-5555-5555-000000000001\",\n  \"statusPagamento\": \"PAGO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/{{id6. Pagamentos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos",
+                "{{id6. Pagamentos}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formaPagamento\": \"PIX\",\n  \"valor\": 180.0,\n  \"dataPagamento\": \"2026-08-20\",\n  \"descricao\": \"Consulta de rotina\",\n  \"observacao\": \"\",\n  \"eventoClinicoId\": \"55555555-5555-5555-5555-000000000001\",\n  \"statusPagamento\": \"PAGO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar parcialmente (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/{{id6. Pagamentos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos",
+                "{{id6. Pagamentos}}"
+              ]
+            },
+            "description": "PATCH envia so o que muda. Os DTOs de patch mantem as restricoes de FORMATO e abrem mao das de PRESENCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statusPagamento\": \"REEMBOLSADO\",\n  \"observacao\": \"Estorno por cancelamento\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/{{id6. Pagamentos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagamentos",
+                "{{id6. Pagamentos}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Catalogo e agenda",
+      "description": "As duas peças que o agendamento pelo tutor precisa: o que a clinica oferece, e quando o veterinario atende. Sem elas, 'so se a clinica oferece o servico' e 'so se houver horario livre' nao tem contra o que ser validado.",
+      "item": [
+        {
+          "name": "Servicos da clinica",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas/11111111-1111-1111-1111-000000000001/servicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas",
+                "11111111-1111-1111-1111-000000000001",
+                "servicos"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar servico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos"
+              ]
+            },
+            "description": "O preco daqui e o valor do atendimento — e a fonte unica que o fluxo de cobranca usa para saber quanto custou.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\",\n  \"nome\": \"Consulta clinica geral\",\n  \"tipoEvento\": \"CONSULTA\",\n  \"preco\": 180.0,\n  \"duracaoMinutos\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar servico",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/{{idServico}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "{{idServico}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicaId\": \"11111111-1111-1111-1111-000000000001\",\n  \"nome\": \"Consulta clinica geral\",\n  \"tipoEvento\": \"CONSULTA\",\n  \"preco\": 200.0,\n  \"duracaoMinutos\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar servico",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/{{idServico}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "{{idServico}}"
+              ]
+            },
+            "description": "Desativa, nao apaga: o preco historico de tudo que ja foi cobrado por ele depende da linha continuar existindo.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Grade do veterinario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/veterinarios/33333333-3333-3333-3333-000000000001/disponibilidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "veterinarios",
+                "33333333-3333-3333-3333-000000000001",
+                "disponibilidades"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar faixa de atendimento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/disponibilidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disponibilidades"
+              ]
+            },
+            "description": "A grade e do profissional: um veterinario nao cria nem apaga a grade de outro. O ADMIN da plataforma pode, para montar a agenda inicial.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\",\n  \"diaSemana\": \"TERCA\",\n  \"horaInicio\": \"08:00\",\n  \"horaFim\": \"12:00\",\n  \"vigenciaInicio\": \"2026-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover faixa",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disponibilidades/{{idFaixa}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disponibilidades",
+                "{{idFaixa}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bloquear periodo (ferias)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bloqueios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bloqueios"
+              ]
+            },
+            "description": "Sem hora = dias inteiros. Com hora = aquela faixa de cada dia (almoco). Meia hora preenchida e recusado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\",\n  \"dataInicio\": \"2026-12-20\",\n  \"dataFim\": \"2027-01-05\",\n  \"motivo\": \"Ferias\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover bloqueio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bloqueios/{{idBloqueio}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bloqueios",
+                "{{idBloqueio}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. FLUXO — Agendamento pelo tutor",
+      "description": "PRIMEIRO FLUXO NAO-CRUD.\n\nEntrada: o tutor escolhe animal, servico, veterinario e horario.\nProcessamento: o servico esta ativo? o veterinario atende nessa clinica? ha antecedencia minima? o horario cai na grade? colide com bloqueio? colide com outro atendimento?\nResultado: evento AGENDADO, com o preco vindo do catalogo.\n\nAtravessa sete entidades. Rode 'Vagas livres' antes de agendar.",
+      "item": [
+        {
+          "name": "Vagas livres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/agendamentos/vagas?servicoId={{idServico}}&de=2026-09-01&ate=2026-09-07",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agendamentos",
+                "vagas"
+              ],
+              "query": [
+                {
+                  "key": "servicoId",
+                  "value": "{{idServico}}"
+                },
+                {
+                  "key": "de",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "ate",
+                  "value": "2026-09-07"
+                }
+              ]
+            },
+            "description": "Devolve o que PODE ser marcado, ja descontando grade, bloqueio e colisao. E a consulta que o calendario do frontend consome.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Marcar consulta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/agendamentos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agendamentos"
+              ]
+            },
+            "description": "consentimentoHistorico e o consentimento do fluxo C: marcar a consulta libera o historico para a clinica.\n\nO campo chega false por padrao. Recusar e permitido e nao impede o atendimento — e o que faz o consentimento ser real.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"animalId\": \"44444444-4444-4444-4444-000000000001\",\n  \"servicoId\": \"{{idServico}}\",\n  \"veterinarioId\": \"33333333-3333-3333-3333-000000000001\",\n  \"data\": \"2026-09-01\",\n  \"hora\": \"09:00\",\n  \"consentimentoHistorico\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Meus agendamentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/agendamentos/meus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agendamentos",
+                "meus"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/agendamentos/{{idAgendamento}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agendamentos",
+                "{{idAgendamento}}",
+                "cancelar"
+              ]
+            },
+            "description": "Nao apaga a linha: sem ela a taxa de cancelamento nao seria calculavel e o horario liberado nao teria rastro.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Imprevisto de viagem\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. FLUXO — Retorno e falta",
+      "description": "SEGUNDO FLUXO NAO-CRUD, e o que responde ao tema do Challenge.\n\nO modelo episodico registra que a consulta aconteceu. Este fluxo registra que ela DEVIA ter tido sequencia e nao teve — e produz a lista de pets em atraso, que e sobre o que a clinica age.",
+      "item": [
+        {
+          "name": "Concluir atendimento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/55555555-5555-5555-5555-000000000001/concluir",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "55555555-5555-5555-5555-000000000001",
+                "concluir"
+              ]
+            },
+            "description": "Unico caminho para REALIZADO. Variacao de peso acima de 20% em relacao a ultima afericao gera AVISO, nunca bloqueio: um filhote que dobra de peso esta saudavel, e quem sabe distinguir e o veterinario.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pesoKg\": 12.4,\n  \"desfecho\": \"MELHORA\",\n  \"dataRetornoPrevisto\": \"2026-10-01\",\n  \"descricao\": \"Quadro estavel, retorno em 30 dias\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Marcar retorno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/55555555-5555-5555-5555-000000000001/retorno",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "55555555-5555-5555-5555-000000000001",
+                "retorno"
+              ]
+            },
+            "description": "O animal e a clinica vem da consulta de origem, nunca do corpo: aceita-los permitiria ligar o retorno de um pet a consulta de outro, e a chave estrangeira nao pega isso.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"2026-10-01\",\n  \"hora\": \"10:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retornos vencidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/retornos-vencidos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "retornos-vencidos"
+              ]
+            },
+            "description": "O RESULTADO do fluxo. Traz nome e telefone do tutor porque esta lista existe para virar ligacao — sem o contato, cada linha exigiria uma consulta a mais antes de alguem conseguir agir.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Varredura de faltas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/eventos-clinicos/marcar-faltas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "eventos-clinicos",
+                "marcar-faltas"
+              ]
+            },
+            "description": "AGENDADO com data vencida vira FALTOU. Sem esta varredura a taxa de falta nunca sai de zero: ninguem volta ao sistema para registrar que o pet nao apareceu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. FLUXO — Historico clinico em tres niveis",
+      "description": "ACESSO EM TRES NIVEIS:\n\n  0  operacional        quem tem agendamento\n  1  resumo de seguranca  qualquer veterinario autenticado, sempre\n  2  historico completo   so com consentimento do tutor\n\nO microchip IDENTIFICA, nunca autoriza — ele esta impresso na carteira de vacinacao e qualquer leitor de pet shop o le. Quem credencia o nivel 1 e a autenticacao do veterinario; o nivel 2, o tutor.",
+      "item": [
+        {
+          "name": "Nivel 1 — resumo pelo microchip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/resumo?microchip=900000000012345",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "resumo"
+              ],
+              "query": [
+                {
+                  "key": "microchip",
+                  "value": "900000000012345"
+                }
+              ]
+            },
+            "description": "Alergias, condicoes cronicas, medicacao continua, vacinas, ultimo peso e telefone de emergencia. NAO traz CPF, endereco, linha do tempo nem laudos.\n\nToda leitura notifica o tutor e conta para o teto diario.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nivel 2 — historico completo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "historico"
+              ]
+            },
+            "description": "O campo nivelDeAcesso na resposta diz o que voce recebeu. Sem consentimento o veterinario ve so os atendimentos da propria clinica — sem esse campo, uma lista curta seria indistinguivel de um animal com pouco historico.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar alerta clinico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "alertas"
+              ]
+            },
+            "description": "A origem (TUTOR ou VETERINARIO) e derivada do perfil, nunca do corpo: 'o tutor disse' e 'o veterinario registrou' pesam diferente na decisao clinica.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"ALERGIA\",\n  \"descricao\": \"Anafilaxia a dipirona\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar alerta",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alertas/{{idAlerta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alertas",
+                "{{idAlerta}}"
+              ]
+            },
+            "description": "O tutor nao derruba alerta registrado por veterinario nem no proprio pet: um achado clinico e retirado por quem tem competencia para reavalia-lo.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Quem leu o historico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/acessos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "acessos"
+              ]
+            },
+            "description": "A ferramenta de transparencia DO TUTOR. Uma linha por (veterinario, animal, dia), com contador — auditar cada requisicao daria dezenas de linhas por atendimento e a lista ficaria ilegivel.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Minhas autorizacoes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/autorizacoes/minhas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "autorizacoes",
+                "minhas"
+              ]
+            },
+            "description": "Quais clinicas tem acesso aos historicos dos meus animais.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Revogar acesso",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/autorizacoes/{{idAutorizacao}}/revogar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "autorizacoes",
+                "{{idAutorizacao}}",
+                "revogar"
+              ]
+            },
+            "description": "A qualquer momento, sem justificar. Nao apaga o que o veterinario escreveu: registro clinico nao se desfaz.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Quebra de vidro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/acesso-emergencial",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "acesso-emergencial"
+              ]
+            },
+            "description": "Existe porque o consentimento nasce no agendamento — entao todo atendimento SEM agendamento (pronto-socorro, encaixe) ficaria sem caminho de acesso.\n\nNUNCA e bloqueada, por mais que se repita: travar numa emergencia cobraria a conta do paciente, nao de quem abusa. O controle e auditoria depois do fato.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Animal atropelado, tutor nao localizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVet}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Auditoria (ADMIN)",
+      "description": "Os tetos de leitura do historico. Sem estas consultas eles produziriam apenas linhas de log — e log que ninguem abre nao e controle, e registro.\n\nRestritas ao administrador da plataforma: nas maos do corpo clinico, a lista vira o mapa de como nao ser notado.",
+      "item": [
+        {
+          "name": "Quem leu muitos prontuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auditoria/excessos?dias=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auditoria",
+                "excessos"
+              ],
+              "query": [
+                {
+                  "key": "dias",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Conta ANIMAIS DISTINTOS por profissional por dia, nao requisicoes. Reabrir o mesmo prontuario nao consome teto — e a diferenca entre 'muitas chamadas' e 'muitos pacientes'.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Quem acionou quebra de vidro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auditoria/quebras-de-vidro?dias=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auditoria",
+                "quebras-de-vidro"
+              ],
+              "query": [
+                {
+                  "key": "dias",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "TODA ocorrencia entra na lista. Filtrar por frequencia deixaria de fora justamente o caso que mais interessa: quem aciona uma vez, contra um paciente escolhido.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

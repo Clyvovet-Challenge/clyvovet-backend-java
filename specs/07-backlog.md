@@ -82,12 +82,17 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 
 | # | Item | Vale | Evidência de que está aberto |
 |---|---|---|---|
-| A1 | **Coleção Insomnia/Postman em `documentos/`** | até 10 pts | `ls documentos/` → só 2 PDFs e 6 PNGs. `git log --all -- '*insomnia*' '*postman*'` vazio. O README promete o arquivo em dois lugares |
-| A2 | **HATEOAS** — nível 3 de maturidade de Richardson | parte de 15 pts | `grep -r "EntityModel\|WebMvcLinkBuilder\|hateoas"` → nenhum resultado. Hoje o projeto está no nível 2 |
+| ~~A1~~ | **Coleção Insomnia/Postman em `documentos/`** | até 10 pts | ✅ **fechado em 31/08/2026** — `documentos/clyvovet-api.postman_collection.json`, 71 requisições em 12 pastas. Formato Postman v2.1, que o Insomnia importa sem perda |
+| ~~A2~~ | **HATEOAS** — nível 3 de maturidade de Richardson | parte de 15 pts | ✅ **fechado em 31/08/2026** — links **condicionais ao estado** em animal e evento clínico. Um evento `AGENDADO` traz `cancelar` e `concluir`; `CANCELADO` não traz nenhum dos dois |
 | A3 | Coerência entre Diagrama de Classes e o DER da disciplina de Database | até 10 pts | não verificável neste repositório — depende do artefato entregue em Database |
 
-> A1 é o melhor custo/benefício aberto no projeto inteiro: até 10 pontos, cerca de 30 minutos,
-> e o README já afirma que o arquivo existe.
+> ~~A1 é o melhor custo/benefício aberto no projeto inteiro.~~ **A1 e A2 foram fechados em
+> 31/08/2026.** Resta A3, que não é verificável neste repositório.
+>
+> Sobre A2, vale registrar o que foi feito: nível 3 de Richardson não é "adicionar um link
+> `self`". O que entrou foram **links que mudam com o estado do recurso** — o cliente descobre
+> pela própria resposta o que pode fazer agora, em vez de carregar por fora uma cópia da
+> máquina de estados que envelhece em silêncio quando a regra do servidor muda.
 
 ### B — Sprint 3: os 50 pontos que faltam
 
