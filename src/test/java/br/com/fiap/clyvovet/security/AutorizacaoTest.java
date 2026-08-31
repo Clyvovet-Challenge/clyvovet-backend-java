@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.support.SeedV2;
 import br.com.fiap.clyvovet.support.TesteDeApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
@@ -87,7 +88,8 @@ class AutorizacaoTest extends TesteDeApi {
         String corpo = mockMvc.perform(post("/api/v1/auth/registrar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"invasor@teste.com","senha":"senha12345","perfil":"ADMIN"}"""))
+                                {"email":"invasor@teste.com","senha":"senha12345",
+                                 "nome":"Invasor Teste","perfil":"ADMIN"}"""))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
@@ -97,10 +99,73 @@ class AutorizacaoTest extends TesteDeApi {
     }
 
     @Test
+    @DisplayName("auto-cadastro cria o tutor junto, e o novo usuario ja consegue usar a API")
+    void autoCadastroCriaOTutorVinculado() throws Exception {
+        // Regressao do X12. Antes, o registro gravava so o Usuario: o tutor_id
+        // ficava nulo, SegurancaService.podeAcessar() devolvia false em tudo, e
+        // quem se cadastrava nao conseguia nem cadastrar o proprio animal. O
+        // produto comecava por uma porta que nao levava a lugar nenhum.
+        String corpo = mockMvc.perform(post("/api/v1/auth/registrar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"novo.tutor@teste.com","senha":"senha12345",
+                                 "nome":"Novo Tutor"}"""))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode json = objectMapper.readTree(corpo);
+        assertThat(json.get("tutorId").isNull()).isFalse();
+        assertThat(json.get("tutorNome").asText()).isEqualTo("Novo Tutor");
+
+        // E o vinculo funciona de verdade: com o token dele, ve o proprio escopo.
+        String token = token("novo.tutor@teste.com", "senha12345");
+        buscar("/api/v1/animais", token).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("auto-cadastro nao aceita mais tutorId do corpo")
+    void autoCadastroNaoAceitaTutorIdDoCorpo() throws Exception {
+        // Regressao do X13. O campo era aceito nesta rota, que e PUBLICA e NAO
+        // AUTENTICADA: quem soubesse o UUID de um tutor existente se registrava
+        // apontando para ele e passava a enxergar os animais, o historico e os
+        // pagamentos daquela pessoa. Hoje o campo nao existe no DTO, entao o
+        // Jackson o descarta e o tutor criado e sempre um novo.
+        String corpo = mockMvc.perform(post("/api/v1/auth/registrar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"oportunista@teste.com","senha":"senha12345",
+                                 "nome":"Oportunista","tutorId":"%s"}""".formatted(SeedV2.TUTOR_LUCAS)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(objectMapper.readTree(corpo).get("tutorId").asText())
+                .isNotEqualTo(SeedV2.TUTOR_LUCAS);
+    }
+
+    @Test
+    @DisplayName("auto-cadastro recusa e-mail que ja pertence a um tutor cadastrado")
+    void autoCadastroRecusaEmailDeTutorExistente() throws Exception {
+        // O vinculo automatico por e-mail parece gentil, mas sem confirmacao de
+        // posse do e-mail ele reabre o X13 por uma porta mais larga: adivinhar
+        // um e-mail e mais facil que adivinhar um UUID. Enquanto nao houver
+        // verificacao, a recusa explicita e a resposta honesta.
+        //
+        // carlos.lima@email.com existe na tabela tutor (seed da V2) e NAO tem
+        // usuario. Usar o e-mail do Lucas daria 409 tambem, mas pela checagem
+        // de usuario duplicado -- passaria sem exercitar a regra que interessa.
+        mockMvc.perform(post("/api/v1/auth/registrar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"carlos.lima@email.com","senha":"senha12345",
+                                 "nome":"Alguem"}"""))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     @DisplayName("e-mail duplicado responde 409, nao 500")
     void emailDuplicadoRetorna409() throws Exception {
         String payload = """
-                {"email":"duplicado@teste.com","senha":"senha12345"}""";
+                {"email":"duplicado@teste.com","senha":"senha12345","nome":"Duplicado"}""";
 
         mockMvc.perform(post("/api/v1/auth/registrar").contentType(MediaType.APPLICATION_JSON).content(payload))
                 .andExpect(status().isCreated());

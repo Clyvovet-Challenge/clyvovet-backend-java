@@ -36,6 +36,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class MigrationsMySqlTest {
 
+    // Ids do seed da V2. Repetidos como literal, viravam numero magico
+    // em cada teste novo.
+    private static final String CLINICA_VETCARE   = "11111111-1111-1111-1111-000000000001";
+    private static final String TUTOR_LUCAS       = "22222222-2222-2222-2222-000000000001";
+    private static final String VET_CAMILA        = "33333333-3333-3333-3333-000000000001";
+    private static final String ANIMAL_BOLINHA    = "44444444-4444-4444-4444-000000000001";
+
     private DataSource h2ModoMySql() {
         var ds = new DriverManagerDataSource();
         ds.setDriverClassName("org.h2.Driver");
@@ -47,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v5() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v6() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -56,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(5);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(resultado.migrationsExecuted).isEqualTo(6);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
     }
 
     @Test
@@ -157,6 +164,177 @@ class MigrationsMySqlTest {
                 insert into evento_clinico (id, data_evento, tipo_evento, status_evento, evento_origem_id)
                 values (?, DATE '2026-01-01', 'RETORNO', 'AGENDADO', ?)
                 """, id, id))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_aceita_um_servico_no_catalogo_da_clinica() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        var id = UUID.randomUUID().toString();
+        jdbc.update("""
+                insert into servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
+                values (?, ?, 'Consulta clinica geral', 'CONSULTA', 180.00, 30)
+                """, id, CLINICA_VETCARE);
+
+        assertThat(jdbc.queryForObject(
+                "select duracao_minutos from servico where id = ?", Integer.class, id))
+                .isEqualTo(30);
+        // O DEFAULT de ativo precisa valer nos dois dialetos: e ele que decide
+        // se um servico recem-criado aparece para agendamento.
+        assertThat(jdbc.queryForObject(
+                "select ativo from servico where id = ?", Integer.class, id))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void a_v6_recusa_duracao_de_servico_fora_da_faixa() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // Duracao zero produziria colisao de agenda impossivel de resolver: dois
+        // atendimentos ocupando o mesmo instante sem se sobrepor.
+        assertThatThrownBy(() -> jdbc.update("""
+                insert into servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
+                values (?, ?, 'Servico invalido', 'CONSULTA', 100.00, 0)
+                """, UUID.randomUUID().toString(), CLINICA_VETCARE))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_recusa_faixa_de_disponibilidade_invertida() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // A comparacao de 'HH:mm' como texto so funciona porque o formato e de
+        // largura fixa com zero a esquerda. Se alguem gravar '9:00' em vez de
+        // '09:00', a ordenacao lexicografica mente -- e este check para de
+        // proteger. O @Pattern no DTO e o que garante o formato na entrada.
+        assertThatThrownBy(() -> jdbc.update("""
+                insert into disponibilidade_veterinario
+                    (id, veterinario_id, dia_semana, hora_inicio, hora_fim, vigencia_inicio)
+                values (?, ?, 'SEGUNDA', '18:00', '08:00', DATE '2026-01-01')
+                """, UUID.randomUUID().toString(), VET_CAMILA))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_exige_as_duas_horas_do_bloqueio_ou_nenhuma() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // Ferias sao dias inteiros (as duas horas nulas); almoco e uma faixa
+        // (as duas preenchidas). Meia hora preenchida nao significa nada, e o
+        // codigo que le a agenda teria de adivinhar o que fazer com ela.
+        jdbc.update("""
+                insert into bloqueio (id, veterinario_id, data_inicio, data_fim, motivo)
+                values (?, ?, DATE '2026-07-01', DATE '2026-07-15', 'Ferias')
+                """, UUID.randomUUID().toString(), VET_CAMILA);
+
+        assertThatThrownBy(() -> jdbc.update("""
+                insert into bloqueio (id, veterinario_id, data_inicio, data_fim, hora_inicio, motivo)
+                values (?, ?, DATE '2026-07-01', DATE '2026-07-01', '12:00', 'Almoco pela metade')
+                """, UUID.randomUUID().toString(), VET_CAMILA))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_deixa_varios_animais_sem_microchip_conviverem() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // O comportamento contra-intuitivo que o cabecalho da migration
+        // registra: um indice UNIQUE ignora as linhas com NULL, nos dois
+        // bancos. Sem isso, o segundo animal sem chip seria recusado -- e
+        // chip e opcional.
+        jdbc.update("insert into animal (id, nome, tutor_id) values (?, 'Sem chip 1', ?)",
+                UUID.randomUUID().toString(), TUTOR_LUCAS);
+        jdbc.update("insert into animal (id, nome, tutor_id) values (?, 'Sem chip 2', ?)",
+                UUID.randomUUID().toString(), TUTOR_LUCAS);
+
+        assertThat(jdbc.queryForObject(
+                "select count(*) from animal where microchip is null", Integer.class))
+                .isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void a_v6_recusa_dois_animais_com_o_mesmo_microchip() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        jdbc.update("insert into animal (id, nome, tutor_id, microchip) values (?, 'Thor', ?, '900000000000001')",
+                UUID.randomUUID().toString(), TUTOR_LUCAS);
+
+        // Chip duplicado significaria dois animais com a mesma identidade no
+        // balcao -- e o resumo de seguranca do errado.
+        assertThatThrownBy(() -> jdbc.update(
+                "insert into animal (id, nome, tutor_id, microchip) values (?, 'Clone', ?, '900000000000001')",
+                UUID.randomUUID().toString(), TUTOR_LUCAS))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_recusa_desfecho_fora_do_enum_Desfecho() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        assertThatThrownBy(() -> jdbc.update("""
+                insert into evento_clinico (id, data_evento, tipo_evento, status_evento, desfecho)
+                values (?, DATE '2026-01-01', 'CONSULTA', 'REALIZADO', 'CURADO')
+                """, UUID.randomUUID().toString()))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void a_v6_aceita_evento_sem_desfecho() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // Nulo e o estado de todo atendimento em aberto. Se o check exigisse
+        // valor, nenhum evento poderia ser agendado -- so concluido.
+        var id = UUID.randomUUID().toString();
+        jdbc.update("""
+                insert into evento_clinico (id, data_evento, tipo_evento, status_evento)
+                values (?, DATE '2026-12-01', 'CONSULTA', 'AGENDADO')
+                """, id);
+
+        assertThat(jdbc.queryForObject(
+                "select desfecho from evento_clinico where id = ?", String.class, id))
+                .isNull();
+    }
+
+    @Test
+    void a_v6_distingue_a_origem_do_alerta_clinico() {
+        var ds = h2ModoMySql();
+        Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // "o tutor disse que tem alergia" e "o veterinario registrou anafilaxia"
+        // pesam diferente na decisao clinica, e quem le o resumo de seguranca
+        // precisa saber qual dos dois esta lendo.
+        var id = UUID.randomUUID().toString();
+        jdbc.update("""
+                insert into alerta_clinico (id, animal_id, tipo, descricao, origem)
+                values (?, ?, 'ALERGIA', 'Anafilaxia a dipirona', 'VETERINARIO')
+                """, id, ANIMAL_BOLINHA);
+
+        assertThat(jdbc.queryForObject(
+                "select origem from alerta_clinico where id = ?", String.class, id))
+                .isEqualTo("VETERINARIO");
+
+        assertThatThrownBy(() -> jdbc.update("""
+                insert into alerta_clinico (id, animal_id, tipo, descricao, origem)
+                values (?, ?, 'ALERGIA', 'Origem inventada', 'RECEPCIONISTA')
+                """, UUID.randomUUID().toString(), ANIMAL_BOLINHA))
                 .isInstanceOf(DataAccessException.class);
     }
 }

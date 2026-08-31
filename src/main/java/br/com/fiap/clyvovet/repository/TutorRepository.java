@@ -20,6 +20,9 @@ public interface TutorRepository extends RepositorioBase<Tutor> {
             @Param("cidade") String cidade,
             Pageable pageable);
 
+    /** Sustenta a recusa do auto-cadastro quando a clinica ja cadastrou a pessoa. */
+    boolean existsByEmail(String email);
+
     default Tutor obterPorId(UUID id) {
         return obterPorId(id, Recurso.TUTOR);
     }

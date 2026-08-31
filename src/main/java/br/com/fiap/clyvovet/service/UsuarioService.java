@@ -6,6 +6,7 @@ import br.com.fiap.clyvovet.dto.auth.UsuarioResponse;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.mapper.UsuarioMapper;
 import br.com.fiap.clyvovet.model.Perfil;
+import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
 import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
@@ -32,15 +33,25 @@ public class UsuarioService {
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
 
-    /** Auto-cadastro publico. O perfil e sempre TUTOR, nunca vem da requisicao. */
+    /**
+     * Auto-cadastro publico. O perfil e sempre TUTOR, nunca vem da requisicao.
+     *
+     * O REGISTRO CRIA O TUTOR, e isso corrige dois defeitos de uma vez.
+     *
+     * X12 — antes, so o Usuario era gravado. O tutor_id ficava nulo, e sem ele
+     * SegurancaService.podeAcessar() devolve false em tudo: quem se cadastrava
+     * nao conseguia sequer cadastrar o proprio animal. O produto comeca pelo
+     * auto-cadastro e o auto-cadastro nao levava a lugar nenhum.
+     *
+     * X13 — antes, o tutorId vinha do corpo, nesta rota que e publica e nao
+     * autenticada. Era escalacao de acesso a dado de terceiro por um campo de
+     * formulario. Criar em vez de apontar fecha o vetor: nao ha mais para onde
+     * apontar.
+     */
     @Transactional
     public UsuarioResponse registrar(RegistroRequest request) {
         Usuario usuario = novoUsuario(request.getEmail(), request.getSenha(), Perfil.TUTOR);
-
-        if (request.getTutorId() != null) {
-            usuario.setTutor(tutorRepository.obterPorId(request.getTutorId()));
-        }
-
+        usuario.setTutor(novoTutor(request.getNome(), request.getEmail()));
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
 
@@ -73,6 +84,30 @@ public class UsuarioService {
         usuario.setPerfil(perfil);
         usuario.setAtivo(true);
         return usuario;
+    }
+
+    /**
+     * Cria o Tutor do usuario que acabou de se registrar.
+     *
+     * DELIBERADAMENTE NAO VINCULA A UM TUTOR EXISTENTE de mesmo e-mail, mesmo
+     * quando ele existe — recusa com 409. O vinculo automatico parece gentil
+     * (a clinica ja cadastrou a pessoa; bastaria reconhece-la), mas sem
+     * verificacao de e-mail ele reabre o X13 por outra porta, e por uma porta
+     * mais larga: adivinhar um e-mail e muito mais facil que adivinhar um UUID.
+     *
+     * Vincular conta a cadastro preexistente e um fluxo legitimo, mas exige
+     * confirmacao de posse do e-mail. Enquanto isso nao existir, a recusa
+     * explicita e a resposta honesta.
+     */
+    private Tutor novoTutor(String nome, String email) {
+        if (tutorRepository.existsByEmail(email)) {
+            throw new RegraDeNegocioException("email",
+                    "Ja existe um cadastro de tutor com este e-mail. Procure a clinica para vincular sua conta");
+        }
+        Tutor tutor = new Tutor();
+        tutor.setNome(nome);
+        tutor.setEmail(email);
+        return tutorRepository.save(tutor);
     }
 
     private void garantirEmailDisponivel(String email) {

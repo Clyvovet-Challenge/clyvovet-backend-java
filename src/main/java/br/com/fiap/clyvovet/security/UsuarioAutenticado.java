@@ -36,6 +36,29 @@ public class UsuarioAutenticado implements UserDetails {
         return usuario.getTutor() != null ? usuario.getTutor().getId() : null;
     }
 
+    /**
+     * Id do veterinario vinculado, ou null se o usuario nao for um veterinario.
+     *
+     * O vinculo Usuario -> Veterinario existia desde o inicio e era gravado no
+     * cadastro, mas NADA o lia: so o lado do tutor tinha getter, e por isso so
+     * o tutor tinha escopo. O veterinario ou via a base inteira ou nao via nada.
+     *
+     * Sem este metodo nao existe "minha agenda", nem "meus atendimentos", nem
+     * metrica por profissional; e o evento clinico nasce atribuido a quem o
+     * corpo da requisicao mandar, e nao a quem o registrou.
+     */
+    public UUID getVeterinarioId() {
+        return usuario.getVeterinario() != null ? usuario.getVeterinario().getId() : null;
+    }
+
+    /** Id da clinica do veterinario vinculado. Sustenta as regras de escopo por clinica. */
+    public UUID getClinicaId() {
+        if (usuario.getVeterinario() == null || usuario.getVeterinario().getClinica() == null) {
+            return null;
+        }
+        return usuario.getVeterinario().getClinica().getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // O prefixo ROLE_ e o que faz hasRole("ADMIN") funcionar nas regras.

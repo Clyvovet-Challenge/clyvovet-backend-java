@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.model;
 
 import jakarta.persistence.*;
+import org.hibernate.type.NumericBooleanConverter;
 import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -27,4 +28,19 @@ public class Animal {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tutor_id")
     private Tutor tutor;
+
+    /**
+     * Numero do microchip, padrao ISO 11784/11785 (15 digitos).
+     *
+     * IDENTIFICA, NAO AUTORIZA. Ele esta impresso na carteira de vacinacao e no
+     * contrato de adocao, e qualquer leitor de pet shop ou canil o le — como
+     * senha nao valeria nada. O que credencia a leitura do resumo de seguranca
+     * e a autenticacao do veterinario; o chip so diz de qual animal se trata.
+     */
+    @Column(unique = true)
+    private String microchip;
+
+    /** Compoe o resumo de seguranca. Nulo = nao informado, que nao e o mesmo que nao. */
+    @Convert(converter = NumericBooleanConverter.class)
+    private Boolean castrado;
 }
