@@ -15,16 +15,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O ciclo de vida do consentimento de acesso ao historico.
+ * Ciclo de vida do consentimento de acesso ao historico.
  *
- * NAO EXISTE ENDPOINT DE CONCESSAO, e isso e o desenho, nao uma lacuna. A
- * autorizacao nasce dentro do agendamento: o tutor ja esta decidindo onde
- * atender, e liberar o historico e parte da mesma escolha. Tirar o ciclo
- * pedir-esperar-aprovar remove uma tela e uma espera do caminho sem tirar a
- * decisao do tutor.
- *
- * O que sobra para este service e o resto do ciclo: estender, revogar,
- * listar — e a expiracao, que nao e um metodo porque nao e um evento.
+ * Nao ha endpoint de concessao: a autorizacao nasce dentro do agendamento. O
+ * que sobra aqui e estender, revogar e listar.
  */
 @Service
 @Slf4j
@@ -33,13 +27,8 @@ import java.util.UUID;
 public class AutorizacaoService {
 
     /**
-     * A autorizacao vive enquanto a relacao viver.
-     *
-     * Dois anos apos o ULTIMO atendimento, e nao apos a concessao: quem
-     * continua frequentando a clinica mantem o acesso sem precisar renovar
-     * nada, e quem parou de ir ve a autorizacao expirar sozinha, sem precisar
-     * lembrar de revogar. Um prazo curto obrigaria a reconsentir a cada
-     * consulta; um prazo infinito seria acesso perpetuo por esquecimento.
+     * Dois anos apos o ULTIMO atendimento, e nao apos a concessao: quem continua
+     * indo mantem sem renovar, quem parou de ir expira sem precisar revogar.
      */
     private static final int ANOS_DE_VIGENCIA = 2;
 
@@ -47,16 +36,11 @@ public class AutorizacaoService {
     private final SegurancaService seguranca;
 
     /**
-     * Chamado pelo agendamento quando o tutor consente.
+     * Estende a autorizacao existente em vez de criar outra: tres anos de
+     * consultas produziriam trinta linhas para o tutor revogar uma a uma.
      *
-     * ESTENDE a autorizacao existente em vez de criar outra — e o que a
-     * constraint uk_autorizacao_animal_clinica exige e o que mantem a lista do
-     * tutor legivel: tres anos de consultas produziriam trinta linhas
-     * empilhadas, e ele teria de revogar uma a uma.
-     *
-     * Reativa a revogada, e isso e deliberado: se o tutor revogou e depois
-     * marcou de novo com consentimento, ele mudou de ideia. Manter a revogacao
-     * valendo obrigaria a um segundo passo que ele ja deu.
+     * Reativa a revogada de proposito — quem revogou e marcou de novo
+     * consentindo mudou de ideia.
      */
     @Transactional
     public void conceder(Animal animal, Clinica clinica, EventoClinico origem) {
@@ -109,12 +93,8 @@ public class AutorizacaoService {
     }
 
     /**
-     * O tutor retira o acesso. Sem justificar, a qualquer momento.
-     *
-     * NAO APAGA o que o veterinario ja escreveu: registro clinico nao se
-     * desfaz, e a clinica mantem a guarda dos atendimentos realizados nela
-     * (C0b). O que a revogacao encerra e a leitura do historico CONSOLIDADO —
-     * o que veio de outras clinicas e os documentos do tutor.
+     * Nao apaga o que o veterinario escreveu: a clinica mantem a guarda dos
+     * atendimentos realizados nela. Encerra a leitura do historico consolidado.
      */
     @Transactional
     public AutorizacaoResponse revogar(UUID id) {

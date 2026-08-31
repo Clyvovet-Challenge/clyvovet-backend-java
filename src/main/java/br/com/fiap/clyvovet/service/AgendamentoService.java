@@ -23,20 +23,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O fluxo de agendamento pelo tutor — regras A1 a A15 da spec 08.
+ * Agendamento pelo tutor — regras A1 a A15 da spec 08.
  *
- * E o primeiro fluxo nao-CRUD do projeto, e a diferenca esta na estrutura: os
- * services existentes recebem um DTO, mapeiam e salvam. Aqui entre a entrada e
- * a gravacao ha uma decisao que consulta cinco entidades e pode recusar por
- * seis motivos distintos, cada um com uma mensagem que diz o que fazer a
- * seguir.
- *
- * O QUE ESTE SERVICE DELIBERADAMENTE NAO FAZ
- * Nao decide se o horario esta livre — isso e do {@link AgendaService}, porque
- * a mesma resposta e necessaria na listagem de vagas. Nao decide quem pode
- * agendar para qual animal — isso e do SegurancaService, que ja resolve
- * ownership para o resto do sistema. Concentrar aqui so o que e especifico do
- * agendamento e o que impede este arquivo de virar o depositario de tudo.
+ * Nao decide se o horario esta livre (é do {@link AgendaService}, porque a
+ * listagem de vagas precisa da mesma resposta) nem quem pode agendar para qual
+ * animal (é do SegurancaService).
  */
 @Service
 @RequiredArgsConstructor
@@ -58,14 +49,7 @@ public class AgendamentoService {
     private final SegurancaService seguranca;
     private final AutorizacaoService autorizacaoService;
 
-    /**
-     * Marca o atendimento. Entrada, decisao, resultado.
-     *
-     * A ordem das validacoes segue o custo: as que so olham objetos ja
-     * carregados vem antes das que consultam a agenda. Quem tenta agendar um
-     * exame numa clinica que so faz consulta recebe a recusa sem que o banco
-     * seja consultado sobre horarios.
-     */
+    /** A ordem das validacoes segue o custo: as mais baratas primeiro. */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
     public EventoClinicoResponse agendar(AgendamentoRequest request) {
@@ -91,16 +75,8 @@ public class AgendamentoService {
 
         EventoClinico salvo = eventoClinicoRepository.save(evento);
 
-        // O CONSENTIMENTO E O AGENDAMENTO (spec 08, regras C8 a C11).
-        //
-        // Nao ha endpoint de concessao, e isso e o desenho: o tutor ja esta
-        // decidindo onde atender, e liberar o historico e parte da mesma
-        // escolha. Some um ciclo inteiro de pedir-esperar-aprovar, e com ele
-        // uma tela e uma espera -- sem que a decisao saia das maos do tutor.
-        //
-        // Recusar e permitido e nao impede nada: o atendimento acontece com os
-        // niveis 0 e 1. E o que faz o consentimento ser real em vez de um
-        // pedagio na tela de agendamento.
+        // O consentimento e o proprio agendamento (spec 08, C8-C11). Recusar e
+        // permitido e nao impede nada: o atendimento acontece nos niveis 0 e 1.
         if (request.consentiu()) {
             autorizacaoService.conceder(animal, servico.getClinica(), salvo);
         }
@@ -109,11 +85,8 @@ public class AgendamentoService {
     }
 
     /**
-     * Cancela um agendamento (A12, A13, A14).
-     *
-     * Nao apaga a linha. Um evento cancelado precisa continuar existindo para
-     * que a taxa de cancelamento seja calculavel e para que o horario liberado
-     * tenha rastro — DELETE aqui destruiria os dois.
+     * Nao apaga a linha: sem ela a taxa de cancelamento nao seria calculavel e
+     * o horario liberado nao teria rastro.
      */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
@@ -125,9 +98,8 @@ public class AgendamentoService {
                     "Só é possível cancelar um atendimento que ainda está agendado");
         }
 
-        // A13: o cancelamento em cima da hora e permitido, mas fica anotado. A
-        // alternativa — recusar — empurraria o tutor a simplesmente nao
-        // aparecer, o que e pior para a clinica: ela perde o horario sem saber.
+        // Cancelar em cima da hora e permitido, mas fica anotado: recusar
+        // empurraria o tutor a simplesmente nao aparecer, o que e pior.
         String marca = cancelamentoEmCimaDaHora(evento) ? "[TARDIO] " : "";
         evento.setStatusEvento(StatusEvento.CANCELADO);
         evento.setMotivoCancelamento(marca + motivo);
@@ -135,13 +107,7 @@ public class AgendamentoService {
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(evento));
     }
 
-    /**
-     * As vagas livres de um servico num intervalo de datas.
-     *
-     * E a consulta que o frontend usa para desenhar o calendario, e por isso
-     * ela devolve o que PODE ser marcado, e nao o que existe: um dia sem
-     * nenhuma vaga simplesmente nao aparece.
-     */
+    /** Devolve o que PODE ser marcado: dia sem vaga nao aparece. */
     public List<VagaResponse> vagas(UUID servicoId, UUID veterinarioId, LocalDate de, LocalDate ate) {
         Servico servico = servicoRepository.obterPorId(servicoId);
         garantirServicoAtivo(servico);
@@ -197,12 +163,8 @@ public class AgendamentoService {
     }
 
     /**
-     * A9 e A10 juntas.
-     *
-     * O @Future do DTO ja barra a data de ontem, mas nao alcanca o caso de hoje
-     * as 08:00 com o relogio marcando 08:30 — a data e valida, o horario nao.
-     * Aqui data e hora sao avaliadas como um instante so, que e como o tutor as
-     * percebe.
+     * O @Future do DTO barra a data de ontem, mas nao hoje as 08:00 com o
+     * relogio em 08:30. Aqui data e hora sao um instante so.
      */
     private void garantirAntecedenciaMinima(LocalDate data, String hora) {
         if (!respeitaAntecedencia(data, LocalTime.parse(hora))) {
@@ -233,12 +195,8 @@ public class AgendamentoService {
     }
 
     /**
-     * Teto na janela de busca de vagas.
-     *
-     * A consulta e um produto cartesiano de veterinarios x dias x slots. Sem
-     * teto, um "de 2026-01-01 ate 2030-01-01" varreria a agenda inteira da
-     * clinica e devolveria dezenas de milhares de linhas — e o custo cairia no
-     * banco, nao em quem pediu.
+     * A busca e um produto cartesiano de veterinarios x dias x slots: sem teto,
+     * um intervalo de quatro anos varreria a agenda inteira da clinica.
      */
     private void garantirIntervaloRazoavel(LocalDate de, LocalDate ate) {
         if (ate.isBefore(de)) {

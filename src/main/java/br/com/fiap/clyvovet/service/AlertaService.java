@@ -49,15 +49,11 @@ public class AlertaService {
     }
 
     /**
-     * Desativa em vez de apagar.
+     * Desativa em vez de apagar: o registro de que a alergia foi informada, e
+     * por quem, nao pode sumir junto.
      *
-     * Uma alergia registrada por engano precisa sumir do resumo sem que o
-     * registro de que ela foi registrada — e por quem — desapareca junto. Num
-     * historico clinico, apagar e perder informacao sobre a propria decisao.
-     *
-     * A AUTORIZACAO E VERIFICADA AQUI, e nao por @PreAuthorize no controller,
-     * porque o id da rota e do ALERTA e a regra fala do ANIMAL: so da para
-     * decidir depois de carregar a linha e descobrir de quem ela e.
+     * A autorizacao e verificada aqui, e nao no controller, porque o id da rota
+     * e do ALERTA e a regra fala do ANIMAL.
      */
     @Transactional
     public void desativar(UUID id) {
@@ -69,17 +65,9 @@ public class AlertaService {
     }
 
     /**
-     * Duas barreiras, e a segunda importa tanto quanto a primeira.
-     *
-     * A primeira e ownership: sem ela, QUALQUER usuario autenticado desativava
-     * QUALQUER alerta de QUALQUER animal — e como o auto-cadastro e publico, o
-     * atacante criava a propria conta. O alvo seriam justamente os dados que
-     * evitam que um veterinario medique errado um animal que nunca viu.
-     *
-     * A segunda: o tutor nao derruba alerta registrado por profissional. Ele
-     * pode corrigir o que ele mesmo informou, mas "o veterinario registrou
-     * anafilaxia a dipirona" e um achado clinico — quem o retira e quem tem
-     * competencia para reavalia-lo.
+     * Ownership, e mais uma barreira: o tutor nao derruba alerta registrado por
+     * profissional. Ele corrige o que informou; achado clinico e retirado por
+     * quem tem competencia para reavalia-lo.
      */
     private void garantirQuePodeDesativar(AlertaClinico alerta) {
         UUID animalId = alerta.getAnimal().getId();

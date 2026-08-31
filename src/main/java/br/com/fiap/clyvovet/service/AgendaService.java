@@ -19,24 +19,16 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Responde a unica pergunta que o agendamento precisa fazer sobre horario:
- * "este veterinario esta livre neste intervalo?".
+ * "Este veterinario esta livre neste intervalo?" — a resposta combina a grade
+ * semanal, os bloqueios e os atendimentos ja marcados.
  *
- * POR QUE ISTO E UMA CLASSE SEPARADA
- * A resposta e composta por tres fontes que nao se conhecem — a grade semanal,
- * os bloqueios pontuais e os atendimentos ja marcados — e e consultada de dois
- * lugares com propositos diferentes: o agendamento, que pergunta sobre UM
- * horario, e a listagem de vagas, que pergunta sobre TODOS os de um periodo.
- * Se a regra morasse no AgendamentoService, a listagem teria de reimplementa-la
- * — e as duas divergiriam no primeiro ajuste.
+ * Classe separada porque a mesma pergunta e feita de dois lugares: o
+ * agendamento, sobre UM horario, e a listagem de vagas, sobre todos os de um
+ * periodo. Junto, um dos dois reimplementaria a regra.
  *
- * SOBRE A COMPARACAO DE HORARIO COMO TEXTO
- * O projeto guarda hora como VARCHAR(5) no formato "HH:mm", decisao herdada de
- * EventoClinico.hora. Aqui as horas sao convertidas para LocalTime antes de
- * qualquer comparacao: comparar "09:00" com "10:30" como texto funciona por
- * acidente do formato de largura fixa, e para de funcionar no dia em que
- * alguem gravar "9:00". Converter torna a intencao explicita e o codigo imune
- * a isso.
+ * As horas viram LocalTime antes de qualquer comparacao: como texto funciona
+ * por acidente do formato de largura fixa, e quebra no dia em que alguem
+ * gravar "9:00".
  */
 @Service
 @RequiredArgsConstructor
@@ -51,10 +43,8 @@ public class AgendaService {
     public record Janela(LocalTime inicio, LocalTime fim) {
 
         /**
-         * Duas janelas colidem quando uma comeca antes de a outra terminar, dos
-         * dois lados. O fim aberto e o que permite uma consulta das 09:00 as
-         * 09:30 conviver com a seguinte as 09:30 — sem ele, toda agenda cheia
-         * teria um furo artificial entre atendimentos.
+         * O fim aberto permite [09:00, 09:30) conviver com [09:30, 10:00). Sem
+         * ele, toda agenda cheia teria um furo artificial entre atendimentos.
          */
         public boolean colideCom(Janela outra) {
             return inicio.isBefore(outra.fim) && outra.inicio.isBefore(fim);
@@ -66,30 +56,10 @@ public class AgendaService {
     }
 
     /**
-     * O veterinario atende neste intervalo, nesta data?
-     *
-     * Tres perguntas em sequencia, e a ordem importa para o custo: a grade e
-     * consultada primeiro porque descarta a maioria dos casos (fora do
-     * expediente) antes de tocar em bloqueio ou agenda.
+     * A grade vem primeiro: descarta a maioria dos casos antes de tocar no resto.
+     * Devolve o motivo, e nao um booleano, porque quem chama precisa dizer ao
+     * usuario qual das tres coisas impediu.
      */
-    public boolean estaLivre(UUID veterinarioId, LocalDate data, Janela janela) {
-        return dentroDaGrade(veterinarioId, data, janela)
-                && !colideComBloqueio(veterinarioId, data, janela)
-                && !colideComAtendimento(veterinarioId, data, janela, null);
-    }
-
-    /**
-     * Variante que ignora um evento especifico ao procurar colisao.
-     *
-     * Existe para o remarcar: sem ela, um evento sempre colidiria consigo
-     * mesmo e nenhuma alteracao de horario passaria.
-     */
-    public boolean estaLivreIgnorando(UUID veterinarioId, LocalDate data, Janela janela, UUID eventoIgnorado) {
-        return dentroDaGrade(veterinarioId, data, janela)
-                && !colideComBloqueio(veterinarioId, data, janela)
-                && !colideComAtendimento(veterinarioId, data, janela, eventoIgnorado);
-    }
-
     public String porQueNaoEstaLivre(UUID veterinarioId, LocalDate data, Janela janela) {
         if (!dentroDaGrade(veterinarioId, data, janela)) {
             return "O veterinário não atende neste horário";
@@ -104,12 +74,8 @@ public class AgendaService {
     }
 
     /**
-     * As vagas livres de um veterinario num dia, para um servico.
-     *
-     * O passo e a propria duracao do servico: uma consulta de 30 min gera vagas
-     * de meia em meia hora dentro de cada faixa da grade. Isso mantem a agenda
-     * alinhada e evita o cenario em que quatro marcacoes de 20 min deixam
-     * buracos de 10 que nunca serao usados.
+     * O passo e a duracao do servico, o que mantem a agenda alinhada e evita
+     * buracos que nunca seriam usados.
      */
     public List<Janela> vagasLivres(UUID veterinarioId, LocalDate data, Servico servico) {
         List<Janela> vagas = new ArrayList<>();
@@ -119,9 +85,7 @@ public class AgendaService {
             LocalTime inicio = LocalTime.parse(faixa.getHoraInicio());
             LocalTime limite = LocalTime.parse(faixa.getHoraFim());
 
-            // O ultimo slot precisa CABER inteiro na faixa: uma faixa que
-            // termina as 12:00 nao comporta uma cirurgia de 60 min iniciada as
-            // 11:30, e oferece-la seria prometer o que a agenda nao sustenta.
+            // O ultimo slot precisa caber inteiro na faixa.
             while (!inicio.plusMinutes(duracao).isAfter(limite)) {
                 Janela candidata = new Janela(inicio, inicio.plusMinutes(duracao));
                 if (!colideComBloqueio(veterinarioId, data, candidata)
@@ -148,7 +112,6 @@ public class AgendaService {
 
     private boolean colideComBloqueio(UUID veterinarioId, LocalDate data, Janela janela) {
         for (Bloqueio bloqueio : bloqueioRepository.queAlcancam(veterinarioId, data)) {
-            // Ferias sao dias inteiros: nao ha hora a comparar, o dia todo cai.
             if (bloqueio.diaInteiro()) {
                 return true;
             }
@@ -175,11 +138,8 @@ public class AgendaService {
     }
 
     /**
-     * Quanto tempo um evento ja marcado ocupa.
-     *
-     * Evento sem servico vinculado — todos os anteriores ao catalogo — recebe
-     * 30 minutos. Ignora-los seria pior: um atendimento historico deixaria de
-     * bloquear o horario e a agenda passaria a aceitar marcacao em cima dele.
+     * Evento sem servico (anterior ao catalogo) recebe 30 min. Ignora-lo faria
+     * a agenda aceitar marcacao em cima de um atendimento existente.
      */
     private Janela janelaDe(EventoClinico evento) {
         LocalTime inicio = LocalTime.parse(evento.getHora());

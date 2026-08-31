@@ -11,13 +11,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A leitura dos tetos, para revisao do administrador da plataforma.
+ * Leitura dos tetos, para revisao do admin.
  *
- * Os limites vivem aqui repetidos como constantes de CONSULTA, e nao importados
- * do HistoricoService: la eles decidem se uma requisicao passa, aqui eles apenas
- * filtram o que vale a pena olhar. Sao papeis diferentes e podem divergir de
- * proposito — o admin pode querer revisar a partir de um numero mais baixo do
- * que o que dispara alarme automatico.
+ * Os limites sao constantes proprias, e nao as do HistoricoService: la eles
+ * decidem se a requisicao passa, aqui so filtram o que vale olhar.
  */
 @Service
 @RequiredArgsConstructor
@@ -28,13 +25,8 @@ public class AuditoriaService {
     private static final long ANIMAIS_POR_DIA_PARA_REVISAR = 30;
 
     /**
-     * Zero, e nao um: TODA quebra de vidro entra na lista.
-     *
-     * Ela e o caminho de excecao — acesso ao prontuario sem consentimento do
-     * tutor. Filtrar por frequencia aqui deixaria de fora justamente o caso que
-     * mais interessa: o profissional que aciona uma vez, contra um paciente
-     * escolhido. Frequencia e um padrao a observar na lista, nao um criterio
-     * para entrar nela.
+     * Zero: toda quebra de vidro entra na lista. Filtrar por frequencia
+     * esconderia quem aciona uma vez, contra um paciente escolhido.
      */
     private static final long QUEBRAS_NO_DIA_PARA_REVISAR = 0;
 
@@ -48,13 +40,7 @@ public class AuditoriaService {
         return montar(dias, true, QUEBRAS_NO_DIA_PARA_REVISAR);
     }
 
-    /**
-     * A consulta devolve Object[] porque e uma projecao com GROUP BY, e nao uma
-     * entidade — o JPQL nao tem uma linha de AcessoHistorico para materializar
-     * quando o resultado e uma contagem agrupada. A conversao para o record
-     * acontece aqui, num lugar so, para que o Object[] nao vaze para o
-     * controller.
-     */
+    /** Object[] porque a consulta e uma projecao com GROUP BY. Nao vaza daqui. */
     private List<ExcessoDeAcessoResponse> montar(int dias, boolean emergencial, long teto) {
         LocalDate desde = LocalDate.now().minusDays(Math.max(dias, 1));
 

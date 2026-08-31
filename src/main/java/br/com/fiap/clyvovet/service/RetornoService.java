@@ -24,16 +24,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O fluxo de retorno e falta — regras R1 a R21 da spec 08.
+ * Retorno e falta — regras R1 a R21 da spec 08.
  *
- * E o segundo fluxo nao-CRUD, e o que responde ao tema do Challenge de forma
- * mais direta: o modelo episodico registra que uma consulta aconteceu; a
- * continuidade do cuidado exige saber que ela DEVIA ter tido sequencia e nao
- * teve. E o que a lista de retornos vencidos entrega.
- *
- * O schema para isto existe desde a migration V5 — status_evento,
- * data_retorno_previsto, evento_origem_id e peso_kg. As colunas ficaram tres
- * meses no banco sem nenhuma linha de Java que as enxergasse.
+ * O modelo episodico registra que a consulta aconteceu; este fluxo registra que
+ * ela devia ter tido sequencia e nao teve. E o que a lista de vencidos entrega.
  */
 @Service
 @Slf4j
@@ -44,21 +38,14 @@ public class RetornoService {
     /** Acima disto a variacao de peso vira alerta clinico (regra R7). */
     private static final BigDecimal VARIACAO_DE_PESO_QUE_ALERTA = new BigDecimal("0.20");
 
-    /** Janela em que um REALIZADO ainda pode ser corrigido para FALTOU (regra R20). */
-    private static final int HORAS_PARA_CORRIGIR_PRESENCA = 24;
-
     private final EventoClinicoRepository eventoClinicoRepository;
     private final VeterinarioRepository veterinarioRepository;
     private final EventoClinicoMapper eventoClinicoMapper;
     private final AgendaService agendaService;
 
     /**
-     * O veterinario fecha o atendimento: registra peso, desfecho e quando o pet
-     * deve voltar.
-     *
-     * E a transicao AGENDADO -> REALIZADO, e o unico caminho para ela. Deixar
-     * o status editavel por PATCH permitiria marcar como realizado um
-     * atendimento futuro — que e o mesmo que registrar consulta que nao houve.
+     * Unico caminho para AGENDADO -> REALIZADO. Com o status editavel por PATCH,
+     * daria para marcar como realizado um atendimento futuro.
      */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
@@ -84,11 +71,8 @@ public class RetornoService {
     }
 
     /**
-     * Agenda o retorno ligado a consulta de origem (R9 a R14).
-     *
-     * O evento_origem_id e o que transforma RETORNO de rotulo solto em relacao
-     * verificavel: sem ele nao da para dizer se o pet voltou, so que houve um
-     * atendimento chamado retorno em algum momento.
+     * O evento_origem_id transforma RETORNO de rotulo solto em relacao
+     * verificavel: sem ele nao da para dizer se o pet voltou.
      */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
@@ -129,12 +113,7 @@ public class RetornoService {
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(retorno));
     }
 
-    /**
-     * Os pets que deviam ter voltado e nao voltaram (R17).
-     *
-     * E o RESULTADO do fluxo — a lista sobre a qual a clinica age. Sem ela, o
-     * data_retorno_previsto seria um campo que ninguem le.
-     */
+    /** O resultado do fluxo: a lista sobre a qual a clinica age. */
     public List<RetornoVencidoResponse> vencidos(UUID veterinarioId, UUID clinicaId) {
         LocalDate hoje = LocalDate.now();
         return eventoClinicoRepository.retornosVencidos(hoje, veterinarioId, clinicaId).stream()
@@ -153,15 +132,11 @@ public class RetornoService {
     }
 
     /**
-     * Marca como FALTOU todo agendamento cuja data passou sem conclusao (R18).
-     *
      * Sem esta varredura a taxa de falta nunca sai de zero: ninguem volta ao
-     * sistema para registrar que o pet nao apareceu. O AGENDADO vencido fica
-     * eternamente agendado, e a metrica mente por omissao.
+     * sistema para registrar que o pet nao apareceu.
      *
-     * E um endpoint, e nao um @Scheduled, de proposito: agendador em aplicacao
-     * com mais de uma instancia dispara em todas ao mesmo tempo. Enquanto nao
-     * houver coordenacao, quem chama e a clinica — e a chamada fica no log.
+     * Endpoint, e nao @Scheduled: agendador em aplicacao com mais de uma
+     * instancia dispara em todas ao mesmo tempo.
      */
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
@@ -210,14 +185,9 @@ public class RetornoService {
     }
 
     /**
-     * R7 — variacao de peso acima de 20% em relacao a aferição anterior.
-     *
-     * AVISA, NAO BLOQUEIA, e a distincao e deliberada. Um filhote de 2 kg que
-     * chega com 3 kg variou 50% e esta perfeitamente saudavel; um gato adulto
-     * que perde 25% em dois meses pode estar com doenca renal. A regra nao tem
-     * como distinguir os dois casos — quem tem e o veterinario. Bloquear o
-     * registro do peso real por causa de um limiar estatistico seria impedir a
-     * anotacao justamente do dado que importa.
+     * Avisa, nao bloqueia. Um filhote que sai de 2 kg para 3 kg variou 50% e
+     * esta saudavel; um gato adulto que perde 25% pode estar com doenca renal.
+     * A regra nao distingue os dois casos — o veterinario distingue.
      */
     private void avisarSobreVariacaoDePeso(EventoClinico evento) {
         if (evento.getPesoKg() == null || evento.getAnimal() == null) {

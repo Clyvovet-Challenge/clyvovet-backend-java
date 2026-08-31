@@ -20,24 +20,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O acesso ao historico clinico, nos tres niveis da spec 08.
+ * Acesso ao historico clinico em tres niveis (spec 08, fluxo C).
  *
- *   0  operacional        quem tem agendamento
- *   1  resumo de seguranca  qualquer veterinario autenticado, sempre
- *   2  historico completo  so com consentimento do tutor
+ *   0  operacional         quem tem agendamento
+ *   1  resumo de seguranca  qualquer veterinario autenticado
+ *   2  historico completo   so com consentimento do tutor
  *
- * O QUE SEPARA OS NIVEIS
- * Nem todo o historico pesa igual. O que salva a vida no primeiro minuto —
- * alergia, condicao cronica, medicacao continua, antirrabica, ultimo peso — e
- * pouco dado e expoe pouco. O que expoe muito — quais clinicas o animal
- * frequentou, laudos, diagnosticos, CPF e endereco do tutor — nao e o que
- * resolve a emergencia. Trancar os dois no mesmo cofre obrigaria a escolher
- * entre travar o atendimento de urgencia e abrir o prontuario inteiro.
+ * O nivel 1 e o que decide conduta nos primeiros minutos e expoe pouco; o
+ * nivel 2 expoe muito e nao e o que resolve a emergencia. Dai a separacao.
  *
- * O MICROCHIP IDENTIFICA, NUNCA AUTORIZA
- * Ele esta impresso na carteira de vacinacao e no contrato de adocao, e
- * qualquer leitor de pet shop o le — como senha nao valeria nada. Quem
- * credencia o nivel 1 e a autenticacao do veterinario; o nivel 2, o tutor.
+ * O microchip identifica, nunca autoriza — ele esta impresso na carteira de
+ * vacinacao e qualquer leitor de pet shop o le.
  */
 @Service
 @Slf4j
@@ -46,35 +39,17 @@ import java.util.UUID;
 public class HistoricoService {
 
     /**
-     * OS DOIS TETOS DA REGRA C6 — e por que sao dois, e nao um.
-     *
-     * TETO_DE_ALERTA e o volume clinico plausivel de um dia cheio. Passar dele
-     * nao bloqueia: sinaliza. Um plantao de feriado, um mutirao de castracao ou
-     * um surto de parvovirose produzem picos legitimos, e travar o profissional
-     * no meio deles seria transformar uma medida de privacidade em risco ao
-     * paciente.
-     *
-     * TETO_ABSOLUTO e o volume que nenhuma jornada clinica alcanca. Passar dele
-     * bloqueia, porque a essa altura ja nao ha leitura de boa-fe a proteger.
-     *
-     * Um teto so obrigaria a escolher entre bloquear cedo demais (e atrapalhar
-     * atendimento) ou tarde demais (e nao proteger ninguem).
+     * Dois tetos, nao um. O de alerta e o volume de um dia cheio: passar dele
+     * sinaliza, mas nao bloqueia — plantao de feriado e mutirao de castracao
+     * produzem picos legitimos. O absoluto nenhuma jornada clinica alcanca.
      */
     private static final int TETO_DE_ALERTA_POR_DIA = 30;
     private static final int TETO_ABSOLUTO_POR_DIA = 150;
 
     /**
-     * O teto da regra C22 — quebra de vidro.
-     *
-     * ELE NUNCA BLOQUEIA, e essa e a decisao mais importante deste arquivo.
-     * Quebra de vidro e o caminho do animal que chega atropelado, sem
-     * agendamento e sem o tutor por perto. Bloquear no limite significaria que,
-     * em algum atendimento, o veterinario abriria a tela e receberia um 429 no
-     * lugar do historico — e a conta desse erro e paga pelo paciente, nao pelo
-     * atacante.
-     *
-     * O controle e outro: o acesso passa, e o alarme sobe. Auditoria depois do
-     * fato e a resposta certa para excecao de emergencia; bloqueio nao e.
+     * Quebra de vidro NUNCA bloqueia. Travar no limite significaria devolver 429
+     * no lugar do historico em algum atendimento de emergencia, e essa conta e
+     * paga pelo paciente. O acesso passa e o alarme sobe.
      */
     private static final int QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR = 5;
 
@@ -86,12 +61,9 @@ public class HistoricoService {
     private final SegurancaService seguranca;
 
     /**
-     * Nivel 1 — o resumo de seguranca, alcancado pelo numero do microchip.
-     *
-     * Nao exige consentimento nem vinculo previo: e o caso do animal que chega
-     * numa clinica que nunca o atendeu. Em compensacao, toda leitura e
-     * registrada e o tutor e avisado — a transparencia e o que torna o acesso
-     * sem consentimento aceitavel.
+     * Nivel 1, pelo microchip. Sem consentimento e sem vinculo previo — e o
+     * animal que chega numa clinica que nunca o atendeu. Toda leitura e
+     * registrada e o tutor avisado.
      */
     @Transactional
     public ResumoDeSegurancaResponse porMicrochip(String microchip) {
@@ -108,13 +80,9 @@ public class HistoricoService {
     }
 
     /**
-     * Nivel 2 — o historico completo.
-     *
-     * O que volta depende do nivel que o solicitante alcanca: sem autorizacao,
-     * o veterinario recebe o mesmo objeto com a linha do tempo restrita aos
-     * atendimentos da propria clinica (C0b). Nao e um 403 — e uma resposta
-     * menor, e a diferenca importa: 403 esconderia que o animal existe e
-     * atrapalharia o atendimento em curso.
+     * Nivel 2. Sem autorizacao o veterinario recebe o mesmo objeto com a linha
+     * do tempo restrita a propria clinica — resposta menor, e nao 403: negar
+     * esconderia que o animal existe e atrapalharia o atendimento em curso.
      */
     @Transactional
     public HistoricoResponse historico(UUID animalId) {
@@ -130,17 +98,11 @@ public class HistoricoService {
     }
 
     /**
-     * Quebra de vidro — nivel 2 sem consentimento, em emergencia.
+     * Nivel 2 sem consentimento, em emergencia.
      *
-     * DEIXOU DE SER OPCIONAL quando o consentimento passou a nascer no
-     * agendamento: todo atendimento SEM agendamento — o pronto-socorro, o
-     * animal atropelado, o encaixe — ficaria sem caminho de acesso. O modelo
-     * travaria exatamente na emergencia, que e quando o historico mais importa.
-     *
-     * O que a torna aceitavel e o custo: motivo obrigatorio, registro
-     * destacado, notificacao imediata ao tutor. Sem esses tres, "qualquer
-     * veterinario com um campo de texto" seria uma porta aberta com livro de
-     * visitas, e anularia todo o resto.
+     * Existe porque o consentimento nasce no agendamento: todo atendimento sem
+     * agendamento — pronto-socorro, encaixe — ficaria sem caminho. O custo que
+     * a torna aceitavel: motivo obrigatorio, registro destacado, aviso ao tutor.
      */
     @Transactional
     public HistoricoResponse acessoEmergencial(UUID animalId, String motivo) {
@@ -175,14 +137,7 @@ public class HistoricoService {
     // Resolucao de nivel
     // ------------------------------------------------------------------
 
-    /**
-     * Quanto este usuario alcanca sobre este animal.
-     *
-     * A ordem das checagens e a ordem das bases legais: o dono primeiro, depois
-     * a guarda do proprio registro (C0b), depois o consentimento. A primeira
-     * que responde COMPLETO encerra — nao ha razao para consultar a tabela de
-     * autorizacao quando o solicitante e o proprio tutor.
-     */
+    /** Quanto este usuario alcanca sobre este animal. */
     private NivelAcesso nivelSobre(Animal animal) {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
         if (usuario == null) {
@@ -200,14 +155,11 @@ public class HistoricoService {
             return dono ? NivelAcesso.COMPLETO : NivelAcesso.OPERACIONAL;
         }
 
-        // Veterinario: consentimento vigente, ou a guarda do proprio registro.
         UUID clinicaId = usuario.getClinicaId();
         if (clinicaId != null && temAutorizacaoVigente(animal.getId(), clinicaId)) {
             return NivelAcesso.COMPLETO;
         }
-        // C0b — a clinica sempre ve o que foi realizado nela. Sem consentimento
-        // ela nao ve mais que isso, mas o proprio registro nao se tranca contra
-        // quem tem o dever de guarda-lo.
+        // Sem consentimento a clinica ainda ve o que foi realizado nela (C0b).
         return NivelAcesso.RESUMO_DE_SEGURANCA;
     }
 
@@ -235,8 +187,7 @@ public class HistoricoService {
                 ultimoPeso(eventos),
                 alertas(animal.getId()),
                 vacinas(eventos),
-                // Do tutor, so o telefone. Nome, CPF e endereco sao nivel 2:
-                // para atender uma emergencia basta conseguir ligar.
+                // Do tutor, so o telefone: para a emergencia basta conseguir ligar.
                 animal.getTutor() != null ? animal.getTutor().getTelefone() : null);
     }
 
@@ -259,9 +210,6 @@ public class HistoricoService {
                         e.getPesoKg(),
                         completo ? e.getDesfecho() : null,
                         e.getClinica() != null ? e.getClinica().getNome() : null,
-                        // A marcacao "desta clinica x de outras" e o que da
-                        // sentido ao nivel 2: sem consentimento o veterinario ve
-                        // so a fatia dele; com ele, a linha inteira.
                         minhaClinica != null && e.getClinica() != null
                                 && minhaClinica.equals(e.getClinica().getId())))
                 .toList();
@@ -294,11 +242,8 @@ public class HistoricoService {
     }
 
     /**
-     * Derivado dos eventos, nunca digitado a parte.
-     *
-     * Um resumo de vacinas mantido a mao envelhece em silencio, e um resumo de
-     * imunizacao desatualizado leva a revacinar sem necessidade — ou, pior, a
-     * nao vacinar achando que ja se vacinou.
+     * Derivado dos eventos, nunca digitado a parte: um resumo mantido a mao
+     * envelhece, e leva a revacinar sem necessidade ou a nao vacinar.
      */
     private List<VacinaResponse> vacinas(List<EventoClinico> eventos) {
         return eventos.stream()
@@ -334,17 +279,9 @@ public class HistoricoService {
     // ------------------------------------------------------------------
 
     /**
-     * O teto de leitura do nivel 1 (regra C6).
-     *
-     * Conta ANIMAIS DISTINTOS no dia, nao requisicoes — a tabela de auditoria ja
-     * agrega por (usuario, animal, dia), entao a contagem de linhas e exatamente
-     * a metrica certa e sai de graca. Reabrir o mesmo prontuario nao consome
-     * teto; e o que separa este controle do rate limit por IP, que protege a
-     * infraestrutura contra rajada e nao sabe nada sobre pacientes.
-     *
-     * O animal ja consultado hoje nao entra na conta de novo: sem isso, um
-     * atendimento longo com varias consultas ao resumo poderia esbarrar no teto
-     * sem que nenhum paciente novo tivesse sido aberto.
+     * Conta ANIMAIS DISTINTOS no dia, nao requisicoes: a tabela de auditoria ja
+     * agrega por (usuario, animal, dia). Reabrir o mesmo prontuario nao consome
+     * teto — e o que separa este controle do rate limit por IP.
      */
     private void aplicarTetoDiario(Animal animal) {
         UUID usuarioId = seguranca.usuarioAutenticadoId();
@@ -370,19 +307,14 @@ public class HistoricoService {
                             + "Procure o administrador da plataforma");
         }
         if (animaisHoje == TETO_DE_ALERTA_POR_DIA) {
-            // Uma vez, na travessia do limiar — e nao a cada consulta acima
-            // dele. Repetir transformaria o alerta em ruido, e ruido nao e lido.
+            // Uma vez, na travessia do limiar: repetir viraria ruido.
             log.warn("VOLUME ATIPICO: usuario {} passou de {} animais distintos hoje. "
                             + "Visivel em GET /auditoria/excessos",
                     usuarioId, TETO_DE_ALERTA_POR_DIA);
         }
     }
 
-    /**
-     * A quebra de vidro que virou rotina (regra C22).
-     *
-     * Alarma; nao bloqueia. Ver a nota em QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR.
-     */
+    /** Alarma; nao bloqueia. Ver a constante. */
     private void alarmarSeQuebraDeVidroVirouRotina() {
         UUID usuarioId = seguranca.usuarioAutenticadoId();
         if (usuarioId == null) {
@@ -407,18 +339,13 @@ public class HistoricoService {
     }
 
     private void garantirQueOResumoEstaLigado(Animal animal) {
-        // O tutor pode desligar o nivel 1. Forcar seria paternalista — o dado e
-        // dele —, mas o desligamento e uma escolha informada, nao o padrao.
         if (Boolean.FALSE.equals(animal.getResumoDeSegurancaAtivo())) {
             throw new RegraDeNegocioException("microchip",
                     "O tutor desativou o resumo de segurança deste animal");
         }
     }
 
-    /**
-     * Uma linha por (usuario, animal, dia): a segunda leitura do mesmo dia
-     * incrementa o contador em vez de criar registro novo.
-     */
+    /** Uma linha por (usuario, animal, dia); a segunda leitura incrementa. */
     private void registrarAcesso(Animal animal, NivelAcesso nivel, boolean emergencial, String motivo) {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
         if (usuario == null) {
@@ -431,9 +358,7 @@ public class HistoricoService {
                 .ifPresentOrElse(
                         existente -> {
                             existente.setVezes(existente.getVezes() + 1);
-                            // O nivel registrado e o MAIOR alcancado no dia: uma
-                            // leitura completa nao pode ser apagada por uma
-                            // consulta de resumo feita depois.
+                            // O maior nivel do dia prevalece.
                             existente.setNivel(Math.max(existente.getNivel(), nivel.getCodigo()));
                             acessoRepository.save(existente);
                         },
@@ -456,12 +381,8 @@ public class HistoricoService {
     }
 
     /**
-     * Placeholder da notificacao ao tutor.
-     *
-     * Vai para o log ate existir canal real (push ou e-mail). Deixar o ponto de
-     * chamada no lugar certo desde agora e o que garante que a notificacao seja
-     * ligada trocando UMA implementacao, e nao caçando os pontos onde ela
-     * deveria ter sido disparada.
+     * Placeholder: vai para o log ate existir canal real (push ou e-mail). O
+     * ponto de chamada ja esta no lugar certo.
      */
     private void notificarTutor(Animal animal, String mensagem) {
         if (animal.getTutor() != null) {
