@@ -110,6 +110,39 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH,  api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
 
+            // --- Catalogo de servicos: quem define o que a clinica oferece ---
+            // Preco e duracao decidem quanto se cobra e como a agenda e ocupada.
+            // Ate existir o perfil ADMIN_CLINICA (spec 08, N2), isso e da plataforma.
+            .requestMatchers(HttpMethod.POST,   api("/servicos")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.PUT,    api("/servicos/**")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/servicos/**")).hasRole(ADMIN)
+
+            // --- Agenda do veterinario: a grade e de quem atende ---
+            .requestMatchers(HttpMethod.POST,   api("/disponibilidades", "/bloqueios"))
+                .hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/disponibilidades/**", "/bloqueios/**"))
+                .hasAnyRole(VETERINARIO, ADMIN)
+
+            // --- Acoes clinicas sobre um atendimento ---
+            //
+            // ESTAS LINHAS PRECISAM VIR ANTES da regra generica de POST em
+            // /eventos-clinicos, e a razao e sutil: aquele matcher e EXATO
+            // ("/eventos-clinicos"), entao /eventos-clinicos/{id}/concluir nao
+            // casa com ele e cairia em anyRequest().authenticated() -- um tutor
+            // conseguiria concluir o proprio atendimento e registrar o desfecho
+            // clinico dele. Fechar por caminho especifico e o que evita isso.
+            .requestMatchers(HttpMethod.POST, api("/eventos-clinicos/*/concluir")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.POST, api("/eventos-clinicos/*/retorno")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.POST, api("/eventos-clinicos/marcar-faltas")).hasAnyRole(VETERINARIO, ADMIN)
+            .requestMatchers(HttpMethod.GET,  api("/eventos-clinicos/retornos-vencidos")).hasAnyRole(VETERINARIO, ADMIN)
+
+            // --- Agendamento: e do tutor, e a excecao ao paragrafo abaixo ---
+            // O tutor marca a propria consulta (regra A1). O que ele NAO pode e
+            // registrar um atendimento como acontecido -- por isso a rota de
+            // agendamento e separada de POST /eventos-clinicos, e nao um
+            // relaxamento dela.
+            .requestMatchers(api("/agendamentos/**")).authenticated()
+
             // --- Corpo clinico: quem registra atendimento e cobranca ---
             .requestMatchers(HttpMethod.POST,   api("/eventos-clinicos", "/pagamentos")).hasAnyRole(VETERINARIO, ADMIN)
             .requestMatchers(HttpMethod.PUT,    api("/eventos-clinicos/**", "/pagamentos/**")).hasAnyRole(VETERINARIO, ADMIN)

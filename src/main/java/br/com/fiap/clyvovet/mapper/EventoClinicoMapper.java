@@ -6,6 +6,7 @@ import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.model.Animal;
 import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.Servico;
 import br.com.fiap.clyvovet.model.Veterinario;
 import org.springframework.stereotype.Component;
 
@@ -54,7 +55,20 @@ public class EventoClinicoMapper {
                 Referencias.de(evento.getAnimal(), Animal::getId),
                 Referencias.de(evento.getAnimal(), Animal::getNome),
                 Referencias.de(evento.getClinica(), Clinica::getId),
-                Referencias.de(evento.getClinica(), Clinica::getNome)
+                Referencias.de(evento.getClinica(), Clinica::getNome),
+                evento.getStatusEvento(),
+                evento.getDataRetornoPrevisto(),
+                Referencias.de(evento.getEventoOrigem(), EventoClinico::getId),
+                evento.getPesoKg(),
+                Referencias.de(evento.getServico(), Servico::getId),
+                Referencias.de(evento.getServico(), Servico::getNome),
+                // O valor vem do catalogo, e nao de uma coluna no evento: e a
+                // mesma fonte que o fluxo de cobranca usa para saber quanto o
+                // atendimento custou. Duplicar aqui abriria espaco para os dois
+                // divergirem.
+                Referencias.de(evento.getServico(), Servico::getPreco),
+                evento.getDesfecho(),
+                evento.getMotivoCancelamento()
         );
     }
 }

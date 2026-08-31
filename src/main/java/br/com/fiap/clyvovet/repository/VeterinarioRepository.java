@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface VeterinarioRepository extends RepositorioBase<Veterinario> {
@@ -18,6 +19,10 @@ public interface VeterinarioRepository extends RepositorioBase<Veterinario> {
             @Param("nome") String nome,
             @Param("especialidade") String especialidade,
             Pageable pageable);
+
+    /** Corpo clinico de uma clinica. Sustenta a busca de vagas por clinica. */
+    @Query("SELECT v FROM Veterinario v WHERE v.clinica.id = :clinicaId ORDER BY v.nome")
+    List<Veterinario> daClinica(@Param("clinicaId") UUID clinicaId);
 
     default Veterinario obterPorId(UUID id) {
         return obterPorId(id, Recurso.VETERINARIO);
