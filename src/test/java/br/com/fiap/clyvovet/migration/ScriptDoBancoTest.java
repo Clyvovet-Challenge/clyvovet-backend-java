@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.migration;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Guarda o documentos/script_bd.sql contra a defasagem.
  *
+ * É uma verificação de REPOSITÓRIO, e não de aplicação: ela lê arquivos que
+ * vivem fora de src/. O build da imagem Docker copia só pom.xml e src/, então
+ * lá estes caminhos não existem e o teste é PULADO, não quebrado — foi o que
+ * derrubou o primeiro build da imagem no CI.
+ *
+ * Pular no container é correto: a imagem não carrega os artefatos de entrega, e
+ * exigi-los ali seria inflar o contexto de build por nada. O teste continua
+ * valendo onde importa: na máquina de quem desenvolve e no job de testes do CI,
+ * que roda sobre o checkout completo.
+ *
  * A disciplina de DevOps pede o DDL num arquivo separado, mas a fonte da
  * verdade são as migrations. Sem este teste, o script envelheceria no primeiro
  * ALTER que ninguém regerasse — e um DDL desatualizado é pior que nenhum:
@@ -30,6 +41,7 @@ class ScriptDoBancoTest {
     @Test
     @DisplayName("o script_bd.sql contém todas as migrations, na ordem")
     void scriptCobreTodasAsMigrations() throws IOException {
+        assumeQueEUmCheckoutCompleto();
         String script = Files.readString(SCRIPT);
 
         List<Path> migrations = migrationsEmOrdem();
@@ -53,6 +65,7 @@ class ScriptDoBancoTest {
     @Test
     @DisplayName("o conteúdo de cada migration está no script, não só o nome")
     void scriptTrazOConteudoEnaoSoOsTitulos() throws IOException {
+        assumeQueEUmCheckoutCompleto();
         String script = Files.readString(SCRIPT);
 
         for (Path migration : migrationsEmOrdem()) {
@@ -68,6 +81,16 @@ class ScriptDoBancoTest {
                     .as("o corpo de %s não está no script_bd.sql", migration.getFileName())
                     .contains(comando);
         }
+    }
+
+    /**
+     * Pula quando os artefatos de entrega não estão no contexto — o caso do
+     * build da imagem Docker. assumeTrue marca como PULADO e não como passou:
+     * um teste que se declara verde sem ter verificado nada é pior que nenhum.
+     */
+    private void assumeQueEUmCheckoutCompleto() {
+        Assumptions.assumeTrue(Files.exists(SCRIPT),
+                "documentos/script_bd.sql fora do contexto: verificação de repositório, pulada aqui");
     }
 
     private List<Path> migrationsEmOrdem() throws IOException {

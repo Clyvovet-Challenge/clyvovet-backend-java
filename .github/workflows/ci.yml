@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: temurin
@@ -42,14 +42,14 @@ jobs:
       # alguém precisa ver qual teste quebrou, sem abrir o log inteiro.
       - name: Resultado dos testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: surefire-reports
           path: target/surefire-reports/
           retention-days: 7
 
       - name: Empacota o jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: clyvovet-jar
           path: target/*.jar
@@ -64,7 +64,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Constrói sem publicar. Publicar exige registry e credencial, que
       # dependem da conta Azure do time — quando existirem, entra aqui um
