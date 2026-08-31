@@ -7,6 +7,35 @@ com a evidência; o que falta está especificado para implementação.
 **Última decisão incorporada:** 30/08/2026 — o consentimento de acesso ao histórico passa a
 ser concedido no agendamento (Partes 5 e 6).
 
+> ## Estado da implementação — 30/08/2026
+>
+> **Ondas 1, 2 e 3 implementadas e verdes. 189 testes, 0 falhas** (eram 130 no início do dia).
+>
+> | Onda | Situação | Commit |
+> |---|---|---|
+> | 1 — base, correções X12/X13, V6 | ✅ | `bdec9d6` |
+> | 2 — fluxos A (agendamento) e R (retorno) | ✅ **os 20 pontos da Sprint 3** | `3463bd3` |
+> | 3 — fluxo C, acesso em três níveis, V7 | ✅ | `920bd50` |
+> | 4 — documentos | ❌ depende de storage no Azure | — |
+> | 5 — planos e painel | ❌ depende de 4 | — |
+>
+> **O que ficou fora da onda 3, e por quê.** A ruptura B1 — inverter `temVisaoAmpla()` para as
+> rotas **já existentes** (`GET /eventos-clinicos`, `podeAcessarEvento`, `podeAcessarPagamento`)
+> — não foi feita. O acesso em três níveis está implementado e testado no **objeto novo**
+> (`GET /animais/{id}/historico` e `GET /animais/resumo`), que é onde o dado sensível de fato
+> mora e é o que sustenta a conversa com Compliance.
+>
+> Retrofitar as listagens antigas muda a semântica de endpoints dos quais a suíte inteira
+> depende e merece commit próprio, com a reescrita das expectativas antes da mudança — que é
+> exatamente a mitigação recomendada na [Parte 12](#12--sequenciamento). Fazer as duas coisas
+> no mesmo commit era o cenário de suíte vermelha de origem ambígua.
+>
+> **Dois defeitos de integridade encontrados ao implementar**, ambos corrigidos: a FK
+> `origem_evento_id` bloqueava a remoção de eventos (virou `ON DELETE SET NULL` — o
+> consentimento sobrevive ao agendamento, não o contrário), e as FKs para `animal` em
+> `alerta_clinico`, `autorizacao_acesso` e `acesso_historico` bloqueavam `DELETE /animais/{id}`
+> (viraram `ON DELETE CASCADE`).
+
 > **Este documento não consta nos PDFs do Challenge.** Ele descreve **o produto que
 > queremos**, e não a rubrica da disciplina. Onde os dois se encontram está indicado.
 >
