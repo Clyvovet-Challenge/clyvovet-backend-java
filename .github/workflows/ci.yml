@@ -50,20 +50,19 @@ jobs:
           path: target/surefire-reports/*.xml
           retention-days: 7
 
-      # O jar tem 76 MB (fat jar: Tomcat, Hibernate e Jackson vão dentro), e
-      # hoje não há para onde mandá-lo. Guardar uma semana de builds encheria
-      # os 500 MB da cota de armazenamento da conta sem ninguém baixar nenhum.
+      # O JAR NÃO É GUARDADO AQUI, de propósito.
       #
-      # 2 dias cobre o caso que interessa agora: "o build de ontem gerou um jar
-      # que sobe?". Quando existir o registry, a imagem publicada passa a ser o
-      # artefato de verdade e este passo pode sair.
-      - name: Empacota o jar
-        uses: actions/upload-artifact@v5
-        with:
-          name: clyvovet-jar
-          path: target/*.jar
-          retention-days: 2
-          compression-level: 9
+      # São 76 MB por push (fat jar: Tomcat, Hibernate e Jackson vão dentro),
+      # contra 500 MB de cota da conta — e ninguém baixaria nenhum deles,
+      # porque ainda não há para onde mandar a aplicação. Artefato que ninguém
+      # consome é só armazenamento.
+      #
+      # O que prova que o build gera algo que funciona é o job abaixo: ele
+      # constrói a imagem e a SOBE, esperando o /actuator/health responder.
+      # Isso vale mais que um zip guardado.
+      #
+      # A publicação do artefato exigida pela disciplina de DevOps está no
+      # azure-pipelines.yml, que é o pipeline que a rubrica avalia.
 
   imagem:
     name: Imagem Docker
