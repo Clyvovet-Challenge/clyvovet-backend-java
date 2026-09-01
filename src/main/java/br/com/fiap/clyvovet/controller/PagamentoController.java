@@ -29,6 +29,9 @@ public class PagamentoController {
     private final PagamentoService pagamentoService;
 
     @PostMapping
+    // O dono a verificar e o do ATENDIMENTO citado no corpo: sem isso, um
+    // veterinario lanca cobranca no atendimento de outra clinica.
+    @PreAuthorize("@seguranca.podeAcessarEvento(#request.eventoClinicoId)")
     @Operation(summary = "Registrar novo pagamento")
     public ResponseEntity<PagamentoResponse> criar(@Valid @RequestBody PagamentoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(pagamentoService.criar(request));

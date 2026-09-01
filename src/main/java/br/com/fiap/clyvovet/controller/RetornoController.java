@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,7 @@ public class RetornoController {
     private final RetornoService retornoService;
 
     @PostMapping("/{id}/concluir")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     @Operation(summary = "Concluir o atendimento: peso, desfecho e retorno previsto")
     public ResponseEntity<ConclusaoResponse> concluir(
             @PathVariable UUID id,
@@ -43,6 +45,7 @@ public class RetornoController {
     }
 
     @PostMapping("/{id}/retorno")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     @Operation(summary = "Marcar o retorno ligado a esta consulta")
     public ResponseEntity<EventoClinicoResponse> agendarRetorno(
             @PathVariable UUID id,

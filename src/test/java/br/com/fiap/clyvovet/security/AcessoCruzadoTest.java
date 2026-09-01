@@ -101,6 +101,40 @@ class AcessoCruzadoTest extends TesteDeApi {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    @DisplayName("veterinário de outra clínica NÃO deve concluir o atendimento")
+    void conclusaoCruzada() throws Exception {
+        String eventoId = eventoNaPetMed(tokenAdmin());
+
+        // Concluir escreve o desfecho clinico -- inclusive OBITO -- e o peso no
+        // prontuario de um paciente que nao e da clinica de quem chama.
+        criar("/api/v1/eventos-clinicos/" + eventoId + "/concluir", tokenVeterinaria(), """
+                {"desfecho":"OBITO"}""")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("veterinário de outra clínica NÃO deve marcar retorno")
+    void retornoCruzado() throws Exception {
+        String admin = tokenAdmin();
+        String eventoId = eventoRealizadoComDividaNaPetMed(admin);
+
+        criar("/api/v1/eventos-clinicos/" + eventoId + "/retorno", tokenVeterinaria(), """
+                {"data":"%s","hora":"10:00"}""".formatted(LocalDate.now().plusDays(7)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("veterinário de outra clínica NÃO deve lançar cobrança no atendimento")
+    void cobrancaCruzada() throws Exception {
+        String eventoId = eventoNaPetMed(tokenAdmin());
+
+        criar("/api/v1/pagamentos", tokenVeterinaria(), """
+                {"formaPagamento":"PIX","valor":50.00,"descricao":"cobranca de fora",
+                 "eventoClinicoId":"%s","statusPagamento":"PENDENTE"}""".formatted(eventoId))
+                .andExpect(status().isForbidden());
+    }
+
     // ------------------------------------------------------------------
 
     private boolean extratoContem(String token, String pagamentoId) throws Exception {
