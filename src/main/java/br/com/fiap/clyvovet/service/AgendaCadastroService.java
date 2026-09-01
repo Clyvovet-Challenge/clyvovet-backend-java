@@ -12,12 +12,12 @@ import br.com.fiap.clyvovet.repository.BloqueioRepository;
 import br.com.fiap.clyvovet.repository.DisponibilidadeVeterinarioRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
+import br.com.fiap.clyvovet.service.AgendaService.Janela;
 import org.springframework.security.access.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -117,7 +117,7 @@ public class AgendaCadastroService {
     }
 
     private void garantirFaixaCoerente(DisponibilidadeRequest request) {
-        if (!LocalTime.parse(request.getHoraFim()).isAfter(LocalTime.parse(request.getHoraInicio()))) {
+        if (!Janela.de(request.getHoraInicio(), request.getHoraFim()).ehCoerente()) {
             throw new RegraDeNegocioException("horaFim",
                     "O fim da faixa precisa ser posterior ao início");
         }
@@ -135,14 +135,16 @@ public class AgendaCadastroService {
      * expressar sobreposicao de intervalos.
      */
     private void garantirQueNaoSobrepoe(DisponibilidadeRequest request) {
-        LocalTime inicio = LocalTime.parse(request.getHoraInicio());
-        LocalTime fim = LocalTime.parse(request.getHoraFim());
+        Janela nova = Janela.de(request.getHoraInicio(), request.getHoraFim());
 
+        // A colisao e perguntada a Janela. Antes a formula estava reescrita aqui
+        // -- uma segunda implementacao da mesma regra que vive em colideCom, e
+        // livre para divergir dela.
         boolean sobrepoe = disponibilidadeRepository
                 .vigentesEm(request.getVeterinarioId(), request.getDiaSemana(), request.getVigenciaInicio())
                 .stream()
-                .anyMatch(existente -> inicio.isBefore(LocalTime.parse(existente.getHoraFim()))
-                        && LocalTime.parse(existente.getHoraInicio()).isBefore(fim));
+                .map(existente -> Janela.de(existente.getHoraInicio(), existente.getHoraFim()))
+                .anyMatch(nova::colideCom);
 
         if (sobrepoe) {
             throw new RegraDeNegocioException("horaInicio",
@@ -161,7 +163,7 @@ public class AgendaCadastroService {
                     "Informe as duas horas para bloquear uma faixa, ou nenhuma para bloquear o dia inteiro");
         }
         if (request.getHoraInicio() != null
-                && !LocalTime.parse(request.getHoraFim()).isAfter(LocalTime.parse(request.getHoraInicio()))) {
+                && !Janela.de(request.getHoraInicio(), request.getHoraFim()).ehCoerente()) {
             throw new RegraDeNegocioException("horaFim",
                     "O fim do bloqueio precisa ser posterior ao início");
         }

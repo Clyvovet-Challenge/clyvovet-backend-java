@@ -167,7 +167,7 @@ public class AgendamentoService {
      * relogio em 08:30. Aqui data e hora sao um instante so.
      */
     private void garantirAntecedenciaMinima(LocalDate data, String hora) {
-        if (!respeitaAntecedencia(data, LocalTime.parse(hora))) {
+        if (!respeitaAntecedencia(data, AgendaService.Janela.hora(hora))) {
             throw new RegraDeNegocioException("hora",
                     "Agendamentos exigem no mínimo " + HORAS_MINIMAS_PARA_AGENDAR
                             + " horas de antecedência. Para atendimento imediato, procure a clínica");
@@ -180,8 +180,7 @@ public class AgendamentoService {
     }
 
     private void garantirHorarioLivre(Veterinario veterinario, Servico servico, AgendamentoRequest request) {
-        LocalTime inicio = LocalTime.parse(request.getHora());
-        var janela = new AgendaService.Janela(inicio, inicio.plusMinutes(servico.getDuracaoMinutos()));
+        var janela = AgendaService.Janela.deDuracao(request.getHora(), servico.getDuracaoMinutos());
 
         String impedimento = agendaService.porQueNaoEstaLivre(veterinario.getId(), request.getData(), janela);
         if (impedimento != null) {
@@ -190,7 +189,7 @@ public class AgendamentoService {
     }
 
     private boolean cancelamentoEmCimaDaHora(EventoClinico evento) {
-        return LocalDateTime.of(evento.getData(), LocalTime.parse(evento.getHora()))
+        return LocalDateTime.of(evento.getData(), AgendaService.Janela.hora(evento.getHora()))
                 .isBefore(LocalDateTime.now().plusHours(HORAS_PARA_CANCELAR_SEM_MARCA));
     }
 

@@ -39,8 +39,43 @@ public class AgendaService {
     private final BloqueioRepository bloqueioRepository;
     private final EventoClinicoRepository eventoClinicoRepository;
 
-    /** Um intervalo de tempo fechado no inicio e aberto no fim: [inicio, fim). */
+    /**
+     * Um intervalo de tempo fechado no inicio e aberto no fim: [inicio, fim).
+     *
+     * A conversao de texto para LocalTime mora AQUI, nas fabricas, e nao em
+     * cada chamador. Enquanto estava espalhada, {@code LocalTime.parse} aparecia
+     * em dezessete pontos e a regra de colisao chegou a ser reescrita a mao numa
+     * segunda implementacao, em AgendaCadastroService. Com a decisao neste
+     * ponto, o dia em que o formato da hora mudar toca uma classe.
+     */
     public record Janela(LocalTime inicio, LocalTime fim) {
+
+        /** A partir do texto guardado no banco: "09:00". */
+        public static Janela de(String inicio, String fim) {
+            return new Janela(hora(inicio), hora(fim));
+        }
+
+        /** Comeco mais duracao — a forma que o agendamento usa. */
+        public static Janela deDuracao(String inicio, int minutos) {
+            LocalTime comeco = hora(inicio);
+            return new Janela(comeco, comeco.plusMinutes(minutos));
+        }
+
+        public Janela deDuracao(int minutos) {
+            return new Janela(inicio, inicio.plusMinutes(minutos));
+        }
+
+        /**
+         * Unico ponto que interpreta a hora em texto.
+         *
+         * Comparar as horas como String so funciona por acidente do formato de
+         * largura fixa. E o parse e estrito: "9:00" nao vira 9h, lanca
+         * DateTimeParseException — falhar alto vale mais que um horario torto
+         * na agenda. Ver JanelaTest.formatoEstrito.
+         */
+        public static LocalTime hora(String texto) {
+            return LocalTime.parse(texto);
+        }
 
         /**
          * O fim aberto permite [09:00, 09:30) conviver com [09:30, 10:00). Sem
@@ -52,6 +87,11 @@ public class AgendaService {
 
         public boolean contem(Janela outra) {
             return !outra.inicio.isBefore(inicio) && !outra.fim.isAfter(fim);
+        }
+
+        /** A faixa termina depois de comecar? Coerencia minima de um intervalo. */
+        public boolean ehCoerente() {
+            return fim.isAfter(inicio);
         }
     }
 
@@ -82,8 +122,9 @@ public class AgendaService {
         int duracao = servico.getDuracaoMinutos();
 
         for (DisponibilidadeVeterinario faixa : gradeDe(veterinarioId, data)) {
-            LocalTime inicio = LocalTime.parse(faixa.getHoraInicio());
-            LocalTime limite = LocalTime.parse(faixa.getHoraFim());
+            Janela grade = Janela.de(faixa.getHoraInicio(), faixa.getHoraFim());
+            LocalTime inicio = grade.inicio();
+            LocalTime limite = grade.fim();
 
             // O ultimo slot precisa caber inteiro na faixa.
             while (!inicio.plusMinutes(duracao).isAfter(limite)) {
@@ -104,9 +145,7 @@ public class AgendaService {
 
     private boolean dentroDaGrade(UUID veterinarioId, LocalDate data, Janela janela) {
         return gradeDe(veterinarioId, data).stream()
-                .map(faixa -> new Janela(
-                        LocalTime.parse(faixa.getHoraInicio()),
-                        LocalTime.parse(faixa.getHoraFim())))
+                .map(faixa -> Janela.de(faixa.getHoraInicio(), faixa.getHoraFim()))
                 .anyMatch(faixa -> faixa.contem(janela));
     }
 
@@ -115,9 +154,7 @@ public class AgendaService {
             if (bloqueio.diaInteiro()) {
                 return true;
             }
-            Janela faixaBloqueada = new Janela(
-                    LocalTime.parse(bloqueio.getHoraInicio()),
-                    LocalTime.parse(bloqueio.getHoraFim()));
+            Janela faixaBloqueada = Janela.de(bloqueio.getHoraInicio(), bloqueio.getHoraFim());
             if (faixaBloqueada.colideCom(janela)) {
                 return true;
             }
@@ -142,11 +179,10 @@ public class AgendaService {
      * a agenda aceitar marcacao em cima de um atendimento existente.
      */
     private Janela janelaDe(EventoClinico evento) {
-        LocalTime inicio = LocalTime.parse(evento.getHora());
         int duracao = evento.getServico() != null
                 ? evento.getServico().getDuracaoMinutos()
                 : DURACAO_PADRAO_MINUTOS;
-        return new Janela(inicio, inicio.plusMinutes(duracao));
+        return Janela.deDuracao(evento.getHora(), duracao);
     }
 
     private static final int DURACAO_PADRAO_MINUTOS = 30;

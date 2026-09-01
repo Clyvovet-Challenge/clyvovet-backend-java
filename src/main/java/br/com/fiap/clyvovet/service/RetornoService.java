@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -174,8 +173,7 @@ public class RetornoService {
 
     private void garantirHorarioLivre(Veterinario veterinario, EventoClinico origem, RetornoRequest request) {
         int duracao = origem.getServico() != null ? origem.getServico().getDuracaoMinutos() : 30;
-        LocalTime inicio = LocalTime.parse(request.getHora());
-        var janela = new AgendaService.Janela(inicio, inicio.plusMinutes(duracao));
+        var janela = AgendaService.Janela.deDuracao(request.getHora(), duracao);
 
         String impedimento = agendaService.porQueNaoEstaLivre(veterinario.getId(), request.getData(), janela);
         if (impedimento != null) {
