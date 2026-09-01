@@ -81,7 +81,7 @@ public class RetornoService {
     public EventoClinicoResponse agendarRetorno(UUID origemId, RetornoRequest request) {
         EventoClinico origem = eventoClinicoRepository.obterPorId(origemId);
 
-        if (origem.getStatusEvento() != StatusEvento.REALIZADO) {          // R11
+        if (!origem.getStatusEvento().podeGerarRetorno()) {                // R11
             throw new RegraDeNegocioException("eventoOrigemId",
                     "Só é possível marcar retorno de um atendimento que aconteceu");
         }
@@ -154,13 +154,10 @@ public class RetornoService {
     // ------------------------------------------------------------------
 
     private void garantirQuePodeConcluir(EventoClinico evento) {
-        if (evento.getStatusEvento() == StatusEvento.CANCELADO) {          // R4
+        StatusEvento status = evento.getStatusEvento();
+        if (!status.podeConcluir()) {                                      // R4, R5
             throw new RegraDeNegocioException("statusEvento",
-                    "Um atendimento cancelado não pode ser concluído");
-        }
-        if (evento.getStatusEvento() == StatusEvento.REALIZADO) {          // R5
-            throw new RegraDeNegocioException("statusEvento",
-                    "Este atendimento já foi concluído");
+                    status.impedimentoParaConcluir());
         }
         if (evento.getData().isAfter(LocalDate.now())) {                   // R2
             throw new RegraDeNegocioException("data",

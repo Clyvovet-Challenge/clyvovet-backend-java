@@ -14,12 +14,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
- * Links de um evento clinico, condicionais ao estado:
- *
- *   AGENDADO   -> cancelar, concluir
- *   REALIZADO  -> marcar-retorno, se houver retorno previsto
- *   FALTOU     -> so navegacao
- *   CANCELADO  -> so navegacao
+ * Links de um evento clinico, condicionais ao estado. Quais acoes cada estado
+ * admite esta em {@link StatusEvento}, nao aqui: repetir a tabela nesta pagina
+ * seria criar a segunda copia que este arranjo veio justamente desfazer.
  *
  * Se o link nao veio, a acao nao existe — o cliente nao precisa conhecer a
  * maquina de estados para desabilitar o botao.
@@ -44,28 +41,32 @@ public class LinksDoEvento {
         return modelo;
     }
 
-    /** As transicoes possiveis a partir do estado atual. */
+    /**
+     * As transicoes possiveis a partir do estado atual.
+     *
+     * Quem responde e o proprio StatusEvento, o mesmo que os services consultam:
+     * link oferecido aqui e chamada aceita la sao, por construcao, a mesma regra.
+     * Estado terminal nao precisa de ramo — ele simplesmente nao responde sim a
+     * pergunta nenhuma.
+     */
     private void acoesDoEstado(EntityModel<EventoClinicoResponse> modelo, EventoClinicoResponse evento) {
         StatusEvento status = evento.statusEvento();
         if (status == null) {
             return;
         }
 
-        switch (status) {
-            case AGENDADO -> {
-                modelo.add(linkTo(methodOn(AgendamentoController.class)
-                        .cancelar(evento.id(), null)).withRel("cancelar"));
-                modelo.add(linkTo(methodOn(RetornoController.class)
-                        .concluir(evento.id(), null)).withRel("concluir"));
-            }
-            case REALIZADO -> {
-                if (evento.dataRetornoPrevisto() != null) {
-                    modelo.add(linkTo(methodOn(RetornoController.class)
-                            .agendarRetorno(evento.id(), null)).withRel("marcar-retorno"));
-                }
-            }
-            // Estados terminais: so navegacao.
-            case FALTOU, CANCELADO -> { }
+        if (status.podeCancelar()) {
+            modelo.add(linkTo(methodOn(AgendamentoController.class)
+                    .cancelar(evento.id(), null)).withRel("cancelar"));
+        }
+        if (status.podeConcluir()) {
+            modelo.add(linkTo(methodOn(RetornoController.class)
+                    .concluir(evento.id(), null)).withRel("concluir"));
+        }
+        // O retorno depende do estado E de haver retorno previsto no atendimento.
+        if (status.podeGerarRetorno() && evento.dataRetornoPrevisto() != null) {
+            modelo.add(linkTo(methodOn(RetornoController.class)
+                    .agendarRetorno(evento.id(), null)).withRel("marcar-retorno"));
         }
     }
 }

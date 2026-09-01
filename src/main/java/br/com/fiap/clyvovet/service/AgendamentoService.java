@@ -93,7 +93,7 @@ public class AgendamentoService {
     public EventoClinicoResponse cancelar(UUID id, String motivo) {
         EventoClinico evento = eventoClinicoRepository.obterPorId(id);
 
-        if (evento.getStatusEvento() != StatusEvento.AGENDADO) {
+        if (!evento.getStatusEvento().podeCancelar()) {
             throw new RegraDeNegocioException("statusEvento",
                     "Só é possível cancelar um atendimento que ainda está agendado");
         }

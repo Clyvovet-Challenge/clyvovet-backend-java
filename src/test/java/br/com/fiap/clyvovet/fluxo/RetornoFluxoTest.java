@@ -304,6 +304,28 @@ class RetornoFluxoTest extends TesteDeApi {
     }
 
     @Test
+    @DisplayName("não conclui um atendimento marcado como falta")
+    void naoConcluiFalta() throws Exception {
+        String vet = tokenVeterinaria();
+        criar("/api/v1/eventos-clinicos/marcar-faltas", vet, "").andExpect(status().isOk());
+
+        // Concluir a falta transformaria o nao-comparecimento em atendimento
+        // realizado — e o historico clinico passaria a contar como aplicada uma
+        // vacina em que o animal nem apareceu (HistoricoService filtra REALIZADO).
+        criar("/api/v1/eventos-clinicos/" + eventoDeOntem + "/concluir", vet, "{}")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Um atendimento marcado como falta não pode ser concluído"));
+
+        // O HATEOAS ja dizia isso; agora o service diz o mesmo, porque os dois
+        // consultam o StatusEvento em vez de cada um decidir por conta propria.
+        buscar("/api/v1/eventos-clinicos/" + eventoDeOntem, vet)
+                .andExpect(jsonPath("$.statusEvento").value("FALTOU"))
+                .andExpect(jsonPath("$._links.concluir").doesNotExist())
+                .andExpect(jsonPath("$._links.cancelar").doesNotExist());
+    }
+
+    @Test
     @DisplayName("a varredura não mexe em atendimento já concluído")
     void varreduraNaoMexeNoConcluido() throws Exception {
         String vet = tokenVeterinaria();
