@@ -52,6 +52,7 @@ public class PagamentoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
     @Operation(summary = "Atualizar pagamento existente")
     public ResponseEntity<PagamentoResponse> atualizar(
             @PathVariable UUID id,
@@ -69,6 +70,7 @@ public class PagamentoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
     @Operation(summary = "Deletar pagamento")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         pagamentoService.deletar(id);

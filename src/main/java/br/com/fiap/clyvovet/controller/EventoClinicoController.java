@@ -67,6 +67,7 @@ public class EventoClinicoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     @Operation(summary = "Atualizar evento clínico existente")
     public ResponseEntity<EventoClinicoResponse> atualizar(
             @PathVariable UUID id,
@@ -84,6 +85,7 @@ public class EventoClinicoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     @Operation(summary = "Remover evento clínico")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         eventoClinicoService.deletar(id);

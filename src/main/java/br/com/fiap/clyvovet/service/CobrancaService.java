@@ -15,6 +15,7 @@ import br.com.fiap.clyvovet.model.StatusPagamento;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.PagamentoRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
+import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class CobrancaService {
     private final EventoClinicoRepository eventoClinicoRepository;
     private final TutorRepository tutorRepository;
     private final PagamentoMapper pagamentoMapper;
+    private final SegurancaService seguranca;
 
     /**
      * PENDENTE -> PAGO. Único caminho para essa transição.
@@ -118,7 +120,7 @@ public class CobrancaService {
     public List<InadimplenciaResponse> inadimplencia(int diasMinimos) {
         LocalDate limite = LocalDate.now().minusDays(Math.max(diasMinimos, 0));
 
-        return eventoClinicoRepository.realizadosAte(limite).stream()
+        return eventoClinicoRepository.realizadosAte(limite, seguranca.clinicaParaFiltro()).stream()
                 .filter(evento -> evento.getServico() != null)
                 .map(evento -> {
                     BigDecimal cobrado = evento.getServico().getPreco();
@@ -145,7 +147,8 @@ public class CobrancaService {
         LocalDate inicio = de != null ? de : LocalDate.now().minusYears(1);
         LocalDate fim = ate != null ? ate : LocalDate.now();
 
-        List<Pagamento> pagamentos = pagamentoRepository.doTutorNoPeriodo(tutorId, inicio, fim);
+        List<Pagamento> pagamentos = pagamentoRepository.doTutorNoPeriodo(
+                tutorId, inicio, fim, seguranca.clinicaParaFiltro());
 
         BigDecimal pago = somar(pagamentos, StatusPagamento.PAGO);
         BigDecimal pendente = somar(pagamentos, StatusPagamento.PENDENTE);

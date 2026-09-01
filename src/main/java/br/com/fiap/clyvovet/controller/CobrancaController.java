@@ -30,6 +30,7 @@ public class CobrancaController {
     private final CobrancaService cobrancaService;
 
     @PostMapping("/pagamentos/{id}/confirmar")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
     @Operation(summary = "Confirmar o recebimento: PENDENTE vira PAGO")
     public ResponseEntity<PagamentoResponse> confirmar(
             @PathVariable UUID id, @Valid @RequestBody ConfirmacaoRequest request) {
@@ -37,6 +38,7 @@ public class CobrancaController {
     }
 
     @PostMapping("/pagamentos/{id}/estornar")
+    @PreAuthorize("@seguranca.podeAcessarPagamento(#id)")
     @Operation(summary = "Estornar um pagamento confirmado. O motivo é obrigatório")
     public ResponseEntity<PagamentoResponse> estornar(
             @PathVariable UUID id, @Valid @RequestBody EstornoRequest request) {

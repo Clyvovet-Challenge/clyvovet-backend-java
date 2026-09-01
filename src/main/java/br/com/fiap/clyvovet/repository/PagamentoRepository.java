@@ -38,16 +38,27 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
             @Param("eventoId") UUID eventoId,
             @Param("status") StatusPagamento status);
 
+    /**
+     * O extrato do tutor, recortado pela clinica de quem pergunta.
+     *
+     * O clinicaId nulo significa "sem recorte" -- e o contrato dos demais
+     * filtros opcionais daqui, e serve ao TUTOR (que ve o proprio extrato
+     * inteiro) e ao ADMIN. Para o VETERINARIO ele vem preenchido: sem isso o
+     * extrato entrega o historico financeiro do tutor em clinicas concorrentes,
+     * inclusive os ids dos pagamentos, que sao a chave de confirmar e estornar.
+     */
     @Query("""
             SELECT p FROM Pagamento p
             WHERE p.eventoClinico.animal.tutor.id = :tutorId
               AND p.eventoClinico.data BETWEEN :de AND :ate
+              AND (:clinicaId IS NULL OR p.eventoClinico.clinica.id = :clinicaId)
             ORDER BY p.eventoClinico.data DESC
             """)
     List<Pagamento> doTutorNoPeriodo(
             @Param("tutorId") UUID tutorId,
             @Param("de") LocalDate de,
-            @Param("ate") LocalDate ate);
+            @Param("ate") LocalDate ate,
+            @Param("clinicaId") UUID clinicaId);
 
     default Pagamento obterPorId(UUID id) {
         return obterPorId(id, Recurso.PAGAMENTO);

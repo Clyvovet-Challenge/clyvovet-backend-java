@@ -98,13 +98,23 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
     Page<EventoClinico> doTutor(@Param("tutorId") UUID tutorId, Pageable pageable);
 
     /** Atendimentos realizados ate a data. Base da varredura de inadimplencia. */
+    /**
+     * Base da lista de inadimplencia, recortada pela clinica de quem pergunta.
+     *
+     * Nulo e "sem recorte", so para o ADMIN. Sem o filtro, a lista entrega os
+     * devedores da plataforma inteira com nome e telefone do tutor -- a carteira
+     * de inadimplentes da concorrente, e de quebra os ids dos atendimentos.
+     */
     @Query("""
             SELECT e FROM EventoClinico e
             WHERE e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.REALIZADO
               AND e.data <= :limite
+              AND (:clinicaId IS NULL OR e.clinica.id = :clinicaId)
             ORDER BY e.data
             """)
-    List<EventoClinico> realizadosAte(@Param("limite") LocalDate limite);
+    List<EventoClinico> realizadosAte(
+            @Param("limite") LocalDate limite,
+            @Param("clinicaId") UUID clinicaId);
 
     default EventoClinico obterPorId(UUID id) {
         return obterPorId(id, Recurso.EVENTO_CLINICO);

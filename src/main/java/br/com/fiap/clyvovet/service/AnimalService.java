@@ -14,6 +14,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,11 +74,31 @@ public class AnimalService {
     @CacheEvict(value = {"animais", "eventos", "pagamentos"}, allEntries = true)
     public AnimalResponse atualizarParcialmente(UUID id, AnimalPatchRequest patch) {
         Animal animal = animalRepository.obterPorId(id);
+        garantirQuePodeMexerNoResumo(id, patch);
         // O tutor so e buscado quando o patch pede troca de dono; null diz ao
         // mapper para deixar o vinculo como esta.
         Tutor tutor = patch.getTutorId() == null ? null : tutorRepository.obterPorId(patch.getTutorId());
         animalMapper.aplicarPatch(animal, patch, tutor);
         return animalMapper.toResponse(animalRepository.save(animal));
+    }
+
+    /**
+     * O interruptor do resumo de seguranca e do DONO, nao de quem pode editar o
+     * cadastro.
+     *
+     * A guarda da rota e podeAcessarAnimal, que libera todo VETERINARIO de
+     * proposito -- o profissional precisa do cadastro para atender. Mas com ela
+     * sozinha, o veterinario religa o resumo que o tutor desligou e o le em
+     * seguida por GET /animais/resumo: o opt-in deixaria de ser do tutor.
+     *
+     * Checagem por CAMPO, e nao por metodo, porque o resto do PATCH continua
+     * aberto ao corpo clinico -- por isso ela nao cabe num @PreAuthorize.
+     */
+    private void garantirQuePodeMexerNoResumo(UUID animalId, AnimalPatchRequest patch) {
+        if (patch.getResumoDeSegurancaAtivo() != null && !seguranca.ehDonoOuAdministrador(animalId)) {
+            throw new AccessDeniedException(
+                    "O resumo de segurança é ligado e desligado pelo tutor do animal");
+        }
     }
 
     @Transactional
