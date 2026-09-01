@@ -134,7 +134,22 @@ lockout de conta após tentativas falhas e rate limit por IP.
 
 ### Os quatro fluxos de negócio
 
-#### 1. Agendamento pelo tutor
+Um **fluxo** aqui é uma operação que não é CRUD: ela consulta o estado do domínio,
+decide, e recusa com um motivo. Cada um tem uma letra, herdada da
+[spec 08](specs/08-modelo-de-negocio.md), que aparece nos nomes das regras
+(`A10`, `R7`, `C22`, `P13`) e nos comentários do código.
+
+| Fluxo | Nome | Pergunta que ele responde |
+|---|---|---|
+| **A** | Agendamento | *Este horário pode ser marcado para este pet?* — cruza catálogo, grade, bloqueios e atendimentos já marcados |
+| **R** | Retorno e falta | *Quem devia ter voltado e não voltou?* — fecha o atendimento e cobra a continuidade do cuidado |
+| **C** | Consentimento e histórico | *Quanto deste prontuário esta pessoa pode ver?* — três níveis de acesso, auditados |
+| **P** | Pagamento e cobrança | *Quanto foi cobrado, quanto entrou, quanto falta?* — máquina de estados, não campo editável |
+
+A letra **C** é de *consentimento*, e a **P** de *pagamento* — as duas nomeiam a
+decisão central do fluxo, não o substantivo do endpoint.
+
+#### Fluxo A — Agendamento pelo tutor
 
 O tutor era o único perfil que **não** podia criar atendimento. Agora ele marca a
 própria consulta — e o sistema decide se pode.
@@ -154,7 +169,7 @@ nasce `AGENDADO`, com o preço vindo do catálogo.
 A busca de vagas devolve o que **pode** ser marcado, já descontando grade,
 bloqueio e colisão — é a consulta que um calendário consome.
 
-#### 2. Retorno e falta
+#### Fluxo R — Retorno e falta
 
 Responde ao tema do Challenge — continuidade do cuidado. O modelo episódico
 registra que a consulta aconteceu; este fluxo registra que ela **devia ter tido
@@ -176,7 +191,7 @@ veterinário.
 A lista de vencidos traz nome e telefone do tutor porque ela existe para virar
 ligação.
 
-#### 3. Histórico clínico em três níveis
+#### Fluxo C — Consentimento e histórico clínico
 
 O acesso ao prontuário deixou de ser tudo-ou-nada.
 
@@ -210,7 +225,7 @@ atendimento sem agendamento ficaria sem caminho. Ela nunca é bloqueada — trav
 numa emergência cobraria a conta do paciente —, mas exige motivo, avisa o tutor na
 hora e entra destacada na auditoria.
 
-#### 4. Cobrança
+#### Fluxo P — Pagamento e cobrança
 
 Máquina de estados, e não campo editável.
 
@@ -304,7 +319,10 @@ A listagem de animais vem **recortada**: o tutor só enxerga os próprios.
 | `POST DELETE /disponibilidades` | Faixas de atendimento recorrentes | Veterinário, **só na própria agenda** |
 | `POST DELETE /bloqueios` | Férias, folga, almoço | Veterinário, **só na própria agenda** |
 
-### Fluxo A — Agendamento pelo tutor *(fluxo não-CRUD)*
+### Fluxo A — Agendamento pelo tutor
+
+*O tutor marca a própria consulta, e o sistema decide se pode.* A decisão atravessa
+sete entidades antes de gravar. Detalhado em [Os quatro fluxos](#os-quatro-fluxos-de-negócio).
 
 | Rota | O que faz | Quem pode chamar |
 |---|---|---|
@@ -313,7 +331,10 @@ A listagem de animais vem **recortada**: o tutor só enxerga os próprios.
 | `POST /agendamentos/{id}/cancelar` | Cancela; em cima da hora fica marcado `[TARDIO]` | Tutor dono, veterinário da clínica |
 | `GET /agendamentos/meus` | Os agendamentos do tutor logado | Tutor dono |
 
-### Fluxo R — Retorno e falta *(fluxo não-CRUD)*
+### Fluxo R — Retorno e falta
+
+*Fecha o atendimento e registra que ele devia ter tido sequência.* O modelo
+episódico só sabe que a consulta aconteceu; este fluxo sabe quem sumiu.
 
 | Rota | O que faz | Quem pode chamar |
 |---|---|---|
@@ -322,7 +343,11 @@ A listagem de animais vem **recortada**: o tutor só enxerga os próprios.
 | `GET /eventos-clinicos/retornos-vencidos` | Pets que deveriam ter voltado e não voltaram | Veterinário ou administrador |
 | `POST /eventos-clinicos/marcar-faltas` | Varre os vencidos e marca `FALTOU` | Veterinário ou administrador |
 
-### Fluxo C — Histórico clínico em três níveis
+### Fluxo C — Consentimento e histórico clínico
+
+*Quanto deste prontuário esta pessoa pode ver?* O acesso deixou de ser
+tudo-ou-nada: são três níveis, cada um com base própria — execução do atendimento,
+proteção da vida do animal, consentimento do tutor.
 
 | Rota | O que faz | Quem pode chamar |
 |---|---|---|
@@ -336,7 +361,11 @@ A listagem de animais vem **recortada**: o tutor só enxerga os próprios.
 
 O microchip **identifica, nunca autoriza**. Tetos de leitura: 30 animais distintos por dia alertam, 150 bloqueiam.
 
-### Fluxo P — Cobrança *(fluxo não-CRUD)*
+### Fluxo P — Pagamento e cobrança
+
+*Quanto foi cobrado, quanto entrou, quanto falta.* O status é máquina de estados e
+não campo editável: `CANCELADO` e `REEMBOLSADO` são terminais, e nada volta para
+`PENDENTE`.
 
 | Rota | O que faz | Quem pode chamar |
 |---|---|---|
