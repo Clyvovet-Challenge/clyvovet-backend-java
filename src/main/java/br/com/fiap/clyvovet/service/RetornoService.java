@@ -99,17 +99,13 @@ public class RetornoService {
 
         garantirHorarioLivre(veterinario, origem, request);                // R8
 
-        EventoClinico retorno = new EventoClinico();
-        retorno.setAnimal(origem.getAnimal());                             // R10, por construcao
-        retorno.setClinica(origem.getClinica());
-        retorno.setServico(origem.getServico());
-        retorno.setVeterinario(veterinario);
-        retorno.setTipoEvento(TipoEvento.RETORNO);
-        retorno.setData(request.getData());
-        retorno.setHora(request.getHora());
-        retorno.setStatusEvento(StatusEvento.AGENDADO);
+        // O animal vem da origem, e nao do corpo: R10 passa a valer por
+        // construcao, sem precisar ser verificada.
+        EventoClinico retorno = EventoClinico.agendado(
+                origem.getAnimal(), origem.getClinica(), origem.getServico(), veterinario,
+                TipoEvento.RETORNO, request.getData(), request.getHora(),
+                "Retorno de " + origem.getData());
         retorno.setEventoOrigem(origem);
-        retorno.setDescricao("Retorno de " + origem.getData());
 
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(retorno));
     }

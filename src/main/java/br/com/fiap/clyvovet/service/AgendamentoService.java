@@ -62,16 +62,10 @@ public class AgendamentoService {
         garantirAntecedenciaMinima(request.getData(), request.getHora()); // A9, A10
         garantirHorarioLivre(veterinario, servico, request);              // A5, A6, A7, A8
 
-        EventoClinico evento = new EventoClinico();
-        evento.setAnimal(animal);
-        evento.setServico(servico);
-        evento.setVeterinario(veterinario);
-        evento.setClinica(servico.getClinica());
-        evento.setTipoEvento(servico.getTipoEvento());
-        evento.setData(request.getData());
-        evento.setHora(request.getHora());
-        evento.setStatusEvento(StatusEvento.AGENDADO);                    // A11
-        evento.setDescricao(servico.getNome());
+        EventoClinico evento = EventoClinico.agendado(                    // A11
+                animal, servico.getClinica(), servico, veterinario,
+                servico.getTipoEvento(), request.getData(), request.getHora(),
+                servico.getNome());
 
         EventoClinico salvo = eventoClinicoRepository.save(evento);
 

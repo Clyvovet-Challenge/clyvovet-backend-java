@@ -72,4 +72,35 @@ public class EventoClinico {
 
     @Column(name = "motivo_cancelamento")
     private String motivoCancelamento;
+
+    /**
+     * O unico jeito de nascer um atendimento AGENDADO.
+     *
+     * Antes, agendar e marcar retorno montavam o agregado a mao, cada um com
+     * sua sequencia de setters: os mesmos oito campos, escritos duas vezes. Nada
+     * acusava o campo esquecido -- foi assim que o servico sumiu do PATCH, e o
+     * preco do atendimento passou a nao acompanhar a correcao.
+     *
+     * Com a construcao aqui, campo obrigatorio novo vira erro de compilacao nos
+     * dois pontos de chamada, e nao uma omissao silenciosa num deles.
+     *
+     * O que NAO entra: eventoOrigem, peso, desfecho e retorno previsto. Sao do
+     * ciclo de vida posterior, nao do nascimento — quem os define e concluir()
+     * e agendarRetorno().
+     */
+    public static EventoClinico agendado(Animal animal, Clinica clinica, Servico servico,
+                                         Veterinario veterinario, TipoEvento tipoEvento,
+                                         LocalDate data, String hora, String descricao) {
+        EventoClinico evento = new EventoClinico();
+        evento.setAnimal(animal);
+        evento.setClinica(clinica);
+        evento.setServico(servico);
+        evento.setVeterinario(veterinario);
+        evento.setTipoEvento(tipoEvento);
+        evento.setData(data);
+        evento.setHora(hora);
+        evento.setDescricao(descricao);
+        evento.setStatusEvento(StatusEvento.AGENDADO);
+        return evento;
+    }
 }
