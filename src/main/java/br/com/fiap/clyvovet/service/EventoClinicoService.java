@@ -13,6 +13,7 @@ import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.ServicoRepository;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
+import br.com.fiap.clyvovet.security.RecorteDeAcesso;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -39,14 +40,12 @@ public class EventoClinicoService {
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
     @Cacheable(value = "eventos",
-            // A clinica entra na chave junto com o tutor. Sem ela, a pagina montada
-            // para um veterinario seria servida ao de outra clinica na mesma
-            // consulta -- o recorte existiria na query e vazaria pelo cache.
-            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.tutorIdParaFiltro()"
-                    + " + '-' + @seguranca.clinicaParaFiltro() + '-' + #pageable")
+            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.recorte().chaveDeCache()"
+                    + " + '-' + #pageable")
     public Page<EventoClinicoResponse> listarTodos(TipoEvento tipoEvento, String animalNome, Pageable pageable) {
+        RecorteDeAcesso recorte = seguranca.recorte();
         return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome,
-                        seguranca.tutorIdParaFiltro(), seguranca.clinicaParaFiltro(), pageable)
+                        recorte.tutorId(), recorte.clinicaId(), pageable)
                 .map(eventoClinicoMapper::toResponse);
     }
 

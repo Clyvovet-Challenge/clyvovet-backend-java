@@ -45,9 +45,12 @@ public class AnimalService {
      * segunda chamada recebia o resultado da primeira, na ordem errada.
      */
     @Cacheable(value = "animais",
-            key = "#nome + '-' + #especie + '-' + @seguranca.tutorIdParaFiltro() + '-' + #pageable")
+            key = "#nome + '-' + #especie + '-' + @seguranca.recorte().chaveDeCache() + '-' + #pageable")
     public Page<AnimalResponse> listarTodos(String nome, String especie, Pageable pageable) {
-        return animalRepository.buscarPorFiltros(nome, especie, seguranca.tutorIdParaFiltro(), pageable)
+        // A consulta filtra so por tutor -- o cadastro do animal e nivel 0 e todo
+        // veterinario alcanca. A CHAVE leva as duas dimensoes mesmo assim: ver a
+        // assimetria explicada em RecorteDeAcesso.chaveDeCache.
+        return animalRepository.buscarPorFiltros(nome, especie, seguranca.recorte().tutorId(), pageable)
                 .map(animalMapper::toResponse);
     }
 

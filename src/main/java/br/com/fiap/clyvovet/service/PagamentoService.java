@@ -10,6 +10,7 @@ import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.StatusPagamento;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.PagamentoRepository;
+import br.com.fiap.clyvovet.security.RecorteDeAcesso;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,12 +34,12 @@ public class PagamentoService {
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
     @Cacheable(value = "pagamentos",
-            // Ver a nota sobre a clinica na chave em EventoClinicoService.
-            key = "#statusPagamento + '-' + #formaPagamento + '-' + @seguranca.tutorIdParaFiltro()"
-                    + " + '-' + @seguranca.clinicaParaFiltro() + '-' + #pageable")
+            key = "#statusPagamento + '-' + #formaPagamento"
+                    + " + '-' + @seguranca.recorte().chaveDeCache() + '-' + #pageable")
     public Page<PagamentoResponse> listarTodos(StatusPagamento statusPagamento, FormaPagamento formaPagamento, Pageable pageable) {
+        RecorteDeAcesso recorte = seguranca.recorte();
         return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento,
-                        seguranca.tutorIdParaFiltro(), seguranca.clinicaParaFiltro(), pageable)
+                        recorte.tutorId(), recorte.clinicaId(), pageable)
                 .map(pagamentoMapper::toResponse);
     }
 

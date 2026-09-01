@@ -39,16 +39,27 @@ public class SegurancaService {
     private final AutorizacaoAcessoRepository autorizacaoRepository;
 
     /**
-     * Id do tutor a usar como filtro nas listagens.
-     * Devolve null para VETERINARIO e ADMIN, que enxergam a base inteira —
-     * e o mesmo contrato dos demais filtros opcionais das queries.
+     * O recorte das listagens deste usuario, resolvido de uma vez.
+     *
+     * Existe para que a chave do cache e o filtro da consulta saiam da MESMA
+     * fonte. Enquanto cada service montava os dois a mao, era possivel — e
+     * aconteceu — a consulta recortar por clinica e a chave nao, servindo a
+     * pagina de um veterinario ao de outra clinica.
      */
-    public UUID tutorIdParaFiltro() {
+    public RecorteDeAcesso recorte() {
         UsuarioAutenticado usuario = autenticado();
-        if (usuario == null || usuario.getUsuario().getPerfil() != Perfil.TUTOR) {
-            return null;
+        if (usuario == null) {
+            return RecorteDeAcesso.irrestrito();
         }
-        return usuario.getTutorId();
+        return switch (usuario.getUsuario().getPerfil()) {
+            case TUTOR -> RecorteDeAcesso.doTutor(usuario.getTutorId());
+            case VETERINARIO -> RecorteDeAcesso.daClinica(usuario.getClinicaId());
+            case ADMIN -> RecorteDeAcesso.irrestrito();
+        };
+    }
+
+    public UUID tutorIdParaFiltro() {
+        return recorte().tutorId();
     }
 
     /**
@@ -60,11 +71,7 @@ public class SegurancaService {
      * clinicas da plataforma, inclusive concorrentes.
      */
     public UUID clinicaParaFiltro() {
-        UsuarioAutenticado usuario = autenticado();
-        if (usuario == null || usuario.getUsuario().getPerfil() != Perfil.VETERINARIO) {
-            return null;
-        }
-        return usuario.getClinicaId();
+        return recorte().clinicaId();
     }
 
     public boolean podeAcessarTutor(UUID tutorId) {

@@ -120,7 +120,7 @@ public class CobrancaService {
     public List<InadimplenciaResponse> inadimplencia(int diasMinimos) {
         LocalDate limite = LocalDate.now().minusDays(Math.max(diasMinimos, 0));
 
-        return eventoClinicoRepository.realizadosAte(limite, seguranca.clinicaParaFiltro()).stream()
+        return eventoClinicoRepository.realizadosAte(limite, seguranca.recorte().clinicaId()).stream()
                 .filter(evento -> evento.getServico() != null)
                 .map(evento -> {
                     BigDecimal cobrado = evento.getServico().getPreco();
@@ -148,7 +148,7 @@ public class CobrancaService {
         LocalDate fim = ate != null ? ate : LocalDate.now();
 
         List<Pagamento> pagamentos = pagamentoRepository.doTutorNoPeriodo(
-                tutorId, inicio, fim, seguranca.clinicaParaFiltro());
+                tutorId, inicio, fim, seguranca.recorte().clinicaId());
 
         BigDecimal pago = somar(pagamentos, StatusPagamento.PAGO);
         BigDecimal pendente = somar(pagamentos, StatusPagamento.PENDENTE);
