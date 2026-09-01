@@ -1,10 +1,12 @@
 package br.com.fiap.clyvovet.mapper;
 
+import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoPatchRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.model.Animal;
 import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.Servico;
 import br.com.fiap.clyvovet.model.TipoEvento;
 import br.com.fiap.clyvovet.model.Veterinario;
 import org.junit.jupiter.api.DisplayName;
@@ -87,6 +89,64 @@ class EventoClinicoMapperTest {
         assertThat(response.veterinarioId()).isEqualTo(relacionamentos.veterinario().getId());
         assertThat(response.animalId()).isEqualTo(relacionamentos.animal().getId());
         assertThat(response.clinicaId()).isEqualTo(relacionamentos.clinica().getId());
+    }
+
+    /**
+     * Todo campo que o PATCH aceita precisa chegar na entidade.
+     *
+     * Escrito por campo, e nao so para o caso que quebrou: o defeito era o
+     * servico resolvido pelo service e descartado em silencio pelo mapper --
+     * PATCH devolvia 200 e o preco do atendimento seguia o antigo. Um mapper
+     * aplica campo a campo e nada acusa o que ficou de fora, entao a garantia
+     * so existe se estiver escrita aqui.
+     */
+    @Test
+    @DisplayName("aplicarPatch leva TODOS os campos do patch para a entidade")
+    void aplicarPatchNaoPerdeCampo() {
+        EventoClinico evento = mapper.toEntity(request("Consulta", TipoEvento.CONSULTA), relacionamentos());
+
+        // Todo campo preenchido: e o ponto do teste.
+        EventoClinicoPatchRequest patch = new EventoClinicoPatchRequest(
+                LocalDate.of(2026, 7, 1), "09:15", "Descricao nova",
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                TipoEvento.VACINA);
+
+        Servico servico = new Servico();
+        servico.setId(patch.getServicoId());
+        servico.setNome("Vacina antirrabica");
+
+        RelacionamentosDoEvento novos = new RelacionamentosDoEvento(
+                relacionamentos().veterinario(), relacionamentos().animal(),
+                relacionamentos().clinica(), servico);
+
+        mapper.aplicarPatch(evento, patch, novos);
+
+        assertThat(evento.getData()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(evento.getHora()).isEqualTo("09:15");
+        assertThat(evento.getDescricao()).isEqualTo("Descricao nova");
+        assertThat(evento.getTipoEvento()).isEqualTo(TipoEvento.VACINA);
+        assertThat(evento.getVeterinario()).isSameAs(novos.veterinario());
+        assertThat(evento.getAnimal()).isSameAs(novos.animal());
+        assertThat(evento.getClinica()).isSameAs(novos.clinica());
+        // O que faltava: sem ele o servico decide preco e duracao e o PATCH mente.
+        assertThat(evento.getServico()).isSameAs(servico);
+    }
+
+    @Test
+    @DisplayName("aplicarPatch preserva o que o corpo nao citou")
+    void aplicarPatchPreservaOmitido() {
+        RelacionamentosDoEvento originais = relacionamentos();
+        EventoClinico evento = mapper.toEntity(request("Consulta", TipoEvento.CONSULTA), originais);
+        Servico servicoOriginal = new Servico();
+        evento.setServico(servicoOriginal);
+
+        // Patch vazio: o mapper entende null como "mantenha o vinculo atual".
+        mapper.aplicarPatch(evento, new EventoClinicoPatchRequest(),
+                new RelacionamentosDoEvento(null, null, null, null));
+
+        assertThat(evento.getDescricao()).isEqualTo("Consulta");
+        assertThat(evento.getAnimal()).isSameAs(originais.animal());
+        assertThat(evento.getServico()).isSameAs(servicoOriginal);
     }
 
     @Test

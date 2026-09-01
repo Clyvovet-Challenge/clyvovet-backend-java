@@ -42,6 +42,7 @@ public class EventoClinicoMapper {
         aplicarSePresente(relacionamentos.veterinario(), evento::setVeterinario);
         aplicarSePresente(relacionamentos.animal(), evento::setAnimal);
         aplicarSePresente(relacionamentos.clinica(), evento::setClinica);
+        aplicarSePresente(relacionamentos.servico(), evento::setServico);
     }
 
     public EventoClinicoResponse toResponse(EventoClinico evento) {
