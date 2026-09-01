@@ -257,20 +257,118 @@ e o que o rate limit por IP não sabe fazer.
 
 ## Endpoints
 
-### Autenticação — `/api/v1/auth`
+Todos ficam sob **`/api/v1`**. São **74 endpoints** em 14 controllers.
 
-| Método | Rota | Acesso |
+**Como ler a coluna "Quem pode chamar":**
+
+| Termo | Significa |
+|---|---|
+| **Público** | Sem token nenhum |
+| **Qualquer autenticado** | Qualquer usuário logado, seja qual for o perfil |
+| **Tutor dono** | Só sobre os próprios registros — os pets dele, as consultas dele |
+| **Veterinário** | Qualquer veterinário autenticado, sem exigir vínculo com o animal |
+| **Veterinário da clínica** | Só se o atendimento aconteceu na clínica dele, ou se o tutor consentiu |
+| **Administrador** | Administrador da plataforma |
+
+---
+
+### Autenticação e sessão
+
+| Rota | O que faz | Quem pode chamar |
 |---|---|---|
-| POST | `/api/v1/auth/login` | público |
-| POST | `/api/v1/auth/refresh` | público |
-| POST | `/api/v1/auth/logout` | público |
-| POST | `/api/v1/auth/registrar` | público — exige `nome`; o perfil é sempre TUTOR e o registro de tutor é criado junto |
-| POST | `/api/v1/auth/usuarios` | ADMIN — cria com perfil arbitrário |
-| GET | `/api/v1/auth/me` | autenticado |
+| `POST /auth/registrar` | Auto-cadastro — o perfil é **sempre** tutor | Público |
+| `POST /auth/login` | Emite access token (15 min) e refresh token (7 dias) | Público |
+| `POST /auth/refresh` | Renova o access token | Público |
+| `POST /auth/logout` | Revoga o refresh token | Público |
+| `POST /auth/usuarios` | Cria usuário com perfil arbitrário | Administrador |
+| `GET /auth/me` | Dados de quem está logado | Qualquer autenticado |
 
-### Recursos de domínio
+### Cadastros
 
-Todos os endpoints ficam sob **`/api/v1`**. Os seis recursos expõem o mesmo CRUD:
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `GET POST PUT PATCH DELETE /tutores` | CRUD de tutor | Ler: tutor dono, veterinário ou administrador · Escrever: veterinário ou administrador |
+| `GET POST PUT PATCH DELETE /animais` | CRUD de animal | Tutor dono, veterinário ou administrador |
+| `GET POST PUT PATCH DELETE /clinicas` | CRUD de clínica | Ler: qualquer autenticado · Escrever: **administrador** |
+| `GET POST PUT PATCH DELETE /veterinarios` | CRUD de veterinário | Ler: qualquer autenticado · Escrever: **administrador** |
+
+A listagem de animais vem **recortada**: o tutor só enxerga os próprios.
+
+### Catálogo e agenda
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `GET /clinicas/{id}/servicos` | Serviços ativos da clínica, com preço e duração | Qualquer autenticado |
+| `POST PUT DELETE /servicos` | Mantém o catálogo — o `DELETE` **desativa**, não apaga | Administrador |
+| `GET /veterinarios/{id}/disponibilidades` | Grade semanal do profissional | Qualquer autenticado |
+| `POST DELETE /disponibilidades` | Faixas de atendimento recorrentes | Veterinário, **só na própria agenda** |
+| `POST DELETE /bloqueios` | Férias, folga, almoço | Veterinário, **só na própria agenda** |
+
+### Fluxo A — Agendamento pelo tutor *(fluxo não-CRUD)*
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `GET /agendamentos/vagas` | Vagas livres cruzando grade × bloqueios × atendimentos | Qualquer autenticado |
+| `POST /agendamentos` | Marca a consulta — nasce `AGENDADO`, e **marcar é consentir** | Tutor dono do animal |
+| `POST /agendamentos/{id}/cancelar` | Cancela; em cima da hora fica marcado `[TARDIO]` | Tutor dono, veterinário da clínica |
+| `GET /agendamentos/meus` | Os agendamentos do tutor logado | Tutor dono |
+
+### Fluxo R — Retorno e falta *(fluxo não-CRUD)*
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `POST /eventos-clinicos/{id}/concluir` | Único caminho para `REALIZADO`: peso, desfecho, retorno previsto | Veterinário **da clínica do atendimento** |
+| `POST /eventos-clinicos/{id}/retorno` | Cria o retorno ligado à consulta de origem | Veterinário **da clínica do atendimento** |
+| `GET /eventos-clinicos/retornos-vencidos` | Pets que deveriam ter voltado e não voltaram | Veterinário ou administrador |
+| `POST /eventos-clinicos/marcar-faltas` | Varre os vencidos e marca `FALTOU` | Veterinário ou administrador |
+
+### Fluxo C — Histórico clínico em três níveis
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `GET /animais/resumo?microchip=` | **Nível 1**: alergias, crônicas, vacinas, peso, telefone do tutor | Veterinário (qualquer, sem vínculo prévio) |
+| `GET /animais/{id}/historico` | **Nível 2** com consentimento; sem ele, só o da própria clínica | Qualquer autenticado, no nível que alcança |
+| `POST /animais/{id}/acesso-emergencial` | **Quebra de vidro**: motivo obrigatório, tutor avisado, alarme no log | Veterinário ou administrador |
+| `GET /animais/{id}/acessos` | Quem leu o prontuário deste animal, e quando | **Tutor dono ou administrador** |
+| `POST /animais/{id}/alertas` · `DELETE /alertas/{id}` | Alergia, condição crônica, medicação contínua | Tutor dono, veterinário ou administrador |
+| `GET /autorizacoes/minhas` · `POST /autorizacoes/{id}/revogar` | O tutor vê e retira o acesso das clínicas | Tutor dono |
+| `GET /auditoria/excessos` · `/quebras-de-vidro` | Quem anda lendo prontuários demais | Administrador |
+
+O microchip **identifica, nunca autoriza**. Tetos de leitura: 30 animais distintos por dia alertam, 150 bloqueiam.
+
+### Fluxo P — Cobrança *(fluxo não-CRUD)*
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `POST /pagamentos` | Lança a cobrança no atendimento | Veterinário **da clínica do atendimento** |
+| `POST /pagamentos/{id}/confirmar` | `PENDENTE → PAGO`, com data | Veterinário **da clínica do atendimento** |
+| `POST /pagamentos/{id}/estornar` | `PAGO → REEMBOLSADO` — não apaga a receita | Veterinário **da clínica do atendimento** |
+| `GET /eventos-clinicos/{id}/saldo` | Quanto custou, quanto entrou, quanto falta | Quem alcança o atendimento |
+| `GET /pagamentos/inadimplencia` | Devedores **da própria clínica**, com contato do tutor | Veterinário ou administrador |
+| `GET /tutores/{id}/extrato` | Pago, pendente e estornado no período | Tutor dono; veterinário vê só a própria clínica |
+
+### Registro clínico
+
+| Rota | O que faz | Quem pode chamar |
+|---|---|---|
+| `GET /eventos-clinicos` | Listagem recortada por tutor ou por clínica | Qualquer autenticado |
+| `GET /eventos-clinicos/{id}` | Traz os **links das ações possíveis** no estado atual | Quem alcança o atendimento |
+| `POST /eventos-clinicos` | Registra atendimento na própria clínica | Veterinário ou administrador |
+| `PUT PATCH DELETE /eventos-clinicos/{id}` | Correção e remoção | Veterinário **da clínica do atendimento** |
+
+---
+
+### O que atravessa toda a API
+
+**JWT** com access curto e refresh revogável · **rate limit** no login e bloqueio de conta · **HATEOAS** com links condicionais ao estado (um atendimento `FALTOU` não oferece o link "concluir") · **cache** Caffeine com chave recortada por tutor e clínica · **paginação e filtros** em toda listagem · **Swagger** público em `/swagger-ui.html` · **health probe** em `/actuator/health` · **Flyway** em duas trilhas espelhadas, Oracle e MySQL.
+
+**Máquina de estados do atendimento:** `AGENDADO` → `REALIZADO` · `CANCELADO` · `FALTOU`. Os estados terminais não voltam, e a tabela de transições vive num arquivo só.
+
+---
+
+### Formato das listagens e do PATCH
+
+Os seis recursos de domínio expõem o mesmo CRUD:
 
 | Método | Rota | O que faz |
 |---|---|---|
@@ -316,57 +414,20 @@ curl -X PATCH http://localhost:8080/api/v1/clinicas/{id} \
 
 Um campo omitido não é apagado: para limpar um campo opcional, use PUT.
 
-### Fluxos de negócio
+### Quem pode o quê, em resumo
 
-| Método | Rota | Acesso |
-|---|---|---|
-| GET | `/agendamentos/vagas` | autenticado |
-| POST | `/agendamentos` | tutor do animal, ou corpo clínico |
-| POST | `/agendamentos/{id}/cancelar` | quem alcança o evento |
-| GET | `/agendamentos/meus` | TUTOR |
-| POST | `/eventos-clinicos/{id}/concluir` | VETERINARIO, ADMIN |
-| POST | `/eventos-clinicos/{id}/retorno` | VETERINARIO, ADMIN |
-| GET | `/eventos-clinicos/retornos-vencidos` | VETERINARIO, ADMIN |
-| POST | `/eventos-clinicos/marcar-faltas` | VETERINARIO, ADMIN |
-| GET | `/animais/resumo?microchip=` | VETERINARIO |
-| GET | `/animais/{id}/historico` | nível conforme o solicitante |
-| POST | `/animais/{id}/acesso-emergencial` | VETERINARIO, ADMIN |
-| GET | `/animais/{id}/acessos` | tutor dono, ADMIN |
-| POST | `/animais/{id}/alertas` | tutor dono, corpo clínico |
-| DELETE | `/alertas/{id}` | quem alcança o animal |
-| GET | `/autorizacoes/minhas` | TUTOR |
-| POST | `/autorizacoes/{id}/revogar` | tutor dono |
-| POST | `/pagamentos/{id}/confirmar` | VETERINARIO, ADMIN |
-| POST | `/pagamentos/{id}/estornar` | VETERINARIO, ADMIN |
-| GET | `/eventos-clinicos/{id}/saldo` | quem alcança o evento |
-| GET | `/pagamentos/inadimplencia` | VETERINARIO, ADMIN |
-| GET | `/tutores/{id}/extrato` | tutor dono, corpo clínico |
-
-### Catálogo, agenda e auditoria
-
-| Método | Rota | Acesso |
-|---|---|---|
-| GET | `/clinicas/{id}/servicos` | autenticado |
-| POST · PUT · DELETE | `/servicos` · `/servicos/{id}` | ADMIN |
-| GET | `/veterinarios/{id}/disponibilidades` | autenticado |
-| POST · DELETE | `/disponibilidades` · `/{id}` | o próprio veterinário, ou ADMIN |
-| POST · DELETE | `/bloqueios` · `/{id}` | o próprio veterinário, ou ADMIN |
-| GET | `/auditoria/excessos` | ADMIN |
-| GET | `/auditoria/quebras-de-vidro` | ADMIN |
-
-### Quem pode o quê
-
-| Operação | TUTOR | VETERINARIO | ADMIN |
+| Operação | Tutor | Veterinário | Administrador |
 |---|:---:|:---:|:---:|
 | Ler o **cadastro** de animais | só os próprios | ✅ | ✅ |
 | Criar e editar animais | só os próprios | ✅ | ✅ |
 | Ler **atendimentos e pagamentos** | só os próprios | só da própria clínica, ou com consentimento | ✅ |
 | Marcar consulta | só para os próprios pets | ✅ | ✅ |
-| Concluir atendimento e registrar retorno | — | ✅ | ✅ |
+| Concluir atendimento e registrar retorno | — | só da própria clínica | ✅ |
 | Listar e criar tutores | — | ✅ | ✅ |
-| Criar e editar eventos e pagamentos | — | ✅ | ✅ |
+| Criar e editar eventos e pagamentos | — | só da própria clínica | ✅ |
 | Resumo de segurança pelo microchip | — | ✅ | ✅ |
 | Histórico completo de um animal | só os próprios | só com consentimento | ✅ |
+| Ligar e desligar o resumo de segurança | só os próprios | — | ✅ |
 | Criar e editar clínicas, veterinários e serviços | — | — | ✅ |
 | Auditoria de acesso | — | — | ✅ |
 
