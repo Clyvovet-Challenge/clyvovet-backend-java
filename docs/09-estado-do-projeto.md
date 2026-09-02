@@ -46,7 +46,7 @@ Detalhe em [02-modelo-de-dados.md](02-modelo-de-dados.md).
 
 | | |
 |---|---|
-| Rotas | **42**, todas sob `/api/v1` — 36 de domínio + 6 de autenticação |
+| Rotas | **74**, todas sob `/api/v1` — 36 de CRUD, 6 de autenticação e 32 dos fluxos |
 | Operações por recurso | listar, buscar, criar, substituir (PUT), alterar parcialmente (PATCH), remover |
 | Consulta | paginação, ordenação e filtros próprios de cada recurso |
 | Contrato | versionado na URL; listagens com envelope estável (`content` + `page`) |
@@ -70,7 +70,7 @@ Detalhe em [08-seguranca.md](08-seguranca.md).
 
 | | |
 |---|---|
-| Testes | **126**, cobrindo CRUD, filtros, PATCH, JWT, sessão, ownership, rate limit e migrations |
+| Testes | **265**, cobrindo CRUD, filtros, PATCH, JWT, sessão, ownership, rate limit e migrations |
 | Schema | versionado por Flyway, um conjunto de migrations por banco |
 | Bancos | H2 (dev e container), Oracle 19c (entrega), MySQL (alvo do deploy) |
 | Deploy | Docker + docker-compose; script Azure CLI idempotente |
@@ -95,7 +95,7 @@ consegue oferecer.
 `Tutor`, e o isolamento é garantido. Um app voltado ao tutor pode ser construído sobre
 isso sem retrabalho de base.
 
-**A base aguenta.** 126 testes, segurança real e schema versionado significam que a
+**A base aguenta.** 265 testes, segurança real e schema versionado significam que a
 lacuna do projeto é de **direção de produto**, não de capacidade de execução.
 
 ---

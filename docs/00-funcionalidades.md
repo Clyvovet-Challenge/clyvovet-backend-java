@@ -57,7 +57,8 @@ Cada entidade expõe o mesmo conjunto de operações sob `/api/v1`:
 | Alterar só alguns campos | `PATCH /recurso/{id}` | 200 |
 | Remover | `DELETE /recurso/{id}` | **204** |
 
-São **36 rotas de domínio** — seis recursos, seis operações cada. Contratos,
+São **36 rotas de domínio** nos seis recursos de CRUD — seis operações cada —
+mais os quatro fluxos de ação, que somam **74 rotas** no total. Contratos,
 payloads e códigos de erro em [03-api-rest.md](03-api-rest.md).
 
 ### 2. Busca, paginação e ordenação
@@ -271,7 +272,7 @@ Registrado para não parecer omissão:
 
 ### Coberto por teste
 
-Os 126 testes cobrem o CRUD dos seis recursos, filtros, atualização parcial, mappers,
+Os 265 testes cobrem o CRUD dos seis recursos, filtros, atualização parcial, mappers,
 JWT, ciclo de sessão, bloqueio de conta, ownership, rate limit e as migrations do
 MySQL.
 
@@ -292,8 +293,8 @@ produção se quebrassem:
 
 | | |
 |---|---|
-| Entidades de domínio | 6 (+ `Usuario` e `Endereco` embutido) |
-| Rotas | 42, todas sob `/api/v1` — 36 de domínio + 6 de autenticação |
+| Entidades de domínio | 13 (+ `Endereco` embutido) |
+| Rotas | 74, todas sob `/api/v1` |
 | Perfis de acesso | 3 |
-| Migrations | V1 a V4, em dois conjuntos (Oracle e MySQL) |
-| Testes automatizados | 126 |
+| Migrations | V1 a V7, em dois conjuntos (Oracle e MySQL) |
+| Testes automatizados | 265 |

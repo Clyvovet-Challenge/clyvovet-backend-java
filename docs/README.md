@@ -17,13 +17,14 @@ silenciosamente corrigido no texto.
 | [00-funcionalidades.md](00-funcionalidades.md) | **Comece aqui.** O que o sistema faz: domínio, funcionalidades, fluxo de ponta a ponta e o que ainda não existe |
 | [01-arquitetura.md](01-arquitetura.md) | Camadas, fluxo de uma requisição, responsabilidades, cache, tratamento de erros |
 | [02-modelo-de-dados.md](02-modelo-de-dados.md) | Entidades JPA, relacionamentos, enums, mapeamento objeto↔tabela, DDL Oracle |
-| [03-api-rest.md](03-api-rest.md) | Os 36 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
+| [03-api-rest.md](03-api-rest.md) | Os 74 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
 | [04-configuracao.md](04-configuracao.md) | Perfis Spring (`oracle`, `h2`, `dev`), propriedades, como rodar localmente |
 | [05-deploy.md](05-deploy.md) | Dockerfile, docker-compose, provisionamento Azure via `deploy.sh`, o que chega na VM |
 | [06-guia-de-desenvolvimento.md](06-guia-de-desenvolvimento.md) | Convenções do código, como adicionar uma entidade nova, build, testes e o grafo do codebase |
 | [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e documentação |
 | [08-seguranca.md](08-seguranca.md) | Autenticação JWT, perfis, ownership, matriz de autorização e hardening |
 | [09-estado-do-projeto.md](09-estado-do-projeto.md) | Onde o projeto está, o que serve à tese de absenteísmo, o que falta e em que ordem |
+| [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta
 
@@ -73,20 +74,22 @@ Clinica ─1:N─> Veterinario ──┘
 
 ### Números do projeto
 
-Conferidos no código em 25/08/2026.
+Conferidos no código em 02/09/2026.
 
 | Item | Quantidade |
 |---|---|
-| Entidades JPA | 7 + 1 `@Embeddable` |
-| Enums | 6 |
-| Controllers | 7 |
-| Endpoints REST | **42** (36 de domínio + 6 de autenticação), todos sob `/api/v1` |
-| Services | 8 |
-| Repositories | 7 + `RepositorioBase` |
-| Mappers | 8 + 3 classes de apoio |
-| DTOs | 27 |
-| Migrations Flyway | 4, em **dois conjuntos** (`oracle/` e `mysql/`) |
-| Testes automatizados | **126** |
+| Entidades JPA | 13 + 1 `@Embeddable` |
+| Enums | 13 |
+| Controllers | 14 + 2 classes de links HATEOAS |
+| Endpoints REST | **74**, todos sob `/api/v1` |
+| Services | 18 |
+| Repositories | 13 + `RepositorioBase` |
+| Mappers | 9 + 3 classes de apoio |
+| DTOs | 56 |
+| Migrations Flyway | 7, em **dois conjuntos** (`oracle/` e `mysql/`) |
+| Testes automatizados | **265** (4 ignorados) |
+
+O detalhamento arquivo a arquivo de cada pacote está em [pacotes/](pacotes/).
 
 ---
 
