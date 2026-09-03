@@ -97,6 +97,23 @@ public record RecorteDeAcesso(UUID tutorId, UUID clinicaId) {
 Nulo significa "sem recorte nesta dimensão": o TUTOR não tem clínica, o
 VETERINARIO não tem tutor, e o ADMIN não tem nenhum dos dois.
 
+### Por que as fábricas não repassam nulo
+
+`POST /auth/usuarios` aceita `{"perfil":"VETERINARIO"}` **sem** `veterinarioId`
+— a validação de vínculo só recusa o cruzado (um TUTOR apontando para
+veterinário, e vice-versa), nunca o ausente. O usuário nasce válido e sem
+lastro.
+
+O recorte desse usuário era `(null, null)`, que é exatamente o do ADMIN. O
+cadastro incompleto não tirava acesso: **dava**. Um "veterinário" sem clínica
+lia o atendimento de toda a plataforma e — porque a guarda de clínica própria
+também compara com nulo — registrava atendimento em qualquer clínica.
+
+Hoje a falta de vínculo vira um id que nenhuma linha carrega, e a mesma
+cláusula `IS NULL OR` devolve página vazia. Falha fechada, e sem exceção: o
+método também é chamado de dentro da chave de cache, em SpEL, onde uma exceção
+viraria 500 em vez de 403.
+
 Antes isto não era um objeto, e sim **três coisas escritas à mão** em cada
 recurso: uma string SpEL na chave do cache, um par de argumentos na chamada do
 repositório e um par de cláusulas `IS NULL OR` na consulta. Manter as três em

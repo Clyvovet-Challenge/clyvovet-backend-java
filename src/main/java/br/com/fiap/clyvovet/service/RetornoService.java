@@ -163,23 +163,17 @@ public class RetornoService {
      * falha que o {@link br.com.fiap.clyvovet.security.RecorteDeAcesso} fecha
      * em /eventos-clinicos e /pagamentos; faltava aqui.
      *
-     * Para o ADMIN da plataforma o parametro continua valendo, inclusive nulo
-     * ("todas as clinicas"): a visao ampla e o proprio papel dele. Para o corpo
-     * clinico vale SEMPRE a clinica do usuario, nunca o que veio na requisicao.
+     * O recorte tem precedencia sobre o parametro, e nao o contrario. So o
+     * ADMIN da plataforma tem recorte nulo, e e para ele que a query string
+     * volta a valer — inclusive ausente, que ali significa "todas as clinicas".
+     * Para o corpo clinico vale sempre a clinica do proprio usuario.
      *
-     * O 409 no fim nao e defensivo por gosto: devolver null ali reabriria o
-     * buraco em silencio, porque null significa "todas" na consulta.
+     * O TUTOR nao aparece nesta conta porque a regra de rota nao o deixa chegar
+     * a nenhuma das duas.
      */
     private UUID clinicaQueRecorta(UUID clinicaSolicitada) {
-        if (seguranca.ehAdministradorDaPlataforma()) {
-            return clinicaSolicitada;
-        }
-        UUID minhaClinica = seguranca.clinicaDoUsuario();
-        if (minhaClinica == null) {
-            throw new RegraDeNegocioException("clinicaId",
-                    "Este usuário não está vinculado a uma clínica");
-        }
-        return minhaClinica;
+        UUID minhaClinica = seguranca.recorte().clinicaId();
+        return minhaClinica != null ? minhaClinica : clinicaSolicitada;
     }
 
     private void garantirQuePodeConcluir(EventoClinico evento) {

@@ -14,10 +14,30 @@ import java.util.UUID;
  *
  * Nulo significa "sem recorte nesta dimensao": o TUTOR nao tem clinica, o
  * VETERINARIO nao tem tutor, e o ADMIN nao tem nenhum dos dois.
+ *
+ * E por isso que as fabricas nao aceitam nulo no lugar do proprio vinculo. Um
+ * TUTOR sem tutor vinculado, ou um VETERINARIO sem veterinario, produzia
+ * {@code (null, null)} — que e exatamente o recorte do ADMIN. O usuario nao
+ * ficava sem ver nada; ficava vendo TUDO.
  */
 public record RecorteDeAcesso(UUID tutorId, UUID clinicaId) {
 
     private static final RecorteDeAcesso IRRESTRITO = new RecorteDeAcesso(null, null);
+
+    /**
+     * O id que nao pertence a ninguem, usado quando o vinculo esperado falta.
+     *
+     * Precisa ser um UUID, e nao nulo, porque a consulta le nulo como "sem
+     * recorte" — {@code (:clinicaId IS NULL OR ...)}. Com um valor que nenhuma
+     * linha carrega, a mesma clausula devolve pagina vazia, e o erro de
+     * cadastro para de valer como promocao a ADMIN.
+     *
+     * Nao e a unica saida possivel: dava para lancar 403 aqui. Nao lanca porque
+     * este metodo tambem e chamado de dentro da chave de cache, em SpEL, onde
+     * uma excecao vira falha de avaliacao da expressao — 500 no lugar de 403,
+     * e a rota inteira quebrada em vez de vazia.
+     */
+    private static final UUID NENHUM = new UUID(0L, 0L);
 
     /** ADMIN: enxerga a base inteira. */
     public static RecorteDeAcesso irrestrito() {
@@ -25,11 +45,16 @@ public record RecorteDeAcesso(UUID tutorId, UUID clinicaId) {
     }
 
     public static RecorteDeAcesso doTutor(UUID tutorId) {
-        return new RecorteDeAcesso(tutorId, null);
+        return new RecorteDeAcesso(ouNenhum(tutorId), null);
     }
 
     public static RecorteDeAcesso daClinica(UUID clinicaId) {
-        return new RecorteDeAcesso(null, clinicaId);
+        return new RecorteDeAcesso(null, ouNenhum(clinicaId));
+    }
+
+    /** Falta de vinculo vira recorte que nao alcanca nada — nunca "sem recorte". */
+    private static UUID ouNenhum(UUID id) {
+        return id != null ? id : NENHUM;
     }
 
     /**

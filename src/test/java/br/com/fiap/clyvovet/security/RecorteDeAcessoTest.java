@@ -60,6 +60,32 @@ class RecorteDeAcessoTest {
     }
 
     @Test
+    @DisplayName("vinculo ausente nao vira o recorte do admin")
+    void vinculoAusenteNaoViraAdmin() {
+        // O caso do usuario com perfil VETERINARIO e nenhum veterinario ligado.
+        // Antes as fabricas repassavam o nulo, e (null, null) e o ADMIN: o
+        // cadastro incompleto DAVA acesso a base inteira em vez de tirar.
+        String semClinica = RecorteDeAcesso.daClinica(null).chaveDeCache();
+        String semTutor = RecorteDeAcesso.doTutor(null).chaveDeCache();
+        String admin = RecorteDeAcesso.irrestrito().chaveDeCache();
+
+        assertThat(semClinica).isNotEqualTo(admin);
+        assertThat(semTutor).isNotEqualTo(admin);
+
+        assertThat(RecorteDeAcesso.daClinica(null).clinicaId()).isNotNull();
+        assertThat(RecorteDeAcesso.doTutor(null).tutorId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("dois usuarios sem vinculo nao alcancam o que o recorte de outro alcanca")
+    void semVinculoNaoAlcancaClinicaReal() {
+        // O id de reserva precisa nao pertencer a ninguem: se colidisse com uma
+        // clinica real, o usuario sem lastro passaria a ver justamente ela.
+        assertThat(RecorteDeAcesso.daClinica(null).clinicaId()).isNotEqualTo(CLINICA_A);
+        assertThat(RecorteDeAcesso.doTutor(null).tutorId()).isNotEqualTo(TUTOR_A);
+    }
+
+    @Test
     @DisplayName("a chave cobre as duas dimensoes, e nao so a que a consulta filtra")
     void chaveCobreAsDuasDimensoes() {
         // AnimalService filtra so por tutor. Se a chave tambem cobrisse so o
