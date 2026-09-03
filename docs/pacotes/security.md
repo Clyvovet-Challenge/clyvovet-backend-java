@@ -99,9 +99,9 @@ VETERINARIO não tem tutor, e o ADMIN não tem nenhum dos dois.
 
 ### Por que as fábricas não repassam nulo
 
-`POST /auth/usuarios` aceita `{"perfil":"VETERINARIO"}` **sem** `veterinarioId`
-— a validação de vínculo só recusa o cruzado (um TUTOR apontando para
-veterinário, e vice-versa), nunca o ausente. O usuário nasce válido e sem
+`POST /auth/usuarios` aceitava `{"perfil":"VETERINARIO"}` **sem**
+`veterinarioId` — a validação de vínculo recusava o cruzado (um TUTOR apontando
+para veterinário, e vice-versa), nunca o ausente. O usuário nascia válido e sem
 lastro.
 
 O recorte desse usuário era `(null, null)`, que é exatamente o do ADMIN. O
@@ -113,6 +113,20 @@ Hoje a falta de vínculo vira um id que nenhuma linha carrega, e a mesma
 cláusula `IS NULL OR` devolve página vazia. Falha fechada, e sem exceção: o
 método também é chamado de dentro da chave de cache, em SpEL, onde uma exceção
 viraria 500 em vez de 403.
+
+### As duas metades são independentes
+
+`UsuarioService.validarVinculo` passou a exigir o vínculo, e não só a recusar o
+cruzado: TUTOR precisa de tutor, VETERINARIO precisa de veterinário, e o ADMIN
+não precisa de nenhum dos dois (nele o vínculo é inerte — o recorte do ADMIN é
+irrestrito de qualquer forma).
+
+Mas a validação cobre só a porta da frente. A linha pode existir vinda de uma
+migration, de uma correção manual no banco ou de um bug futuro, e é por isso que
+o recorte continua contendo o caso por conta própria. Quem testa cada metade
+sabe disso: `CicloDeSessaoTest` bate na rota, e `RecorteSemVinculoTest` grava a
+linha **direto no repositório**, justamente porque a porta da frente já não a
+produz.
 
 Antes isto não era um objeto, e sim **três coisas escritas à mão** em cada
 recurso: uma string SpEL na chave do cache, um par de argumentos na chamada do

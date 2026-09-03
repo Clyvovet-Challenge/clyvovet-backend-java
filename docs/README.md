@@ -87,7 +87,7 @@ Conferidos no código em 02/09/2026.
 | Mappers | 9 + 3 classes de apoio |
 | DTOs | 56 |
 | Migrations Flyway | 7, em **dois conjuntos** (`oracle/` e `mysql/`) |
-| Testes automatizados | **274** (4 ignorados) |
+| Testes automatizados | **277** (4 ignorados) |
 
 O detalhamento arquivo a arquivo de cada pacote está em [pacotes/](pacotes/).
 

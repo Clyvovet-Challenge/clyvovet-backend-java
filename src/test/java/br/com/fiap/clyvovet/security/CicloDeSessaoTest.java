@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.support.SeedV2;
 import br.com.fiap.clyvovet.support.TesteDeApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -179,12 +181,15 @@ class CicloDeSessaoTest extends TesteDeApi {
     // ------------------------------------------------------------------
 
     private ResultActions criarUsuario(String token, String email, String perfil) throws Exception {
+        return criarUsuario(token, """
+                {"email":"%s","senha":"senha12345","perfil":"%s"}""".formatted(email, perfil));
+    }
+
+    private ResultActions criarUsuario(String token, String corpo) throws Exception {
         return mockMvc.perform(post("/api/v1/auth/usuarios")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"email":"%s","senha":"senha12345","perfil":"%s"}"""
-                        .formatted(email, perfil)));
+                .content(corpo));
     }
 
     private static String emailUnico() {
@@ -196,12 +201,52 @@ class CicloDeSessaoTest extends TesteDeApi {
     @Test
     @DisplayName("admin cria usuario com perfil arbitrario")
     void adminCriaUsuarioComPerfilArbitrario() throws Exception {
-        JsonNode criado = corpoDe(criarUsuario(tokenAdmin(), emailUnico(), "VETERINARIO")
+        JsonNode criado = corpoDe(criarUsuario(tokenAdmin(), """
+                {"email":"%s","senha":"senha12345","perfil":"VETERINARIO","veterinarioId":"%s"}"""
+                .formatted(emailUnico(), SeedV2.VET_RAFAEL_DA_PETMED))
                 .andExpect(status().isCreated()));
 
         // A diferenca para /auth/registrar, que fixa TUTOR e por isso e publico.
         assertThat(criado.get("perfil").asText()).isEqualTo("VETERINARIO");
         assertThat(criado.has("senha")).isFalse();
+    }
+
+    @Test
+    @DisplayName("perfil que exige vinculo nao e aceito sem ele")
+    void perfilComVinculoObrigatorio() throws Exception {
+        // O usuario sem lastro era aceito, e como o recorte de acesso se resolve
+        // pelo vinculo, ele nao ficava sem enxergar nada: ficava enxergando
+        // tudo. O RecorteDeAcesso hoje o contem; aqui a linha nem nasce.
+        criarUsuario(tokenAdmin(), emailUnico(), "VETERINARIO")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("veterinarioId"));
+
+        criarUsuario(tokenAdmin(), emailUnico(), "TUTOR")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("tutorId"));
+    }
+
+    @Test
+    @DisplayName("o vinculo cruzado continua recusado")
+    void vinculoCruzadoRecusado() throws Exception {
+        // A metade que ja existia. Fica junto para que as duas caiam no mesmo
+        // teste se alguem simplificar a validacao para um lado so.
+        criarUsuario(tokenAdmin(), """
+                {"email":"%s","senha":"senha12345","perfil":"VETERINARIO","tutorId":"%s"}"""
+                .formatted(emailUnico(), SeedV2.TUTOR_LUCAS))
+                .andExpect(status().isConflict());
+
+        criarUsuario(tokenAdmin(), """
+                {"email":"%s","senha":"senha12345","perfil":"TUTOR","veterinarioId":"%s"}"""
+                .formatted(emailUnico(), SeedV2.VET_RAFAEL_DA_PETMED))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("o ADMIN continua sendo criado sem vinculo nenhum")
+    void adminNaoPrecisaDeVinculo() throws Exception {
+        // Ele nao precisa: o recorte do ADMIN e irrestrito de qualquer forma.
+        criarUsuario(tokenAdmin(), emailUnico(), "ADMIN").andExpect(status().isCreated());
     }
 
     @Test

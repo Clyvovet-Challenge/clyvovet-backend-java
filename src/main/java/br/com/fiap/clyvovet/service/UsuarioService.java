@@ -116,12 +116,41 @@ public class UsuarioService {
         }
     }
 
+    /**
+     * O perfil determina o vinculo, nos dois sentidos.
+     *
+     * Recusar o vinculo CRUZADO — um TUTOR apontando para veterinario, e
+     * vice-versa — ja era feito aqui. O que faltava era recusar o AUSENTE, e a
+     * assimetria custava caro: {"perfil":"VETERINARIO"} sem veterinarioId era
+     * aceito, e o usuario nascia valido e sem lastro. Como o recorte de acesso
+     * se resolve pelo vinculo, esse usuario nao ficava sem enxergar nada;
+     * ficava enxergando tudo.
+     *
+     * O {@link br.com.fiap.clyvovet.security.RecorteDeAcesso} hoje trata a
+     * falta de vinculo como quem nao alcanca nada, e continua sendo a garantia
+     * que vale para linha vinda de qualquer lugar — migration, correcao manual
+     * no banco, bug futuro. Esta validacao e a outra metade: o cadastro nao
+     * deveria produzir essa linha para comecar.
+     *
+     * O ADMIN fica de fora dos dois lados. Ele nao precisa de vinculo, e um
+     * vinculo nele e inerte: o recorte do ADMIN e irrestrito de qualquer forma.
+     */
     private void validarVinculo(Usuario usuario) {
-        if (usuario.getPerfil() == Perfil.TUTOR && usuario.getVeterinario() != null) {
+        Perfil perfil = usuario.getPerfil();
+
+        if (perfil == Perfil.TUTOR && usuario.getTutor() == null) {
+            throw new RegraDeNegocioException("tutorId",
+                    "Usuario com perfil TUTOR precisa ser vinculado a um tutor");
+        }
+        if (perfil == Perfil.TUTOR && usuario.getVeterinario() != null) {
             throw new RegraDeNegocioException("veterinarioId",
                     "Usuario com perfil TUTOR nao pode ser vinculado a um veterinario");
         }
-        if (usuario.getPerfil() == Perfil.VETERINARIO && usuario.getTutor() != null) {
+        if (perfil == Perfil.VETERINARIO && usuario.getVeterinario() == null) {
+            throw new RegraDeNegocioException("veterinarioId",
+                    "Usuario com perfil VETERINARIO precisa ser vinculado a um veterinario");
+        }
+        if (perfil == Perfil.VETERINARIO && usuario.getTutor() != null) {
             throw new RegraDeNegocioException("tutorId",
                     "Usuario com perfil VETERINARIO nao pode ser vinculado a um tutor");
         }
