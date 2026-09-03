@@ -272,7 +272,7 @@ Registrado para não parecer omissão:
 
 ### Coberto por teste
 
-Os 265 testes cobrem o CRUD dos seis recursos, filtros, atualização parcial, mappers,
+Os 269 testes cobrem o CRUD dos seis recursos, filtros, atualização parcial, mappers,
 JWT, ciclo de sessão, bloqueio de conta, ownership, rate limit e as migrations do
 MySQL.
 
@@ -297,4 +297,4 @@ produção se quebrassem:
 | Rotas | 74, todas sob `/api/v1` |
 | Perfis de acesso | 3 |
 | Migrations | V1 a V7, em dois conjuntos (Oracle e MySQL) |
-| Testes automatizados | 265 |
+| Testes automatizados | 269 |

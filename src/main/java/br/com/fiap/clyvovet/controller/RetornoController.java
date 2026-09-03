@@ -53,17 +53,26 @@ public class RetornoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(retornoService.agendarRetorno(id, request));
     }
 
-    /** O resultado do fluxo: sobre quem a clinica precisa agir. */
+    /**
+     * O resultado do fluxo: sobre quem a clinica precisa agir.
+     *
+     * {@code clinicaId} so tem efeito para o ADMIN da plataforma. Para o corpo
+     * clinico o recorte e sempre a propria clinica, decidido no service — o
+     * parametro nao afrouxa nada.
+     */
     @GetMapping("/retornos-vencidos")
-    @Operation(summary = "Pets que deveriam ter voltado e não voltaram")
+    @Operation(summary = "Pets que deveriam ter voltado e não voltaram. "
+            + "Recortado pela clínica do solicitante; clinicaId só vale para ADMIN")
     public ResponseEntity<List<RetornoVencidoResponse>> vencidos(
             @RequestParam(required = false) UUID veterinarioId,
             @RequestParam(required = false) UUID clinicaId) {
         return ResponseEntity.ok(retornoService.vencidos(veterinarioId, clinicaId));
     }
 
+    /** Varre apenas a clinica de quem chama. O ADMIN da plataforma varre todas. */
     @PostMapping("/marcar-faltas")
-    @Operation(summary = "Marcar como FALTOU os agendamentos vencidos sem conclusão")
+    @Operation(summary = "Marcar como FALTOU os agendamentos vencidos sem conclusão, "
+            + "na clínica do solicitante")
     public ResponseEntity<Map<String, Integer>> marcarFaltas() {
         return ResponseEntity.ok(Map.of("marcados", retornoService.marcarFaltas()));
     }

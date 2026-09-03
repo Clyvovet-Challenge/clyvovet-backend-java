@@ -10,6 +10,7 @@ import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
 import br.com.fiap.clyvovet.model.*;
 import br.com.fiap.clyvovet.repository.EventoClinicoRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
+import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -42,6 +43,7 @@ public class RetornoService {
     private final VeterinarioRepository veterinarioRepository;
     private final EventoClinicoMapper eventoClinicoMapper;
     private final AgendaService agendaService;
+    private final SegurancaService seguranca;
 
     /**
      * Unico caminho para AGENDADO -> REALIZADO. Com o status editavel por PATCH,
@@ -113,7 +115,7 @@ public class RetornoService {
     /** O resultado do fluxo: a lista sobre a qual a clinica age. */
     public List<RetornoVencidoResponse> vencidos(UUID veterinarioId, UUID clinicaId) {
         LocalDate hoje = LocalDate.now();
-        return eventoClinicoRepository.retornosVencidos(hoje, veterinarioId, clinicaId).stream()
+        return eventoClinicoRepository.retornosVencidos(hoje, veterinarioId, clinicaQueRecorta(clinicaId)).stream()
                 .map(evento -> new RetornoVencidoResponse(
                         evento.getId(),
                         evento.getAnimal().getId(),
@@ -138,15 +140,47 @@ public class RetornoService {
     @Transactional
     @CacheEvict(value = "eventos", allEntries = true)
     public int marcarFaltas() {
-        List<EventoClinico> vencidos = eventoClinicoRepository.agendadosVencidos(LocalDate.now());
+        UUID clinica = clinicaQueRecorta(null);
+        List<EventoClinico> vencidos = eventoClinicoRepository.agendadosVencidos(LocalDate.now(), clinica);
         vencidos.forEach(evento -> evento.setStatusEvento(StatusEvento.FALTOU));
         eventoClinicoRepository.saveAll(vencidos);
 
-        log.info("Varredura de faltas: {} agendamentos vencidos marcados como FALTOU", vencidos.size());
+        log.info("Varredura de faltas: {} agendamentos vencidos marcados como FALTOU (clinica {})",
+                vencidos.size(), clinica != null ? clinica : "todas");
         return vencidos.size();
     }
 
     // ------------------------------------------------------------------
+
+    /**
+     * A clinica que de fato recorta a lista de vencidos e a varredura de faltas.
+     *
+     * Estas duas rotas nasceram recebendo a clinica pela query string, e o
+     * parametro era OPCIONAL: um veterinario que simplesmente o omitisse
+     * recebia os retornos vencidos de todas as clinicas da plataforma — nome do
+     * animal, nome do tutor e telefone junto — e a varredura de faltas
+     * reescrevia o status dos agendamentos de todo mundo. E a mesma classe de
+     * falha que o {@link br.com.fiap.clyvovet.security.RecorteDeAcesso} fecha
+     * em /eventos-clinicos e /pagamentos; faltava aqui.
+     *
+     * Para o ADMIN da plataforma o parametro continua valendo, inclusive nulo
+     * ("todas as clinicas"): a visao ampla e o proprio papel dele. Para o corpo
+     * clinico vale SEMPRE a clinica do usuario, nunca o que veio na requisicao.
+     *
+     * O 409 no fim nao e defensivo por gosto: devolver null ali reabriria o
+     * buraco em silencio, porque null significa "todas" na consulta.
+     */
+    private UUID clinicaQueRecorta(UUID clinicaSolicitada) {
+        if (seguranca.ehAdministradorDaPlataforma()) {
+            return clinicaSolicitada;
+        }
+        UUID minhaClinica = seguranca.clinicaDoUsuario();
+        if (minhaClinica == null) {
+            throw new RegraDeNegocioException("clinicaId",
+                    "Este usuário não está vinculado a uma clínica");
+        }
+        return minhaClinica;
+    }
 
     private void garantirQuePodeConcluir(EventoClinico evento) {
         StatusEvento status = evento.getStatusEvento();

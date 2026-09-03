@@ -15,6 +15,8 @@ public final class SeedV2 {
     public static final String TUTOR_MARIA = "22222222-2222-2222-2222-000000000002";
 
     public static final String VET_CAMILA = "33333333-3333-3333-3333-000000000001";
+    /** Da PETMED, e nao da VETCARE: e com ele que se prova o recorte por clinica. */
+    public static final String VET_RAFAEL_DA_PETMED = "33333333-3333-3333-3333-000000000002";
 
     /** Lucas e dono do Bolinha; Maria, da Mimi e do Rex. */
     public static final String ANIMAL_BOLINHA_DO_LUCAS = "44444444-4444-4444-4444-000000000001";

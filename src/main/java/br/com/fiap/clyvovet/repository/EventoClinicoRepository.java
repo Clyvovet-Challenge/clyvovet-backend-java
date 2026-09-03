@@ -70,13 +70,22 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
             @Param("veterinarioId") UUID veterinarioId,
             @Param("clinicaId") UUID clinicaId);
 
-    /** Agendamentos cuja data ja passou e que ninguem concluiu — viram falta (R18). */
+    /**
+     * Agendamentos cuja data ja passou e que ninguem concluiu — viram falta (R18).
+     *
+     * O recorte por clinica nao e opcional para quem chama do corpo clinico:
+     * marcar falta e ESCRITA, e sem ele a varredura de uma clinica reescrevia o
+     * status dos agendamentos de todas as outras.
+     */
     @Query("""
             SELECT e FROM EventoClinico e
             WHERE e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.AGENDADO
               AND e.data < :hoje
+              AND (:clinicaId IS NULL OR e.clinica.id = :clinicaId)
             """)
-    List<EventoClinico> agendadosVencidos(@Param("hoje") LocalDate hoje);
+    List<EventoClinico> agendadosVencidos(
+            @Param("hoje") LocalDate hoje,
+            @Param("clinicaId") UUID clinicaId);
 
     /** Ha retorno em aberto ligado a este evento? Sustenta R14. */
     @Query("""

@@ -70,7 +70,7 @@ Detalhe em [08-seguranca.md](08-seguranca.md).
 
 | | |
 |---|---|
-| Testes | **265**, cobrindo CRUD, filtros, PATCH, JWT, sessão, ownership, rate limit e migrations |
+| Testes | **269**, cobrindo CRUD, filtros, PATCH, JWT, sessão, ownership, rate limit e migrations |
 | Schema | versionado por Flyway, um conjunto de migrations por banco |
 | Bancos | H2 (dev e container), Oracle 19c (entrega), MySQL (alvo do deploy) |
 | Deploy | Docker + docker-compose; script Azure CLI idempotente |
@@ -95,7 +95,7 @@ consegue oferecer.
 `Tutor`, e o isolamento é garantido. Um app voltado ao tutor pode ser construído sobre
 isso sem retrabalho de base.
 
-**A base aguenta.** 265 testes, segurança real e schema versionado significam que a
+**A base aguenta.** 269 testes, segurança real e schema versionado significam que a
 lacuna do projeto é de **direção de produto**, não de capacidade de execução.
 
 ---

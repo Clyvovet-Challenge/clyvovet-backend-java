@@ -119,6 +119,14 @@ Foi a ausência desse recorte em `doTutorNoPeriodo` e `realizadosAte` que entreg
 o extrato financeiro de um tutor em clínicas concorrentes e a carteira de
 inadimplentes da plataforma inteira, com nome e telefone.
 
+A mesma falha reapareceu em `retornosVencidos` e `agendadosVencidos`, e ali com
+um agravante: o `clinicaId` chegava **da query string**, e era opcional. Quem
+omitisse o parâmetro recebia os retornos vencidos de todas as clínicas — nome do
+animal, nome do tutor e telefone — e a varredura de faltas reescrevia o status
+dos agendamentos de todo mundo, que é leitura virando **escrita** entre
+clínicas. Hoje quem decide o valor é o `RetornoService`, e o parâmetro só tem
+efeito para o ADMIN da plataforma.
+
 ---
 
 ## A armadilha do `ESCAPE`
