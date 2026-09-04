@@ -34,13 +34,14 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
 | 19 | Perfil `mysql` nunca executado contra um MySQL real | Média | Configuração | aberto |
+| 20 | CORS não permite PATCH → as seis rotas PATCH são inalcançáveis pelo navegador | **Alta** | Configuração | aberto |
 
 **Novo — introduzido e corrigido na Sprint 3.** A chave de cache das listagens passou
 a precisar do `tutorId`: sem ele, a listagem de um tutor seria servida a outro. Está
 em [08-seguranca.md](08-seguranca.md#ownership) e coberta por
 `OwnershipTest.cacheNaoVazaEntreTutores`.
 
-Restam **4 itens abertos** (7, 9, 12 e 19) e duas pendências parciais (2 e 15).
+Restam **5 itens abertos** (7, 9, 12, 19 e 20) e duas pendências parciais (2 e 15).
 
 > ⚠️ O item **2 é o único de severidade alta ainda em aberto**: o código e a
 > documentação já não têm a senha, mas ela continua no histórico do Git de um
@@ -621,6 +622,40 @@ pontos que só um MySQL responde:
 aplicação com `SPRING_PROFILES_ACTIVE=mysql` e confirmar que o boot passa do
 `validate`. Depois disso, trocar o `MigrationsMySqlTest` por um teste com
 Testcontainers no CI, que é o único jeito de manter a garantia viva.
+
+---
+
+## 20. CORS não permite PATCH
+
+**Severidade:** Alta · **Área:** Configuração · **Situação:** aberto
+
+`SecurityConfig.corsConfigurationSource()` declara
+`setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"))`. **PATCH
+ficou de fora**, e a API tem seis rotas PATCH — `/tutores/{id}`, `/animais/{id}`,
+`/clinicas/{id}`, `/veterinarios/{id}`, `/eventos-clinicos/{id}` e
+`/pagamentos/{id}`.
+
+O navegador emite um preflight `OPTIONS` com `Access-Control-Request-Method: PATCH`,
+o Spring não encontra o método entre os permitidos e recusa. A requisição real nunca
+chega ao controller.
+
+Confirmado em 04/09/2026 com um preflight pelo MockMvc: `OPTIONS /api/v1/animais/{id}`
+com `Access-Control-Request-Method: PATCH` devolve **403**; o mesmo preflight com
+`PUT` devolve 200 e `Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS`.
+
+**Por que passou despercebido.** Nada disso aparece do lado do servidor: os testes
+usam MockMvc, que não faz preflight, e Postman e Insomnia também não. O único
+cliente que sofre é o navegador — exatamente o que ainda não existe. Quando o
+frontend entrar, a falha vai parecer um problema dele.
+
+Os PATCH foram acrescentados depois da configuração de CORS, e a lista de métodos
+não foi revisitada. É o mesmo padrão do item 16: uma configuração escrita à mão que
+para de acompanhar as rotas e não avisa.
+
+**Como fechar:** acrescentar `"PATCH"` à lista. Um teste de preflight
+(`options("/api/v1/animais/{id}")` com os headers de CORS, esperando 200 e o método
+na resposta) evita a reincidência — e vale cobrir os demais métodos na mesma volta,
+para que uma rota nova com verbo novo não repita a história.
 
 ---
 
