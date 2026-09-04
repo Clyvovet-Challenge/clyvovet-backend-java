@@ -121,6 +121,14 @@ cruzado: TUTOR precisa de tutor, VETERINARIO precisa de veterinário, e o ADMIN
 não precisa de nenhum dos dois (nele o vínculo é inerte — o recorte do ADMIN é
 irrestrito de qualquer forma).
 
+As quatro checagens não são intercambiáveis, e a ordem importa para quem lê o
+teste: a do vínculo **ausente** roda antes, então um pedido que manda só o id
+errado (`perfil=VETERINARIO` com `tutorId`) é recusado por falta de
+veterinário, e não por cruzamento. Os dois casos devolvem 409, e só o `campo`
+da resposta os separa — por isso `vinculoCruzadoRecusado` manda **os dois ids**
+e confere o campo. Conferir só o status deixava a checagem do cruzado
+descoberta: apagando as duas linhas do serviço, o teste continuava verde.
+
 Mas a validação cobre só a porta da frente. A linha pode existir vinda de uma
 migration, de uma correção manual no banco ou de um bug futuro, e é por isso que
 o recorte continua contendo o caso por conta própria. Quem testa cada metade

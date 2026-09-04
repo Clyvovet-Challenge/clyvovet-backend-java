@@ -229,17 +229,22 @@ class CicloDeSessaoTest extends TesteDeApi {
     @Test
     @DisplayName("o vinculo cruzado continua recusado")
     void vinculoCruzadoRecusado() throws Exception {
-        // A metade que ja existia. Fica junto para que as duas caiam no mesmo
-        // teste se alguem simplificar a validacao para um lado so.
+        // A metade que ja existia. Os dois ids vao juntos DE PROPOSITO: mandando
+        // so o id errado, quem recusa e a checagem do vinculo AUSENTE, que roda
+        // antes — o 409 chega, o teste passa, e a checagem do cruzado poderia
+        // ter sido apagada sem ninguem notar. O campo na resposta e o que
+        // separa uma metade da outra.
         criarUsuario(tokenAdmin(), """
-                {"email":"%s","senha":"senha12345","perfil":"VETERINARIO","tutorId":"%s"}"""
-                .formatted(emailUnico(), SeedV2.TUTOR_LUCAS))
-                .andExpect(status().isConflict());
+                {"email":"%s","senha":"senha12345","perfil":"VETERINARIO","veterinarioId":"%s","tutorId":"%s"}"""
+                .formatted(emailUnico(), SeedV2.VET_RAFAEL_DA_PETMED, SeedV2.TUTOR_LUCAS))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("tutorId"));
 
         criarUsuario(tokenAdmin(), """
-                {"email":"%s","senha":"senha12345","perfil":"TUTOR","veterinarioId":"%s"}"""
-                .formatted(emailUnico(), SeedV2.VET_RAFAEL_DA_PETMED))
-                .andExpect(status().isConflict());
+                {"email":"%s","senha":"senha12345","perfil":"TUTOR","tutorId":"%s","veterinarioId":"%s"}"""
+                .formatted(emailUnico(), SeedV2.TUTOR_LUCAS, SeedV2.VET_RAFAEL_DA_PETMED))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("veterinarioId"));
     }
 
     @Test
