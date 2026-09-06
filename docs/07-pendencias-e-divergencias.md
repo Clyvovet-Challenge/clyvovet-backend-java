@@ -613,7 +613,7 @@ pontos que só um MySQL responde:
 
 | O que conferir | Por que pode falhar |
 |---|---|
-| `ddl-auto=validate` sobe | O validate compara o tipo JDBC de cada coluna com o do atributo. `TINYINT` para `ativo` e `INT` para `tentativas_falhas` foram escolhidos com isso em mente, mas não confirmados |
+| ~~`ddl-auto=validate` sobe~~ | **Conferido em 06/09/2026 contra MySQL 8.0.46 real: reprovava em 54 das 133 colunas mapeadas** — 33 de UUID (`VARCHAR` vs `char`), 14 de enum (`VARCHAR` vs `ENUM` nativo) e 7 booleanas (`TINYINT` vs `INTEGER`). No Oracle nada disso aparece, e a suíte roda em H2 `MODE=Oracle`. Corrigido: duas propriedades em `application-mysql.properties` e as 7 colunas em `INT` nas V3/V6/V7 |
 | `DROP CONSTRAINT` na V4 | Existe a partir do MySQL 8.0.19. O Flexible Server é 8.0.21+, então deve passar — confirmar a versão exata do servidor provisionado |
 | Os `CHECK` são aplicados | Só valem do MySQL 8.0.16 em diante. Abaixo disso o servidor os aceita **em silêncio** e não valida nada |
 | UUID como `VARCHAR(36)` | Sem as duas linhas de `uuid_jdbc_type` no perfil, o Hibernate grava `BINARY(16)` e os ids não casam com o seed |

@@ -104,7 +104,7 @@ Regras de comunicação observadas, sem exceção no código atual:
 | Enums | `VARCHAR2(n)` + `CHECK (col IN ('A','B',...))` |
 | Dinheiro | `NUMBER(10,2)` / `DECIMAL(10,2)` — nunca `DOUBLE` |
 | Datas | `DATE` (Oracle e MySQL) para `LocalDate`; `TIMESTAMP` (Oracle) / `DATETIME` (MySQL) para `LocalDateTime` |
-| Booleano | `NUMBER(1)` / `TINYINT` + `NumericBooleanConverter` + `CHECK (col IN (0,1))` |
+| Booleano | `NUMBER(1)` (Oracle) / `INT` (MySQL) + `NumericBooleanConverter` + `CHECK (col IN (0,1))`. No MySQL precisa ser `INT`: o conversor entrega `Integer` ao JDBC e o `validate` reprova `TINYINT` |
 | Migrations | Flyway, **dois conjuntos espelhados**: `db/migration/oracle/` e `db/migration/mysql/`. Versões atuais: V1–V4. **A próxima livre é a V5** |
 | DDL | `spring.jpa.hibernate.ddl-auto=validate` — entidade sem coluna correspondente **derruba o boot** |
 | MySQL | `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4` explícito em toda tabela |
@@ -300,7 +300,7 @@ da Parte II.
 | `porte_padrao` | `VARCHAR2(20)` | `VARCHAR(20)` | `CHECK IN ('PEQUENO','MEDIO','GRANDE')` |
 | `expectativa_vida_meses` | `NUMBER(4)` | `SMALLINT` | nulo permitido |
 | `expectativa_vida_fonte` | `VARCHAR2(300)` | `VARCHAR(300)` | de onde veio o número — **obrigatório se a expectativa estiver preenchida** |
-| `ativo` | `NUMBER(1)` | `TINYINT` | DEFAULT 1, `CHECK IN (0,1)` |
+| `ativo` | `NUMBER(1)` | `INT` | DEFAULT 1, `CHECK IN (0,1)` |
 
 Entidade `RacaReferencia`, repositório `RacaReferenciaRepository extends RepositorioBase<RacaReferencia>`,
 novo valor `RACA_REFERENCIA("Raça de referência não encontrada")` no enum `Recurso`.
@@ -662,7 +662,7 @@ dois bancos.
 | `nome` | `VARCHAR2(200)` | `VARCHAR(200)` | NOT NULL |
 | `sistema` | `VARCHAR2(50)` | `VARCHAR(50)` | aparelho acometido (DERMATOLOGICO, CARDIACO, …) |
 | `especie_alvo` | `VARCHAR2(50)` | `VARCHAR(50)` | nulo = qualquer espécie |
-| `ativo` | `NUMBER(1)` | `TINYINT` | DEFAULT 1, `CHECK IN (0,1)` |
+| `ativo` | `NUMBER(1)` | `INT` | DEFAULT 1, `CHECK IN (0,1)` |
 
 #### `diagnostico` — patologia observada em um atendimento
 
@@ -671,7 +671,7 @@ dois bancos.
 | `id` | `VARCHAR2(36)` | `VARCHAR(36)` | PK |
 | `evento_id` | `VARCHAR2(36)` | `VARCHAR(36)` | `fk_diagnostico_evento` → `evento_clinico(id)`, NOT NULL |
 | `patologia_id` | `VARCHAR2(36)` | `VARCHAR(36)` | `fk_diagnostico_patologia` → `patologia(id)`, NOT NULL |
-| `principal` | `NUMBER(1)` | `TINYINT` | DEFAULT 0 — no máximo um principal por evento (regra na aplicação) |
+| `principal` | `NUMBER(1)` | `INT` | DEFAULT 0 — no máximo um principal por evento (regra na aplicação) |
 | `status_diagnostico` | `VARCHAR2(20)` | `VARCHAR(20)` | `CHECK IN ('SUSPEITA','CONFIRMADO','DESCARTADO')` |
 | `observacao` | `VARCHAR2(1000)` | `VARCHAR(1000)` | |
 
@@ -686,9 +686,9 @@ dois bancos.
 | `principio_ativo` | `VARCHAR2(200)` | `VARCHAR(200)` | |
 | `classe_terapeutica` | `VARCHAR2(100)` | `VARCHAR(100)` | agrupador do painel (R3) |
 | `tarja` | `VARCHAR2(20)` | `VARCHAR(20)` | `CHECK IN ('LIVRE','AMARELA','VERMELHA','PRETA')` |
-| `controlado` | `NUMBER(1)` | `TINYINT` | DEFAULT 0, `CHECK IN (0,1)` |
+| `controlado` | `NUMBER(1)` | `INT` | DEFAULT 0, `CHECK IN (0,1)` |
 | `registro_mapa` | `VARCHAR2(50)` | `VARCHAR(50)` | registro no MAPA |
-| `ativo` | `NUMBER(1)` | `TINYINT` | DEFAULT 1, `CHECK IN (0,1)` |
+| `ativo` | `NUMBER(1)` | `INT` | DEFAULT 1, `CHECK IN (0,1)` |
 
 > ⚠️ **Verificar antes de criar:** o enunciado diz que a API .NET, no mesmo banco Oracle,
 > já trata "produtos" e "sugestões de produtos". Se `produto` já existir com medicamentos,

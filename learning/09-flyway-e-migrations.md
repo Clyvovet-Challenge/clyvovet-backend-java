@@ -184,7 +184,7 @@ As diferenças entre os dois conjuntos são quase todas mecânicas:
 |---|---|---|
 | `VARCHAR2(n)` | `VARCHAR(n)` | MySQL não conhece `VARCHAR2` |
 | `NUMBER(10,2)` | `DECIMAL(10,2)` | precisão exata; **nunca `DOUBLE`** para dinheiro |
-| `NUMBER(1)` | `TINYINT` | booleano gravado como 0/1 |
+| `NUMBER(1)` | `INT` | booleano com `NumericBooleanConverter`: chega ao JDBC como `Integer`, e `TINYINT` reprova no `validate` |
 | `NUMBER(3)` | `INT` | o `validate` compara o tipo JDBC: `int` espera `INTEGER` |
 | `TIMESTAMP` | **`DATETIME`** | ver abaixo |
 

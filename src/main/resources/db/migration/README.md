@@ -64,7 +64,7 @@ São 205 linhas de SQL, e **três decisões**. O resto é renomeação mecânica
 | texto | `VARCHAR2(n)` | `VARCHAR(n)` | MySQL não conhece `VARCHAR2`. 69 ocorrências, troca direta |
 | dinheiro | `NUMBER(10,2)` | `DECIMAL(10,2)` | mesma precisão exata. Nunca `DOUBLE` para valor monetário |
 | — | — | `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4` | são os defaults do MySQL 8, mas explícito evita MyISAM (ignora FK em silêncio) e charset sem acento |
-| `usuario.ativo` | `NUMBER(1)` | `TINYINT` | o campo é `boolean` com `NumericBooleanConverter`: grava 0/1 num inteiro, não num BOOLEAN nativo |
+| `usuario.ativo` | `NUMBER(1)` | `INT` | o campo é `boolean` com `NumericBooleanConverter`, que o entrega ao JDBC como `Integer` — não como boolean. `TINYINT` parece o equivalente natural, mas o `validate` compara família de tipo e reprova `TINYINT` contra `INTEGER` |
 | `usuario.tentativas_falhas` | `NUMBER(3)` | `INT` | o campo é `int` em Java, e o `validate` do Hibernate compara o tipo JDBC. `SMALLINT` caberia, mas economizar 2 bytes não paga uma falha de boot |
 | `usuario.bloqueado_ate` | `TIMESTAMP` | `DATETIME` | **a importante** — ver abaixo |
 
