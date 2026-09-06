@@ -6,8 +6,9 @@
 -- la -- aqui ficam so as diferencas de dialeto, que sao cinco:
 --
 --   1. VARCHAR2 vira VARCHAR; NUMBER(10,2) vira DECIMAL(10,2);
---      NUMBER(4) vira INT; NUMBER(1) vira TINYINT -- as mesmas
---      correspondencias ja usadas da V1 a V5.
+--      NUMBER(4) vira INT; NUMBER(1) tambem vira INT, porque e
+--      boolean com NumericBooleanConverter e o validate o espera
+--      como INTEGER -- as mesmas correspondencias da V1 a V5.
 --   2. A ordem de DEFAULT e NOT NULL se inverte.
 --   3. SYSDATE vira CURRENT_DATE.
 --   4. ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 em toda tabela nova, como
@@ -36,7 +37,7 @@ CREATE TABLE servico (
     tipo_evento      VARCHAR(20)   NOT NULL,
     preco            DECIMAL(10,2) NOT NULL,
     duracao_minutos  INT           NOT NULL,
-    ativo            TINYINT       NOT NULL DEFAULT 1,
+    ativo            INT           NOT NULL DEFAULT 1,
     CONSTRAINT fk_servico_clinica  FOREIGN KEY (clinica_id) REFERENCES clinica(id),
     CONSTRAINT chk_servico_tipo    CHECK (tipo_evento IN ('CONSULTA','RETORNO','VACINA','EXAME','CIRURGIA','OUTRO')),
     CONSTRAINT chk_servico_preco   CHECK (preco >= 0),
@@ -92,7 +93,7 @@ CREATE TABLE alerta_clinico (
     descricao     VARCHAR(500) NOT NULL,
     origem        VARCHAR(15)  NOT NULL,
     registrado_em DATE         NOT NULL DEFAULT (CURRENT_DATE),
-    ativo         TINYINT      NOT NULL DEFAULT 1,
+    ativo         INT          NOT NULL DEFAULT 1,
     -- ON DELETE CASCADE: estas linhas nao tem vida propria sem o animal.
     -- Sem isso, DELETE /animais/{id} passaria a falhar em todo animal que
     -- ja tivesse alerta, autorizacao ou acesso registrado -- e o erro
@@ -110,7 +111,7 @@ CREATE INDEX idx_alerta_animal ON alerta_clinico (animal_id, ativo);
 -- ---------- Colunas novas ----------
 
 ALTER TABLE animal ADD COLUMN microchip VARCHAR(15);
-ALTER TABLE animal ADD COLUMN castrado TINYINT;
+ALTER TABLE animal ADD COLUMN castrado INT;
 
 ALTER TABLE animal ADD CONSTRAINT uk_animal_microchip UNIQUE (microchip);
 ALTER TABLE animal ADD CONSTRAINT chk_animal_castrado CHECK (castrado IS NULL OR castrado IN (0,1));

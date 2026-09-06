@@ -6,7 +6,7 @@
 -- anos e a decisao de auditar por dia em vez de por leitura estao no
 -- cabecalho de la. Aqui, so as diferencas de dialeto:
 --
---   1. VARCHAR2 vira VARCHAR; NUMBER(1) vira TINYINT; NUMBER(6) vira INT.
+--   1. VARCHAR2 vira VARCHAR; NUMBER(1) e NUMBER(6) viram INT.
 --   2. A ordem de DEFAULT e NOT NULL se inverte.
 --   3. SYSDATE vira CURRENT_DATE, entre parenteses: o MySQL exige
 --      parenteses em DEFAULT de expressao (8.0.13+).
@@ -56,9 +56,9 @@ CREATE TABLE acesso_historico (
     usuario_id  VARCHAR(36) NOT NULL,
     clinica_id  VARCHAR(36),
     dia         DATE        NOT NULL,
-    nivel       TINYINT     NOT NULL,
+    nivel       INT         NOT NULL,
     vezes       INT         NOT NULL DEFAULT 1,
-    emergencial TINYINT     NOT NULL DEFAULT 0,
+    emergencial INT         NOT NULL DEFAULT 0,
     motivo      VARCHAR(500),
     -- ON DELETE CASCADE: estas linhas nao tem vida propria sem o animal.
     -- Sem isso, DELETE /animais/{id} passaria a falhar em todo animal que
@@ -78,5 +78,5 @@ CREATE INDEX idx_acesso_animal ON acesso_historico (animal_id, dia);
 CREATE INDEX idx_acesso_usuario ON acesso_historico (usuario_id, dia);
 
 -- Ver o cabecalho do conjunto oracle para a razao do DEFAULT 1.
-ALTER TABLE animal ADD COLUMN resumo_seguranca_ativo TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE animal ADD COLUMN resumo_seguranca_ativo INT NOT NULL DEFAULT 1;
 ALTER TABLE animal ADD CONSTRAINT chk_animal_resumo CHECK (resumo_seguranca_ativo IN (0,1));

@@ -18,11 +18,13 @@
 -- tres sao as unicas do projeto inteiro que nao sao renomeacao
 -- mecanica de tipo, entao vale saber por que cada uma e assim:
 --
---   ativo NUMBER(1) -> TINYINT
+--   ativo NUMBER(1) -> INT
 --       Usuario.ativo e boolean anotado com NumericBooleanConverter,
 --       ou seja, o Hibernate grava 0/1 num inteiro -- nao um BOOLEAN
---       nativo. TINYINT e o inteiro de 1 byte do MySQL e o BOOLEAN do
---       MySQL e apelido dele, entao os dois lados falam a mesma coisa.
+--       nativo. Precisa ser INT, e nao TINYINT: o conversor faz o
+--       atributo chegar ao JDBC como Integer, e o ddl-auto=validate
+--       compara familia de tipo JDBC. TINYINT e INTEGER sao familias
+--       diferentes, e a divergencia impede o boot da aplicacao.
 --
 --   tentativas_falhas NUMBER(3) -> INT
 --       O campo e int em Java. SMALLINT caberia de sobra (o limite de
@@ -45,7 +47,7 @@ CREATE TABLE usuario (
     email             VARCHAR(200) NOT NULL,
     senha             VARCHAR(100) NOT NULL,
     perfil            VARCHAR(20)  NOT NULL,
-    ativo             TINYINT      DEFAULT 1 NOT NULL,
+    ativo             INT          DEFAULT 1 NOT NULL,
     tentativas_falhas INT          DEFAULT 0 NOT NULL,
     bloqueado_ate     DATETIME,
     tutor_id          VARCHAR(36),
