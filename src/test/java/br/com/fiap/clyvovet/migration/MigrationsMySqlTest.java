@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(7);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
+        assertThat(resultado.migrationsExecuted).isEqualTo(8);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
     }
 
     @Test
