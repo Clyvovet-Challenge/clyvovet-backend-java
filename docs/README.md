@@ -25,6 +25,7 @@ silenciosamente corrigido no texto.
 | [08-seguranca.md](08-seguranca.md) | Autenticação JWT, perfis, ownership, matriz de autorização e hardening |
 | [09-estado-do-projeto.md](09-estado-do-projeto.md) | Onde o projeto está, o que serve à tese de absenteísmo, o que falta e em que ordem |
 | [10-guia-do-frontend.md](10-guia-do-frontend.md) | **Para quem consome a API.** Autenticação, recorte de acesso, forma das respostas, HATEOAS e o que o cliente nunca deve assumir |
+| [11-auditoria-de-arquitetura.md](11-auditoria-de-arquitetura.md) | Auditoria de 06/09/2026: decisão de banco compartilhado, o que esta API é dona e o que ela precisa corrigir |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta

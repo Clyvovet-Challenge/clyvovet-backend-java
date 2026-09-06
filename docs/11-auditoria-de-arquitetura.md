@@ -1,0 +1,190 @@
+# Auditoria de arquitetura — o que este repositório precisa corrigir
+
+> Levantado em **06/09/2026** sobre o código, migrations, Dockerfile e pipelines —
+> não sobre documentação. Relatório completo dos dois backends, com comparação de
+> arquiteturas e matriz de riscos:
+> [claude.ai/code/artifact/79da68b6-2d7d-41b1-82c2-aac5fc68652a](https://claude.ai/code/artifact/79da68b6-2d7d-41b1-82c2-aac5fc68652a)
+>
+> Este arquivo é o recorte do que **esta API** é dona. O recorte da API .NET está
+> em `ClyvoVet-api/docs/auditoria-de-arquitetura.md`; o do app, em
+> `2tdspw-challenge-clyvovet-challenge/spec/12-auditoria-de-arquitetura.md`.
+
+---
+
+## 1. A decisão de arquitetura
+
+**Banco compartilhado entre as duas APIs, com esta aqui dona do schema.**
+
+A decisão não foi tomada por conveniência de prazo. Foi tomada porque o código já
+satisfaz a condição que torna banco compartilhado seguro:
+
+> **Cada tabela tem exatamente um escritor.**
+> A API .NET lê `animal` e `tutor` e nunca escreve nelas — verificado em
+> `AnimalRepository.cs`, que expõe apenas `GetByIdAsync` e `GetByTutorIdAsync`, e
+> por busca em todo o projeto dela por escrita nesses `DbSet`.
+
+A objeção clássica ao banco compartilhado é disputa de escrita entre serviços.
+Aqui ela não existe. As alternativas avaliadas — a .NET consumir esta API por
+HTTP, ou bancos separados com mensageria — resolvem um problema que este sistema
+não tem, e cobram por isso em componentes que o time teria de operar.
+
+### O que esta API é dona
+
+| | |
+|---|---|
+| **Dados** | `usuario`, `tutor`, `animal`, `clinica`, `veterinario`, `servico`, `evento_clinico`, `pagamento`, `disponibilidade_veterinario`, `bloqueio`, `alerta_clinico`, `autorizacao_acesso`, `acesso_historico` |
+| **Schema** | **Inteiro**, incluindo as seis tabelas `t_clyvo_*` que só a .NET consome (V8). O Flyway daqui é a fonte única |
+| **Identidade** | Emissão e validação de JWT. A .NET não tem noção de usuário hoje |
+
+### O que não muda
+
+Nenhuma tabela troca de dono. A .NET continua dona do **conteúdo** das
+`t_clyvo_*` — só a **definição** delas passou a viver aqui, para que o
+provisionamento tenha um caminho só.
+
+---
+
+## 2. Achados desta API
+
+Ordenados por gravidade. Cada um cita o arquivo que justifica a conclusão.
+
+### 2.1 🔴 Estado de sessão em memória local
+
+Três componentes guardam estado no processo:
+
+| Componente | O que guarda | O que quebra com mais de uma instância |
+|---|---|---|
+| `security/RevogacaoTokenService.java` | deny-list de `jti` revogado | logout numa instância **não** revoga nas demais — o token segue válido em 2 de 3 |
+| `security/RateLimitFilter.java` | buckets do bucket4j | o limite efetivo multiplica pelo número de réplicas |
+| `config/CacheConfig.java` | caches `pagamentos`, `eventos`, `tutores`, `animais`, `clinicas`, `veterinarios` | `@CacheEvict` limpa só a instância que atendeu; as outras servem dado velho |
+
+**Isto já estava documentado no próprio código.** O comentário de
+`RevogacaoTokenService` diz, textualmente, que o estado é local ao processo e que
+a correção seria um cache compartilhado (Redis). A auditoria confirma o
+diagnóstico, não o descobre.
+
+**Correção:** Redis para os três. **Não é necessário para a entrega** — uma
+instância de App Service elimina os três de uma vez, e é a decisão certa para o
+prazo. Vira obrigatório no dia em que houver autoscaling.
+
+### 2.2 🔴 Não existe script de deploy para esta API
+
+O repositório da .NET tem `azure/00-04.sh` provisionando Resource Group, MySQL,
+App Service Plan e um Web App `DOTNETCORE:8.0`. **Não há equivalente aqui.**
+
+Consequência: hoje só a .NET vai ao ar. O app móvel depende das duas — a .NET
+cobre apenas lembretes; autenticação, pets, agenda e histórico são desta API.
+
+O `deploy.sh` que existe provisiona VM Ubuntu com Docker Compose e H2, que é o
+desenho antigo e não serve: a opção escolhida é App Service + banco PaaS.
+
+**Correção:** script `az` cobrindo `appservice plan create --is-linux`,
+`webapp create --runtime JAVA:17-java17`, `webapp config appsettings set` e
+`webapp deploy --type jar`. O plano já existe e é compartilhável com a .NET.
+
+### 2.3 🟡 Connection pool no padrão
+
+Nenhuma propriedade `spring.datasource.hikari.*` nos `.properties`. Vale o padrão
+do HikariCP: **10 conexões por instância**.
+
+O problema não é esse número, é o desequilíbrio: a API .NET opera no padrão do
+MySqlConnector, **100 por instância** — dez vezes mais, sendo a API com menos
+endpoints e menos tráfego. Contra um `Standard_B1ms` são 110 conexões potenciais
+com uma instância de cada.
+
+**Correção:** `spring.datasource.hikari.maximum-pool-size=15` em
+`application-mysql.properties`, e o equivalente do lado .NET.
+
+**Antes de escalar:** confirmar o teto real com
+`SHOW VARIABLES LIKE 'max_connections'`. Não presumir o valor do tier.
+
+### 2.4 🟡 Sem correlation ID e sem tracing
+
+Não há `MDC`, header de correlação, nem OpenTelemetry. O actuator expõe só
+`health` — decisão de segurança correta, registrada em `comum.properties`, com o
+custo de não haver métricas.
+
+Rastrear uma requisição nesta API, que tem **74 endpoints**, depende hoje de
+timestamp. A API .NET tem `CorrelationIdMiddleware` com `X-Correlation-Id` e
+OpenTelemetry — a assimetria é grande.
+
+**Correção:** filtro que aceita ou gera `X-Correlation-Id`, coloca no `MDC` e
+devolve no header. O app propaga o mesmo id para as duas APIs, e aí passa a
+existir rastro ponta a ponta mesmo sem as APIs se chamarem.
+
+### 2.5 🟡 Nenhum controle de concorrência
+
+Não existe `@Version`, `@Lock` ou `LockModeType` em nenhuma entidade. Nível de
+isolamento não configurado — vale o padrão do MySQL (`REPEATABLE READ`).
+
+Cenário concreto: dois `PATCH /animais/{id}` concorrentes se sobrescrevem em
+silêncio. O ciclo do JPA é ler-modificar-gravar; o segundo commit vence e a
+alteração do primeiro se perde **sem erro**.
+
+**Correção:** `@Version` em `Animal`, `Tutor` e `EventoClinico` — as entidades que
+o app edita. O Hibernate passa a lançar `OptimisticLockException`, que vira 409.
+Exige migration nova (uma coluna por tabela).
+
+### 2.6 🟢 Race condition conhecida em `marcarFaltas()`
+
+`service/RetornoService.java:137` lê os agendamentos vencidos e grava todos como
+`FALTOU`. Duas chamadas concorrentes processam o mesmo conjunto.
+
+É **idempotente no resultado** — gravar `FALTOU` duas vezes dá `FALTOU` —, então
+o impacto é escrita e log duplicados, não corrupção.
+
+Vale o registro de que o comentário ali documenta a decisão de ser endpoint e não
+`@Scheduled`, *"porque agendador em aplicação com mais de uma instância dispara em
+todas ao mesmo tempo"*. **Não há nenhum `@Scheduled` no projeto.** É maturidade
+real: o problema foi antecipado.
+
+### 2.7 🟢 Estágio Docker no pipeline conflita com a opção de entrega
+
+O `azure-pipelines.yml` tem um estágio `Imagem` que constrói imagem Docker. Se a
+entrega de DevOps for App Service + banco PaaS, o artefato publicado não pode sair
+dele.
+
+**Correção:** remover ou desabilitar o estágio. O `Dockerfile` continua no
+repositório servindo ao desenvolvimento e ao CI.
+
+---
+
+## 3. O que já foi corrigido
+
+Registrado aqui para que a auditoria não seja lida como lista de pendências que
+inclui coisas resolvidas.
+
+| Correção | Commit |
+|---|---|
+| `ddl-auto=validate` reprovava em **54 das 133 colunas** contra MySQL real — 33 de UUID, 14 de enum, 7 booleanas. Corrigido com duas propriedades de tipo JDBC e sete colunas em `INT` | `fix(mysql): faz o ddl-auto=validate passar contra um MySQL real` |
+| Convenção `NUMBER(1) → TINYINT` em quatro documentos reintroduziria a falha na próxima tabela | `docs: corrige a convencao de tipo booleano no MySQL` |
+| Metade do schema não era versionada — as `t_clyvo_*` nasciam de SQL avulso no repo .NET e não existiriam na nuvem | `feat(schema): V8 traz as tabelas da API .NET para o Flyway` |
+
+---
+
+## 4. Ordem sugerida
+
+| # | O quê | Bloqueia a entrega? |
+|---|---|---|
+| 1 | Script `az` de deploy desta API (§2.2) | **Sim** — sem ela o app não funciona na nuvem |
+| 2 | Pool em 15 (§2.3) | Não, mas é 1 linha |
+| 3 | Correlation ID (§2.4) | Não |
+| 4 | Compartilhar a chave JWT com a .NET via Key Vault | Não — ver spec da .NET, §2.1 |
+| 5 | `@Version` (§2.5) | Não |
+| 6 | Remover estágio `Imagem` do pipeline (§2.7) | Depende da régua de DevOps |
+| 7 | Redis (§2.1) | Só se escalarem |
+
+---
+
+## 5. O que **não** fazer
+
+Registrado porque são caminhos plausíveis que a auditoria descartou com base no
+código, e alguém pode propô-los de novo:
+
+- **Não** introduzir chamadas HTTP desta API para a .NET, nem o contrário. Hoje
+  não existe nenhuma, e a integração pelo banco tem integridade referencial
+  garantida que uma chamada HTTP perderia.
+- **Não** separar os bancos. Exigiria replicar `animal` e `tutor` para o lado
+  .NET — dados que ela não é dona — e trocar consistência forte por eventual.
+- **Não** mover as `t_clyvo_*` de volta para fora do Flyway. Foi exatamente o que
+  fez metade do schema não existir no caminho de deploy.
