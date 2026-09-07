@@ -70,63 +70,22 @@ stages:
             artifact: clyvovet-jar
             displayName: Publica o artefato
 
-  - stage: Imagem
-    displayName: Imagem Docker
-    dependsOn: Build
-    # Só na branch padrão: um PR não precisa gerar imagem.
-    condition: >
-      and(succeeded(),
-          or(eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-             eq(variables['Build.SourceBranch'], 'refs/heads/master')))
-    jobs:
-      - job: docker
-        steps:
-          - task: Docker@2
-            displayName: Build da imagem
-            inputs:
-              command: build
-              repository: clyvovet
-              dockerfile: Dockerfile
-              tags: |
-                $(Build.BuildId)
-                latest
-
-          # O push está comentado de propósito: exige um service connection ao
-          # Azure Container Registry, que depende da conta do time. Quando ela
-          # existir, basta preencher containerRegistry e descomentar — a imagem
-          # já é construída e validada acima.
-          #
-          # - task: Docker@2
-          #   displayName: Push para o ACR
-          #   inputs:
-          #     command: push
-          #     repository: clyvovet
-          #     containerRegistry: '<service-connection-do-acr>'
-          #     tags: |
-          #       $(Build.BuildId)
-          #       latest
-
-  # CD — deploy no Azure Container Apps.
+  # ============================================================
+  # SEM ESTAGIO DE IMAGEM DOCKER, DE PROPOSITO
   #
-  # Fica desabilitado até existirem o registry e o service connection. As
-  # variáveis de ambiente NÃO entram aqui em texto: DB_URL, DB_USERNAME,
-  # DB_PASSWORD e JWT_SECRET são secrets do container ou referência ao Key
-  # Vault, como está descrito em application-mysql.properties.
+  # Havia aqui um estagio "Imagem" que construia a imagem, e um estagio "Deploy"
+  # comentado apontando para Azure Container Apps. Os dois foram removidos.
   #
-  # - stage: Deploy
-  #   displayName: Deploy no Azure
-  #   dependsOn: Imagem
-  #   condition: succeeded()
-  #   jobs:
-  #     - deployment: producao
-  #       environment: clyvovet-producao
-  #       strategy:
-  #         runOnce:
-  #           deploy:
-  #             steps:
-  #               - task: AzureContainerApps@1
-  #                 inputs:
-  #                   azureSubscription: '<service-connection-azure>'
-  #                   containerAppName: clyvovet-api
-  #                   resourceGroup: '<resource-group>'
-  #                   imageToDeploy: '<acr>.azurecr.io/clyvovet:$(Build.BuildId)'
+  # A disciplina de DevOps exige escolher UMA opcao e nao misturar. A escolhida e
+  # a Opcao 2 -- App Service com banco PaaS --, onde "App Containerizado" custa
+  # -40 e "Banco Containerizado" custa outros -40. Um pipeline que publica imagem
+  # e o caminho mais direto para o artefato errado chegar na nuvem.
+  #
+  # O Dockerfile continua no repositorio e serve ao desenvolvimento local, ao
+  # docker-compose de integracao e ao CI. O proibido e o ARTEFATO PUBLICADO sair
+  # dele -- e por isso o deploy vive em azure/07-deploy-java.sh, que publica o jar
+  # gerado pelo estagio Build acima.
+  #
+  # O CD automatico e requisito da SPRINT 4, com Azure DevOps. Ver
+  # docs/12-plano-de-entrega-sprint3.md, secao 9.
+  # ============================================================
