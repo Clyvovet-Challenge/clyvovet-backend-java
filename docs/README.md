@@ -19,7 +19,7 @@ silenciosamente corrigido no texto.
 | [02-modelo-de-dados.md](02-modelo-de-dados.md) | Entidades JPA, relacionamentos, enums, mapeamento objeto↔tabela, DDL Oracle |
 | [03-api-rest.md](03-api-rest.md) | Os 74 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
 | [04-configuracao.md](04-configuracao.md) | Perfis Spring (`oracle`, `h2`, `dev`), propriedades, como rodar localmente |
-| [05-deploy.md](05-deploy.md) | Dockerfile, docker-compose, provisionamento Azure via `deploy.sh`, o que chega na VM |
+| [05-deploy.md](05-deploy.md) | Como o artefato chega à Azure e **por que** cada decisão: App Service nativo em vez de container, banco vazio, ordem de boot. O `deploy.sh` que provisionava VM com Compose e H2 foi removido — ele disparava três penalidades de −40 |
 | [06-guia-de-desenvolvimento.md](06-guia-de-desenvolvimento.md) | Convenções do código, como adicionar uma entidade nova, build, testes e o grafo do codebase |
 | [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e documentação |
 | [08-seguranca.md](08-seguranca.md) | Autenticação JWT, perfis, ownership, matriz de autorização e hardening |
@@ -27,6 +27,7 @@ silenciosamente corrigido no texto.
 | [10-guia-do-frontend.md](10-guia-do-frontend.md) | **Para quem consome a API.** Autenticação, recorte de acesso, forma das respostas, HATEOAS e o que o cliente nunca deve assumir |
 | [11-auditoria-de-arquitetura.md](11-auditoria-de-arquitetura.md) | Auditoria de 06/09/2026: decisão de banco compartilhado, o que esta API é dona e o que ela precisa corrigir |
 | [12-plano-de-entrega-sprint3.md](12-plano-de-entrega-sprint3.md) | **O plano da entrega de 12/09.** A régua de avaliação de DevOps e Java Advanced, a infraestrutura decidida, a ordem de execução e o cronograma |
+| [13-arquitetura-na-azure.md](13-arquitetura-na-azure.md) | O desenho da arquitetura e seu par escrito: os cinco recursos com SKU e script, os quatro fluxos, o orçamento de conexões e o que ficou deliberadamente fora |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta

@@ -124,18 +124,29 @@ Em ordem de execução. O que está acima destrava o que está abaixo.
    exigem `${JWT_SECRET}` sem fallback — lá a ausência da variável derruba o boot
    em vez de assumir uma chave conhecida. No repositório da .NET, o
    `appsettings.json` só tem placeholders (`SUA_API_KEY`, `SEU_AUTH_TOKEN`).
-5. **Roteiro do vídeo de DevOps** com o seed pensado para a narrativa: o item 9.3
+5. ✅ **Desenho da arquitetura** — [`docs/arquitetura-azure.svg`](arquitetura-azure.svg),
+   com o par escrito em [`docs/13-arquitetura-na-azure.md`](13-arquitetura-na-azure.md).
+   **Este item não estava nesta lista, e vale até 20 pontos** — metade do que não é
+   vídeo na disciplina. O repositório não tinha desenho nenhum; o único que existia
+   estava no repositório da .NET e retratava a infraestrutura anterior, com região
+   `chilecentral` e uma API só.
+
+   A régua penaliza **−20** um desenho *"parecido com Fluxo, Togaf ou UML"*, então
+   ele mostra **recursos e tráfego** — caixas que existem no portal da Azure e as
+   setas entre elas —, e não etapas de processo nem classes.
+
+6. **Roteiro do vídeo de DevOps** com o seed pensado para a narrativa: o item 9.3
    exige CRUD em **duas tabelas relacionadas**, com `SELECT` evidenciando cada
    operação. `t_clyvo_animal` e `t_clyvo_tutor` servem — são o CORE e têm FK entre
    si, o que atende também o *"tabelas significativas para a solução"*.
-6. **PDF de entrega** — nome completo e RM de todos, link do GitHub, link do
+7. **PDF de entrega** — nome completo e RM de todos, link do GitHub, link do
    YouTube. *"Não pode ter mais nada no PDF"* (p. 12).
-7. ✅ **Removido o que disparava −40** — o `deploy.sh` provisionava VM com Docker
+8. ✅ **Removido o que disparava −40** — o `deploy.sh` provisionava VM com Docker
    Compose e H2 (três penalidades de −40 no mesmo arquivo: app containerizado,
    banco containerizado e banco não permitido), e o `azure-pipelines.yml` tinha um
    estágio `Imagem` que construía imagem Docker. O `Dockerfile` ficou: o proibido é
    o **artefato publicado** sair dele.
-8. **Se sobrar tempo:** JWT compartilhado com a .NET, na ordem decidida — só
+9. **Se sobrar tempo:** JWT compartilhado com a .NET, na ordem decidida — só
    depois do deploy estar verificado, para que uma quebra tenha causa óbvia.
 
 ---

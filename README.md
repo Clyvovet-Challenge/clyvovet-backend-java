@@ -562,6 +562,30 @@ Os requisitos do Challenge que originaram o projeto estão em
 
 ## Deploy na Azure — passo a passo
 
+### Os recursos, antes dos comandos
+
+![Arquitetura na Azure](docs/arquitetura-azure.svg)
+
+Cinco recursos, um script por recurso, todos por **Azure CLI**. As duas APIs
+dividem um App Service Plan **B1 Linux** e um **Azure Database for MySQL Flexible
+Server** — nada containerizado, nem a aplicação, nem o banco.
+
+Três coisas do desenho que decidem se isso funciona, e que valem ler antes de
+digitar o primeiro comando:
+
+- **O banco é provisionado vazio.** Quem cria o schema é o Flyway desta API, no
+  primeiro boot. Aplicar DDL à mão antes disso deixa as tabelas sem a
+  `flyway_schema_history`, e o Flyway recusa migrar um schema não vazio que ele não
+  conhece — a aplicação não sobe.
+- **A API Java sobe antes da .NET.** As seis tabelas que a .NET consome nascem
+  daquelas migrations; se ela subir primeiro, encontra um banco vazio.
+- **Uma instância, autoscale desligado.** Cinco componentes guardam estado no
+  processo, e o sintoma de errar aqui não aparece em log de erro — aparece como
+  logout que não revoga e notificação duplicada.
+
+O detalhamento de cada recurso, de cada fluxo e do que ficou deliberadamente fora
+está em [docs/13-arquitetura-na-azure.md](docs/13-arquitetura-na-azure.md).
+
 Arquitetura: **App Service + banco PaaS**, nada containerizado. Dois Web Apps
 compartilhando um App Service Plan, sobre um Azure Database for MySQL Flexible
 Server. Todos os recursos são criados por **Azure CLI**, um script por recurso, em
