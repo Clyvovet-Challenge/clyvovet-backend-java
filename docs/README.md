@@ -26,6 +26,7 @@ silenciosamente corrigido no texto.
 | [09-estado-do-projeto.md](09-estado-do-projeto.md) | Onde o projeto está, o que serve à tese de absenteísmo, o que falta e em que ordem |
 | [10-guia-do-frontend.md](10-guia-do-frontend.md) | **Para quem consome a API.** Autenticação, recorte de acesso, forma das respostas, HATEOAS e o que o cliente nunca deve assumir |
 | [11-auditoria-de-arquitetura.md](11-auditoria-de-arquitetura.md) | Auditoria de 06/09/2026: decisão de banco compartilhado, o que esta API é dona e o que ela precisa corrigir |
+| [12-plano-de-entrega-sprint3.md](12-plano-de-entrega-sprint3.md) | **O plano da entrega de 12/09.** A régua de avaliação de DevOps e Java Advanced, a infraestrutura decidida, a ordem de execução e o cronograma |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta
