@@ -92,11 +92,36 @@ MySqlConnector, **100 por instância** — dez vezes mais, sendo a API com menos
 endpoints e menos tráfego. Contra um `Standard_B1ms` são 110 conexões potenciais
 com uma instância de cada.
 
-**Correção:** `spring.datasource.hikari.maximum-pool-size=15` em
-`application-mysql.properties`, e o equivalente do lado .NET.
+**✅ Corrigido, mas com número diferente do sugerido acima: 10, não 15.**
 
-**Antes de escalar:** confirmar o teto real com
-`SHOW VARIABLES LIKE 'max_connections'`. Não presumir o valor do tier.
+O lado .NET foi fechado primeiro, em 15 (`Database__MaxPoolSize`, via
+`MySqlConnectionStringBuilder`). Com isso o desequilíbrio de 10 contra 100 deixou de
+existir — e o argumento para subir a Java caiu junto com ele.
+
+O que restou decidir foi o número, e aí manda o hardware: o App Service é **B1, um
+core**, compartilhado com a API .NET. Conexão ociosa não processa requisição. Num
+core só, passar de 10 gasta memória da JVM (que roda com `-Xmx512m`) para engordar
+uma fila que a CPU não drena mais rápido. O total fica em **10 + 15 = 25** conexões
+potenciais com uma instância de cada.
+
+O pool agora está **declarado**, e não herdado. O padrão do HikariCP é 10 — por
+acaso o número certo aqui —, mas "por acaso o padrão serve" e "escolhemos 10" são
+coisas diferentes na hora de justificar, e a segunda é a que sobrevive a uma troca
+de versão. Junto entraram `minimum-idle=2` (o padrão do Hikari é não encolher
+nunca, o que num plano compartilhado é o comportamento errado), `max-lifetime` e
+`idle-timeout` abaixo do `wait_timeout` do servidor (quem fecha a conexão tem de
+ser o pool, não o gateway do MySQL — se o servidor derruba primeiro, o Hikari só
+descobre ao tentar usar, e o sintoma é erro de rede numa requisição de usuário) e
+`connection-timeout=10000`.
+
+**O teto continua sendo medido, não presumido** — e agora automaticamente. O
+`azure/09-verificar.sh` roda `SHOW VARIABLES LIKE 'max_connections'`, compara com o
+orçamento de 25 e avisa se estiver apertado. O lugar de descobrir isso é a
+verificação, não a gravação do vídeo.
+
+> **Não coberto por teste:** essas propriedades vivem no perfil `mysql`, e a suíte
+> roda em `dev`/H2. Elas só valem quando o perfil `mysql` sobe de verdade — ou
+> seja, no deploy. O `09-verificar.sh` é a rede aqui.
 
 ### 2.4 🟡 Sem correlation ID e sem tracing
 
@@ -183,9 +208,51 @@ equivalente configurado: o Maven não audita nada por padrão.
 Isso não quer dizer que esteja limpo. Quer dizer que **ninguém sabe**, e que os
 outros dois só souberam porque a ferramenta existia.
 
-**Correção:** `org.owasp:dependency-check-maven` no `pom.xml`, rodando no job de
-testes. Ele baixa a base do NVD na primeira execução, então convém prender ao CI e
-não ao build de todo mundo.
+**✅ Verificado, e não estava limpo.** Quatro pacotes com aviso, **três deles
+CRÍTICOS no mesmo artefato** — e é o pior artefato possível para isso:
+
+| Pacote | Versão | Avisos | Corrigido em |
+|---|---|---|---|
+| `org.apache.tomcat.embed:tomcat-embed-core` | 10.1.55 | **3 CRÍTICOS**: `GHSA-9xv2-5v5q-p794` (bypass de autenticação por captura-replay no DIGEST), `GHSA-gcx9-497g-6cp6` (controle de acesso e autorização incorretos), `GHSA-h3x4-894j-xpx5` (autorização incorreta na autenticação FORM) | 10.1.58 |
+| `com.fasterxml.jackson.core:jackson-databind` | 2.21.4 | 3 moderados: `@JsonView` e `@JsonIgnoreProperties` contornáveis na desserialização | 2.21.5 |
+| `org.apache.logging.log4j:log4j-api` | 2.24.3 | `GHSA-qv9r-c865-cp47`, moderado | 2.25.5 |
+| `org.apache.commons:commons-lang3` | 3.17.0 | `GHSA-j288-q9x7-2f5v`, moderado — recursão sem controle | 3.18.0 |
+
+O `tomcat-embed-core` **é** a camada HTTP da aplicação, e é ela que fica exposta na
+internet no App Service. Não é dependência de canto.
+
+**A ferramenta proposta acima não serviu.** O `org.owasp:dependency-check-maven`
+exige chave da API da NVD e falha sem ela:
+
+```
+UpdateException: Error updating the NVD Data
+  caused by NvdApiException: Invalid API Key, length of 0 too short
+```
+
+**O que serviu:** a API pública do **OSV** (`api.osv.dev/v1/querybatch`), que agrega
+a GitHub Advisory Database, não pede autenticação e aceita consulta em lote. O
+caminho é: `mvn dependency:list -DincludeScope=runtime` para obter as 110
+dependências reais, e uma consulta em lote ao OSV com ecossistema `Maven`. Roda em
+segundos e não depende de cadastro.
+
+**Como foi corrigido:** quatro propriedades no `<properties>` do `pom.xml`
+sobrepondo o que o `spring-boot-dependencies` fixa. **Não havia patch do Boot para
+subir** — a 3.5.16 é a última publicada, e é ela que fixa as versões com aviso.
+
+O critério da versão escolhida foi a **menor que corrige**, não a mais recente: o
+BOM do Spring Boot é um conjunto curado e testado junto, e quanto menor o desvio
+dele, menor a chance de trocar uma vulnerabilidade por uma incompatibilidade.
+
+Duas observações que só aparecem fazendo:
+
+- **A 10.1.58 do Tomcat nunca foi publicada no Maven Central** — o projeto pula
+  versões. A seguinte é a 10.1.59, e ela contém as correções.
+- **Ficar na linha 10.1 é obrigatório**, não conservadorismo. O Tomcat 11 é
+  Servlet 6.1 / Jakarta EE 11 e o Spring Boot 3.5 exige Servlet 6.0 / EE 10: subir
+  para 11.x não seria atualizar, seria trocar de plataforma.
+
+Depois da mudança: **277 testes passando** e o OSV devolvendo *"nenhuma
+vulnerabilidade conhecida nas dependências de runtime"*.
 
 ---
 
@@ -238,13 +305,13 @@ que é o fluxo cruzado que a spec 11 do app chama de critério de pronto.
 
 | # | O quê | Bloqueia a entrega? |
 |---|---|---|
-| 1 | Script `az` de deploy desta API (§2.2) | **Sim** — sem ela o app não funciona na nuvem |
-| 2 | Pool em 15 (§2.3) | Não, mas é 1 linha |
+| 1 | Script `az` de deploy desta API (§2.2) | ✅ feito — 12 scripts em `azure/`, um por recurso |
+| 2 | Pool declarado (§2.3) | ✅ feito — em **10**, não 15, e o motivo mudou junto: ver §2.3 |
 | 3 | Correlation ID (§2.4) | Não |
 | 4 | Compartilhar a chave JWT com a .NET via Key Vault | Não — ver spec da .NET, §2.1 |
 | 5 | Gerar a variante MySQL do `script_bd.sql` (§2.8) | Não, mas encerra uma classe de defeito que já mordeu duas vezes |
-| 6 | Remover estágio `Imagem` do pipeline (§2.7) | Depende da régua de DevOps |
-| 7 | Auditoria de dependência (§2.9) | Não |
+| 6 | Remover estágio `Imagem` do pipeline (§2.7) | ✅ feito — a régua confirmou: app containerizado é −40 |
+| 7 | Auditoria de dependência (§2.9) | ✅ feito — e achou **3 CRÍTICOS** no `tomcat-embed-core`. Ver §2.9 |
 | 8 | `@Version` (§2.5) | Não — **muda comportamento**, deixar para depois da entrega |
 | 9 | Redis (§2.1) | Só se escalarem |
 

@@ -112,6 +112,37 @@ else
 fi
 echo "=============================================================="
 
+echo
+echo "=============================================================="
+echo " 6. ORCAMENTO DE CONEXOES -- medido, nao presumido"
+echo "=============================================================="
+# As duas APIs somam 25 conexoes potenciais com uma instancia de cada: 10 da Java
+# (spring.datasource.hikari.maximum-pool-size) e 15 da .NET (Database__MaxPoolSize).
+# O teto de um Standard_B1ms depende do tier, e a Azure ja mudou esses numeros --
+# entao o certo e ler o valor real. Se 25 nao couber com folga, o lugar de
+# descobrir e aqui, e nao durante a gravacao do video.
+if command -v mysql >/dev/null 2>&1 && [ -n "${MYSQL_PASSWORD:-}" ]; then
+    TETO="$(mysql -h "${MYSQL_SERVER}.mysql.database.azure.com" \
+                  -u "$MYSQL_ADMIN" -p"$MYSQL_PASSWORD" --ssl-mode=REQUIRED \
+                  -N -B -e "SHOW VARIABLES LIKE 'max_connections';" 2>/dev/null | awk '{print $2}')"
+    if [ -n "$TETO" ]; then
+        printf '  max_connections do servidor: %s\n' "$TETO"
+        printf '  orcamento das duas APIs:     25 (Java 10 + .NET 15)\n'
+        if [ "$TETO" -gt 40 ] 2>/dev/null; then
+            echo "  [ok]   folga confortavel"
+        else
+            echo "  [ATENCAO] teto apertado. Baixe os dois pools antes de gravar:"
+            echo "            spring.datasource.hikari.maximum-pool-size (repo Java)"
+            echo "            Database__MaxPoolSize (app setting da .NET)"
+            falhou=$((falhou + 1))
+        fi
+    else
+        echo "  [pulado] nao consegui consultar o servidor"
+    fi
+else
+    echo "  [pulado] cliente mysql ausente ou MYSQL_PASSWORD nao exportada"
+fi
+
 cat <<SQL
 
 --------------------------------------------------------------------
