@@ -147,6 +147,46 @@ dele.
 **Correção:** remover ou desabilitar o estágio. O `Dockerfile` continua no
 repositório servindo ao desenvolvimento e ao CI.
 
+### 2.8 🟡 O DDL da API .NET é cópia manual do schema daqui
+
+`ClyvoVet-api/schema/script_bd.sql` é o entregável de DDL da disciplina de DevOps
+do outro repositório, e a PARTE 1 dele é **cópia à mão** das migrations deste. Já
+defasou duas vezes: primeiro nas sete colunas booleanas que viraram `INT`, depois
+nas treze tabelas que ganharam prefixo na V9.
+
+O custo é assimétrico e cai deste lado. Aquela API não valida schema e sobe contra
+um banco errado sem reclamar; **esta roda com `ddl-auto=validate` e não sobe**. Um
+erro naquele arquivo não aparece lá — aparece aqui, no deploy.
+
+**Correção durável:** o `scripts/gerar-script-bd.py` já gera
+`documentos/script_bd.sql` a partir de `db/migration/oracle/`. Falta a variante
+MySQL, gerada de `db/migration/mysql/`, para o outro repositório consumir em vez
+de copiar.
+
+Duas coisas a resolver antes de trocar o arquivo de lá:
+
+1. O script deles começa com um bloco `DROP TABLE IF EXISTS` que o torna
+   re-executável. Uma concatenação de migrations não tem isso, e o vídeo de
+   entrega depende de rodar o arquivo mais de uma vez. O gerador precisaria emitir
+   o preâmbulo de limpeza.
+2. Os dialetos não são intercambiáveis. O `documentos/script_bd.sql` atual é DDL
+   **Oracle** — `VARCHAR2`, sem `ENGINE=InnoDB`. Entregar esse arquivo para um
+   banco MySQL produz um script que não roda.
+
+### 2.9 🟢 Não há verificação de dependência vulnerável
+
+Os outros dois repositórios têm o comando pronto: a API .NET responde a
+`dotnet list package --vulnerable --include-transitive`, e o app a `npm audit` —
+e os dois **acusaram** pacotes vulneráveis quando rodados. Este projeto não tem
+equivalente configurado: o Maven não audita nada por padrão.
+
+Isso não quer dizer que esteja limpo. Quer dizer que **ninguém sabe**, e que os
+outros dois só souberam porque a ferramenta existia.
+
+**Correção:** `org.owasp:dependency-check-maven` no `pom.xml`, rodando no job de
+testes. Ele baixa a base do NVD na primeira execução, então convém prender ao CI e
+não ao build de todo mundo.
+
 ---
 
 ## 3. O que já foi corrigido
@@ -163,7 +203,7 @@ inclui coisas resolvidas.
 
 ---
 
-## 3.1 O que a V9 deixou pendente na API .NET
+## 3.1 O que a V9 exigiu da API .NET — resolvido
 
 O rename das tabelas é o único ponto onde uma mudança daqui **quebra a outra API**,
 e por isso fica registrado em vez de ficar implícito.
@@ -181,12 +221,16 @@ passou a existir, com o formato do veterinário do núcleo clínico, que não é
 modelo dela. O achado §2.7 da spec da .NET tratava isso como faxina; virou
 correção necessária.
 
-| O quê | Onde |
-|---|---|
-| `ToTable("t_clyvo_animal")` | `ClyvoVet.Api/Data/Configurations/AnimalConfiguration.cs` |
-| `ToTable("t_clyvo_tutor")` | `ClyvoVet.Api/Data/Configurations/TutorConfiguration.cs` |
-| Remover `Veterinario` e `Consulta` (entidade, configuration e `DbSet`) | `ClyvoVet.Api/Data/` e `Models/` |
-| Renomear as treze tabelas na PARTE 1 do DDL | `ClyvoVet-api/schema/script_bd.sql` |
+| O quê | Onde | Estado |
+|---|---|---|
+| `ToTable("t_clyvo_animal")` | `ClyvoVet.Api/Data/Configurations/AnimalConfiguration.cs` | ✅ |
+| `ToTable("t_clyvo_tutor")` | `ClyvoVet.Api/Data/Configurations/TutorConfiguration.cs` | ✅ |
+| Remover `Veterinario` e `Consulta` (entidade, configuration e `DbSet`) | `ClyvoVet.Api/Data/` e `Models/` | ✅ |
+| Renomear as treze tabelas na PARTE 1 do DDL | `ClyvoVet-api/schema/script_bd.sql` | ✅ |
+
+Verificado contra o MySQL 8 do ambiente local depois das quatro: `POST /animais`
+aqui seguido de `POST /lembretes` lá devolve **201 com o `nomeAnimal` resolvido**,
+que é o fluxo cruzado que a spec 11 do app chama de critério de pronto.
 
 ---
 
@@ -198,9 +242,11 @@ correção necessária.
 | 2 | Pool em 15 (§2.3) | Não, mas é 1 linha |
 | 3 | Correlation ID (§2.4) | Não |
 | 4 | Compartilhar a chave JWT com a .NET via Key Vault | Não — ver spec da .NET, §2.1 |
-| 5 | `@Version` (§2.5) | Não |
+| 5 | Gerar a variante MySQL do `script_bd.sql` (§2.8) | Não, mas encerra uma classe de defeito que já mordeu duas vezes |
 | 6 | Remover estágio `Imagem` do pipeline (§2.7) | Depende da régua de DevOps |
-| 7 | Redis (§2.1) | Só se escalarem |
+| 7 | Auditoria de dependência (§2.9) | Não |
+| 8 | `@Version` (§2.5) | Não — **muda comportamento**, deixar para depois da entrega |
+| 9 | Redis (§2.1) | Só se escalarem |
 
 ---
 
