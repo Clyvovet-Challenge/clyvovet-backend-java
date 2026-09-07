@@ -227,7 +227,7 @@ disciplina — incluindo os módulos novos — está consolidado em
 |---|---|---|---|
 | 2 | Senha do Oracle no histórico do Git | **Alta** | código e docs limpos; **falta trocar a senha no portal da FIAP** |
 | 19 | Perfil `mysql` nunca rodou contra um MySQL real | Média | escrito e testado contra H2 em `MODE=MySQL` |
-| 7 | `dataPagamento` obrigatória impede registrar pendente | Média | aberto |
+| 7 | `dataPagamento` obrigatória impede registrar pendente | Média | ✅ resolvido |
 | 9 | Cache não invalida entre entidades relacionadas | Média | aberto |
 | 12 | `especie` e `porte` como texto livre | Baixa | aberto |
 | 15 | `PagamentoResponse` ainda usa `@Data` | Baixa | parcial |

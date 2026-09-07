@@ -268,7 +268,7 @@ Registrado para não parecer omissão:
 | Soft delete | `DELETE` remove a linha de verdade |
 | Recuperação de senha | não há fluxo de "esqueci minha senha" |
 | Cache e rate limit distribuídos | ambos por processo; com réplicas, precisariam de Redis |
-| Coleção Postman/Insomnia exportada | pendente, e vale 10 pontos na rubrica |
+| Coleção Postman/Insomnia exportada | não consta na régua oficial da Sprint 3 (Java Advanced pontua frontend 30, Flyway 20, Security 30, funcionalidades 20) — ver `docs/12` §2 |
 
 ### Coberto por teste
 

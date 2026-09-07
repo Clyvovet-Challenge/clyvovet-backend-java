@@ -21,7 +21,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 4 | Exclusão com dependentes → 500 | Média | Erros | ✅ 409 no handler, coberto por `IntegridadeReferencialTest` |
 | 5 | Perfil `h2` não roda fora do Docker | Média | Configuração | ✅ documentado; use `dev` |
 | 6 | `@Size` em `crmv` e `telefone` rejeita o formato do seed | Média | Validação | ✅ `crmv` alinhado à coluna (30) |
-| 7 | `dataPagamento` obrigatória impede registrar pendente | Média | Validação | aberto |
+| 7 | `dataPagamento` obrigatória impede registrar pendente | Média | Validação | ✅ resolvido — `@NotNull` removido, e a coerência da data virou regra em `CobrancaService.garantirDataCoerente` |
 | 8 | Chave de cache ignora a ordenação | Média | Cache | ✅ `#pageable` na chave |
 | 9 | Cache não invalida entre entidades relacionadas | Média | Cache | aberto |
 | 10 | NPE em `endereco` ou `sexo` nulos | Média | Mapper | ✅ null-guard no `EnderecoMapper`; `sexo` virou enum |
@@ -251,8 +251,16 @@ o que faz sentido: um pagamento pendente ainda não tem data.
 **Efeito:** não é possível registrar um pagamento pendente pela API. O usuário é
 forçado a inventar uma data.
 
-**Correção:** tornar `dataPagamento` condicional ao status. O caminho mais simples é
-remover o `@NotNull` e validar na regra de negócio:
+**✅ Resolvido, e por um caminho melhor do que o proposto abaixo.** O `@NotNull` saiu
+do `PagamentoRequest` — o `@PastOrPresent` ficou, porque ele já ignora nulo. A data
+deixou de ser declarada no cadastro e passou a entrar pela confirmação, via
+`ConfirmacaoRequest`, e a coerência dela é validada em
+`CobrancaService.garantirDataCoerente`: não pode ser futura, nem anterior ao evento
+clínico que ela paga. Isso cobre mais do que a correção original previa, que só
+exigia data quando o status fosse `PAGO`.
+
+_A proposta original, mantida como registro:_ tornar `dataPagamento` condicional ao
+status, removendo o `@NotNull` e validando na regra de negócio:
 
 ```java
 if (request.getStatusPagamento() == StatusPagamento.PAGO && request.getDataPagamento() == null) {
