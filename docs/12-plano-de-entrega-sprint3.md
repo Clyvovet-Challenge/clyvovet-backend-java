@@ -107,8 +107,23 @@ Em ordem de execução. O que está acima destrava o que está abaixo.
 2. **README com o passo a passo de deploy** — ver §5, porque ele é mais crítico do
    que parece.
 3. **Deploy das duas APIs e verificação** de que o fluxo cruzado responde.
-4. **Varredura de segredo exposto no código-fonte** — vale −20 direto e leva
-   minutos.
+4. ✅ **Varredura de segredo exposto no código-fonte** — feita nos dois repositórios
+   da API, e achou uma coisa. O `application-dev.properties` trazia
+   `clyvovet.jwt.secret=${JWT_SECRET:rkYIlJliub5QNZcqETol75AapUui0JedF0xcPztVgbo=}`:
+   **32 bytes aleatórios de verdade**, commitados como valor padrão. Funcionava, e
+   o perfil `dev` é H2 em memória — mas o critério da régua não é se a chave vale
+   algo, e sim se quem varre o código consegue saber que não vale. Aquele valor era
+   indistinguível de uma chave de produção. Trocado por um base64 que decodifica
+   para a própria frase `clyvovet-dev-chave-publica-nao-secreta`, com o motivo
+   escrito ao lado. A chave dos testes já era autoexplicativa ao decodificar
+   (`teste-clyvovet-chave-hmac-sha256-para-testes`) e ganhou o decode no comentário,
+   para não depender de alguém decodificar base64 na hora da correção.
+
+   O resto veio limpo: nenhum `.env` rastreado, nenhum token do Telegram em formato
+   real, nenhum JWT solto, e os perfis de banco real (`h2`, `mysql`, `oracle`) já
+   exigem `${JWT_SECRET}` sem fallback — lá a ausência da variável derruba o boot
+   em vez de assumir uma chave conhecida. No repositório da .NET, o
+   `appsettings.json` só tem placeholders (`SUA_API_KEY`, `SEU_AUTH_TOKEN`).
 5. **Roteiro do vídeo de DevOps** com o seed pensado para a narrativa: o item 9.3
    exige CRUD em **duas tabelas relacionadas**, com `SELECT` evidenciando cada
    operação. `t_clyvo_animal` e `t_clyvo_tutor` servem — são o CORE e têm FK entre
