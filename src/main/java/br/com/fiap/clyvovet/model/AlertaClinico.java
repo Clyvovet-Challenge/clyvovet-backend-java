@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
-@Table(name = "alerta_clinico")
+@Table(name = "t_clyvo_alerta_clinico")
 public class AlertaClinico {
 
     @Id

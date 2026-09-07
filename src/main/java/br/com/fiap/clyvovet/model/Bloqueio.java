@@ -16,6 +16,7 @@ import java.util.UUID;
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
+@Table(name = "t_clyvo_bloqueio")
 public class Bloqueio {
 
     @Id

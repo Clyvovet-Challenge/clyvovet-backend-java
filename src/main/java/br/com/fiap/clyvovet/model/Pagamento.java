@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
+@Table(name = "t_clyvo_pagamento")
 public class Pagamento {
 
     @Id

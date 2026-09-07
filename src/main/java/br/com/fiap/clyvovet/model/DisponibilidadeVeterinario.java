@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
-@Table(name = "disponibilidade_veterinario")
+@Table(name = "t_clyvo_disponibilidade_vet")
 public class DisponibilidadeVeterinario {
 
     @Id

@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
-@Table(name = "acesso_historico")
+@Table(name = "t_clyvo_acesso_historico")
 public class AcessoHistorico {
 
     @Id

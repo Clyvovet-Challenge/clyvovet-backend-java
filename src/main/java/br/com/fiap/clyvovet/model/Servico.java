@@ -20,6 +20,7 @@ import java.util.UUID;
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
+@Table(name = "t_clyvo_servico")
 public class Servico {
 
     @Id

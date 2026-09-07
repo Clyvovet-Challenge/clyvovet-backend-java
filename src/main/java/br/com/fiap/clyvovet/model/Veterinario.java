@@ -14,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "t_clyvo_veterinario")
 public class Veterinario {
 
     @Id

@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v7() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v9() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(8);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(resultado.migrationsExecuted).isEqualTo(9);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
     }
 
     @Test
@@ -76,12 +76,12 @@ class MigrationsMySqlTest {
         // O seed da V2 e identico nos dois conjuntos; se alguem mexer em um so,
         // estas contagens deixam de bater. Os numeros vem do proprio arquivo --
         // a disciplina exige no MINIMO 5 por tabela, e algumas tem mais.
-        assertThat(jdbc.queryForObject("select count(*) from clinica", Integer.class)).isEqualTo(5);
-        assertThat(jdbc.queryForObject("select count(*) from tutor", Integer.class)).isEqualTo(5);
-        assertThat(jdbc.queryForObject("select count(*) from animal", Integer.class)).isEqualTo(6);
-        assertThat(jdbc.queryForObject("select count(*) from veterinario", Integer.class)).isEqualTo(7);
-        assertThat(jdbc.queryForObject("select count(*) from evento_clinico", Integer.class)).isEqualTo(11);
-        assertThat(jdbc.queryForObject("select count(*) from pagamento", Integer.class)).isEqualTo(8);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_clinica", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_tutor", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_animal", Integer.class)).isEqualTo(6);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_veterinario", Integer.class)).isEqualTo(7);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_evento_clinico", Integer.class)).isEqualTo(11);
+        assertThat(jdbc.queryForObject("select count(*) from t_clyvo_pagamento", Integer.class)).isEqualTo(8);
     }
 
     @Test
@@ -93,12 +93,12 @@ class MigrationsMySqlTest {
         // O ponto da V4: REEMBOLSADO passa a ser aceito. Antes dela o INSERT
         // estourava violacao de check e virava 500 na API.
         jdbc.update("""
-                insert into pagamento (id, metodo_pagamento, valor, data_pagamento, status_pagamento)
+                insert into t_clyvo_pagamento (id, metodo_pagamento, valor, data_pagamento, status_pagamento)
                 values (?, 'PIX', 10.00, DATE '2026-01-01', 'REEMBOLSADO')
                 """, UUID.randomUUID().toString());
 
         assertThat(jdbc.queryForObject(
-                "select count(*) from pagamento where status_pagamento = 'REEMBOLSADO'", Integer.class))
+                "select count(*) from t_clyvo_pagamento where status_pagamento = 'REEMBOLSADO'", Integer.class))
                 .isEqualTo(1);
     }
 
@@ -112,7 +112,7 @@ class MigrationsMySqlTest {
         // ja tinha gravado. E a consequencia declarada no cabecalho da migration:
         // taxa de falta retroativa nasce zerada, de proposito.
         assertThat(jdbc.queryForObject(
-                "select count(*) from evento_clinico where status_evento = 'REALIZADO'", Integer.class))
+                "select count(*) from t_clyvo_evento_clinico where status_evento = 'REALIZADO'", Integer.class))
                 .isEqualTo(11);
     }
 
@@ -126,7 +126,7 @@ class MigrationsMySqlTest {
         // tem — ou recusar valor que ele tem — a divergencia so aparece como
         // 500 em producao.
         assertThatThrownBy(() -> jdbc.update("""
-                insert into evento_clinico (id, data_evento, tipo_evento, status_evento)
+                insert into t_clyvo_evento_clinico (id, data_evento, tipo_evento, status_evento)
                 values (?, DATE '2026-01-01', 'CONSULTA', 'COMPARECEU')
                 """, UUID.randomUUID().toString()))
                 .isInstanceOf(DataAccessException.class);
@@ -143,13 +143,13 @@ class MigrationsMySqlTest {
         var consulta = "55555555-5555-5555-5555-000000000001";
         var retorno = UUID.randomUUID().toString();
         jdbc.update("""
-                insert into evento_clinico (id, data_evento, tipo_evento, status_evento,
+                insert into t_clyvo_evento_clinico (id, data_evento, tipo_evento, status_evento,
                                             evento_origem_id, peso_kg, data_retorno_previsto)
                 values (?, DATE '2026-02-01', 'RETORNO', 'AGENDADO', ?, 12.500, DATE '2026-02-01')
                 """, retorno, consulta);
 
         assertThat(jdbc.queryForObject(
-                "select evento_origem_id from evento_clinico where id = ?", String.class, retorno))
+                "select evento_origem_id from t_clyvo_evento_clinico where id = ?", String.class, retorno))
                 .isEqualTo(consulta);
     }
 
@@ -161,7 +161,7 @@ class MigrationsMySqlTest {
 
         var id = UUID.randomUUID().toString();
         assertThatThrownBy(() -> jdbc.update("""
-                insert into evento_clinico (id, data_evento, tipo_evento, status_evento, evento_origem_id)
+                insert into t_clyvo_evento_clinico (id, data_evento, tipo_evento, status_evento, evento_origem_id)
                 values (?, DATE '2026-01-01', 'RETORNO', 'AGENDADO', ?)
                 """, id, id))
                 .isInstanceOf(DataAccessException.class);
@@ -175,17 +175,17 @@ class MigrationsMySqlTest {
 
         var id = UUID.randomUUID().toString();
         jdbc.update("""
-                insert into servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
+                insert into t_clyvo_servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
                 values (?, ?, 'Consulta clinica geral', 'CONSULTA', 180.00, 30)
                 """, id, CLINICA_VETCARE);
 
         assertThat(jdbc.queryForObject(
-                "select duracao_minutos from servico where id = ?", Integer.class, id))
+                "select duracao_minutos from t_clyvo_servico where id = ?", Integer.class, id))
                 .isEqualTo(30);
         // O DEFAULT de ativo precisa valer nos dois dialetos: e ele que decide
         // se um servico recem-criado aparece para agendamento.
         assertThat(jdbc.queryForObject(
-                "select ativo from servico where id = ?", Integer.class, id))
+                "select ativo from t_clyvo_servico where id = ?", Integer.class, id))
                 .isEqualTo(1);
     }
 
@@ -198,7 +198,7 @@ class MigrationsMySqlTest {
         // Duracao zero produziria colisao de agenda impossivel de resolver: dois
         // atendimentos ocupando o mesmo instante sem se sobrepor.
         assertThatThrownBy(() -> jdbc.update("""
-                insert into servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
+                insert into t_clyvo_servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
                 values (?, ?, 'Servico invalido', 'CONSULTA', 100.00, 0)
                 """, UUID.randomUUID().toString(), CLINICA_VETCARE))
                 .isInstanceOf(DataAccessException.class);
@@ -215,7 +215,7 @@ class MigrationsMySqlTest {
         // '09:00', a ordenacao lexicografica mente -- e este check para de
         // proteger. O @Pattern no DTO e o que garante o formato na entrada.
         assertThatThrownBy(() -> jdbc.update("""
-                insert into disponibilidade_veterinario
+                insert into t_clyvo_disponibilidade_vet
                     (id, veterinario_id, dia_semana, hora_inicio, hora_fim, vigencia_inicio)
                 values (?, ?, 'SEGUNDA', '18:00', '08:00', DATE '2026-01-01')
                 """, UUID.randomUUID().toString(), VET_CAMILA))
@@ -232,12 +232,12 @@ class MigrationsMySqlTest {
         // (as duas preenchidas). Meia hora preenchida nao significa nada, e o
         // codigo que le a agenda teria de adivinhar o que fazer com ela.
         jdbc.update("""
-                insert into bloqueio (id, veterinario_id, data_inicio, data_fim, motivo)
+                insert into t_clyvo_bloqueio (id, veterinario_id, data_inicio, data_fim, motivo)
                 values (?, ?, DATE '2026-07-01', DATE '2026-07-15', 'Ferias')
                 """, UUID.randomUUID().toString(), VET_CAMILA);
 
         assertThatThrownBy(() -> jdbc.update("""
-                insert into bloqueio (id, veterinario_id, data_inicio, data_fim, hora_inicio, motivo)
+                insert into t_clyvo_bloqueio (id, veterinario_id, data_inicio, data_fim, hora_inicio, motivo)
                 values (?, ?, DATE '2026-07-01', DATE '2026-07-01', '12:00', 'Almoco pela metade')
                 """, UUID.randomUUID().toString(), VET_CAMILA))
                 .isInstanceOf(DataAccessException.class);
@@ -253,13 +253,13 @@ class MigrationsMySqlTest {
         // registra: um indice UNIQUE ignora as linhas com NULL, nos dois
         // bancos. Sem isso, o segundo animal sem chip seria recusado -- e
         // chip e opcional.
-        jdbc.update("insert into animal (id, nome, tutor_id) values (?, 'Sem chip 1', ?)",
+        jdbc.update("insert into t_clyvo_animal (id, nome, tutor_id) values (?, 'Sem chip 1', ?)",
                 UUID.randomUUID().toString(), TUTOR_LUCAS);
-        jdbc.update("insert into animal (id, nome, tutor_id) values (?, 'Sem chip 2', ?)",
+        jdbc.update("insert into t_clyvo_animal (id, nome, tutor_id) values (?, 'Sem chip 2', ?)",
                 UUID.randomUUID().toString(), TUTOR_LUCAS);
 
         assertThat(jdbc.queryForObject(
-                "select count(*) from animal where microchip is null", Integer.class))
+                "select count(*) from t_clyvo_animal where microchip is null", Integer.class))
                 .isGreaterThanOrEqualTo(2);
     }
 
@@ -269,13 +269,13 @@ class MigrationsMySqlTest {
         Flyway.configure().dataSource(ds).locations("classpath:db/migration/mysql").load().migrate();
         var jdbc = new JdbcTemplate(ds);
 
-        jdbc.update("insert into animal (id, nome, tutor_id, microchip) values (?, 'Thor', ?, '900000000000001')",
+        jdbc.update("insert into t_clyvo_animal (id, nome, tutor_id, microchip) values (?, 'Thor', ?, '900000000000001')",
                 UUID.randomUUID().toString(), TUTOR_LUCAS);
 
         // Chip duplicado significaria dois animais com a mesma identidade no
         // balcao -- e o resumo de seguranca do errado.
         assertThatThrownBy(() -> jdbc.update(
-                "insert into animal (id, nome, tutor_id, microchip) values (?, 'Clone', ?, '900000000000001')",
+                "insert into t_clyvo_animal (id, nome, tutor_id, microchip) values (?, 'Clone', ?, '900000000000001')",
                 UUID.randomUUID().toString(), TUTOR_LUCAS))
                 .isInstanceOf(DataAccessException.class);
     }
@@ -287,7 +287,7 @@ class MigrationsMySqlTest {
         var jdbc = new JdbcTemplate(ds);
 
         assertThatThrownBy(() -> jdbc.update("""
-                insert into evento_clinico (id, data_evento, tipo_evento, status_evento, desfecho)
+                insert into t_clyvo_evento_clinico (id, data_evento, tipo_evento, status_evento, desfecho)
                 values (?, DATE '2026-01-01', 'CONSULTA', 'REALIZADO', 'CURADO')
                 """, UUID.randomUUID().toString()))
                 .isInstanceOf(DataAccessException.class);
@@ -303,12 +303,12 @@ class MigrationsMySqlTest {
         // valor, nenhum evento poderia ser agendado -- so concluido.
         var id = UUID.randomUUID().toString();
         jdbc.update("""
-                insert into evento_clinico (id, data_evento, tipo_evento, status_evento)
+                insert into t_clyvo_evento_clinico (id, data_evento, tipo_evento, status_evento)
                 values (?, DATE '2026-12-01', 'CONSULTA', 'AGENDADO')
                 """, id);
 
         assertThat(jdbc.queryForObject(
-                "select desfecho from evento_clinico where id = ?", String.class, id))
+                "select desfecho from t_clyvo_evento_clinico where id = ?", String.class, id))
                 .isNull();
     }
 
@@ -323,16 +323,16 @@ class MigrationsMySqlTest {
         // precisa saber qual dos dois esta lendo.
         var id = UUID.randomUUID().toString();
         jdbc.update("""
-                insert into alerta_clinico (id, animal_id, tipo, descricao, origem)
+                insert into t_clyvo_alerta_clinico (id, animal_id, tipo, descricao, origem)
                 values (?, ?, 'ALERGIA', 'Anafilaxia a dipirona', 'VETERINARIO')
                 """, id, ANIMAL_BOLINHA);
 
         assertThat(jdbc.queryForObject(
-                "select origem from alerta_clinico where id = ?", String.class, id))
+                "select origem from t_clyvo_alerta_clinico where id = ?", String.class, id))
                 .isEqualTo("VETERINARIO");
 
         assertThatThrownBy(() -> jdbc.update("""
-                insert into alerta_clinico (id, animal_id, tipo, descricao, origem)
+                insert into t_clyvo_alerta_clinico (id, animal_id, tipo, descricao, origem)
                 values (?, ?, 'ALERGIA', 'Origem inventada', 'RECEPCIONISTA')
                 """, UUID.randomUUID().toString(), ANIMAL_BOLINHA))
                 .isInstanceOf(DataAccessException.class);
