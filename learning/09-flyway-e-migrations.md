@@ -118,6 +118,52 @@ se a tabela já tiver mil linhas?"*
 
 ---
 
+## Estudo de caso: a migration V9
+
+A V4 corrigiu um defeito. A V9 mostra o outro motivo para criar versão nova: **nem toda
+mudança é conserto — às vezes é padronização, e a regra do checksum vale igual.**
+
+O banco tinha duas convenções de nome convivendo. As treze tabelas do núcleo clínico, criadas
+da V1 à V7, usavam o nome puro da entidade: `animal`, `tutor`, `evento_clinico`. As seis da
+API .NET, trazidas para o Flyway na V8, já nasceram com prefixo: `t_clyvo_lembrete`. Quem
+abrisse o banco encontraria as duas e não teria como saber qual era a regra.
+
+A tentação óbvia é abrir a V1 e trocar os nomes lá. Ficaria mais limpo de ler — e é
+exatamente o que o checksum impede, pelo motivo da seção anterior: o Oracle da FIAP tem da V3
+em diante no histórico, e o próximo boot contra ele falharia. Então:
+
+```sql
+-- src/main/resources/db/migration/oracle/V9__prefixo_t_clyvo.sql
+ALTER TABLE tutor  RENAME TO t_clyvo_tutor;
+ALTER TABLE animal RENAME TO t_clyvo_animal;
+-- ... treze no total
+```
+
+💡 **`ALTER TABLE ... RENAME TO` é a única grafia que serve aos três bancos** — Oracle, MySQL
+e o H2 dos testes. O MySQL também aceita `RENAME TABLE a TO b`, mas usar a forma comum deixa
+os dois conjuntos de migration idênticos, como na V2.
+
+**O que o rename leva junto, e por que isso importa.** Chave primária, estrangeira, unique,
+check e índice seguem a tabela sozinhos nos dois bancos — inclusive as FKs declaradas em
+**outras** tabelas que apontam para esta. As seis tabelas da V8 referenciavam `animal(id)`;
+depois da V9 referenciam `t_clyvo_animal(id)` sem nenhum comando adicional. Não há nada a
+recriar depois, e os dados não se movem: um rename é uma troca de nome no catálogo, não uma
+cópia de linhas.
+
+⚠️ **O limite de 30 caracteres do Oracle mudou um dos nomes.**
+`disponibilidade_veterinario` com o prefixo daria 35, e o Oracle até a 12.1 recusa. Virou
+`t_clyvo_disponibilidade_vet` (27). O MySQL aceitaria os 35 numa boa — e é justamente aí que
+mora a armadilha: o conjunto `mysql/` passaria, o `oracle/` quebraria, e a divergência só
+apareceria no deploy. **Quando dois bancos discordam, o nome tem que caber no mais apertado
+dos dois.**
+
+**O que a V9 NÃO renomeou:** os nomes de constraint e índice. `fk_animal_tutor` continua
+`fk_animal_tutor`. Eles já usavam abreviação e nunca carregaram o nome completo da tabela —
+prefixá-los estouraria os 30 caracteres em vários (`uk_autorizacao_animal_clinica` já tem 29)
+sem acrescentar informação. Padronizar não quer dizer aplicar a regra em tudo que se move.
+
+---
+
 ## Flyway + `ddl-auto=validate`: a dupla
 
 ```properties

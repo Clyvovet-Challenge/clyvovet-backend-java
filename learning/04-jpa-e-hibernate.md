@@ -33,10 +33,10 @@ banco **recusa** um `tutor_id` que não exista — isso se chama integridade ref
 E o SQL, a linguagem de consulta:
 
 ```sql
-SELECT nome FROM animal WHERE raca = 'Golden Retriever';
-INSERT INTO animal (id, nome, raca) VALUES ('444...', 'Bolinha', 'Golden Retriever');
-UPDATE animal SET nome = 'Bolinha Silva' WHERE id = '444...';
-DELETE FROM animal WHERE id = '444...';
+SELECT nome FROM t_clyvo_animal WHERE raca = 'Golden Retriever';
+INSERT INTO t_clyvo_animal (id, nome, raca) VALUES ('444...', 'Bolinha', 'Golden Retriever');
+UPDATE t_clyvo_animal SET nome = 'Bolinha Silva' WHERE id = '444...';
+DELETE FROM t_clyvo_animal WHERE id = '444...';
 ```
 
 ---
@@ -48,7 +48,7 @@ entre os dois na mão é assim:
 
 ```java
 // ❌ como seria sem ORM — e isto é só um SELECT
-String sql = "SELECT id, nome, raca, tutor_id FROM animal WHERE id = ?";
+String sql = "SELECT id, nome, raca, tutor_id FROM t_clyvo_animal WHERE id = ?";
 try (Connection conn = dataSource.getConnection();
      PreparedStatement stmt = conn.prepareStatement(sql)) {
     stmt.setString(1, id.toString());
@@ -328,9 +328,9 @@ Page<Pagamento> buscarPorFiltros(...);
 
 ```sql
 -- SQL: fala de TABELAS e COLUNAS
-SELECT * FROM pagamento p
-JOIN evento_clinico e ON p.evento_id = e.id
-JOIN animal a ON e.animal_id = a.id
+SELECT * FROM t_clyvo_pagamento p
+JOIN t_clyvo_evento_clinico e ON p.evento_id = e.id
+JOIN t_clyvo_animal a ON e.animal_id = a.id
 WHERE a.tutor_id = ?
 ```
 

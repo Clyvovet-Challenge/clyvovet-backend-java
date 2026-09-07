@@ -37,8 +37,13 @@ Cada pasta tem a linha do tempo completa:
 |---|---|
 | `V1__schema_inicial.sql` | As 6 tabelas de domínio, com FKs, uniques e checks |
 | `V2__seed_inicial.sql` | Carga inicial, ≥ 5 registros por tabela |
-| `V3__usuario_e_perfis.sql` | Tabela `usuario` |
+| `V3__usuario_e_perfis.sql` | Tabela de usuário e os três perfis |
 | `V4__corrige_status_pagamento.sql` | Alinha o check a `REEMBOLSADO` |
+| `V5__evento_status_e_retorno.sql` | Status do evento e o vínculo retorno → consulta |
+| `V6__catalogo_agenda_e_alertas.sql` | Serviço, disponibilidade, bloqueio e alerta clínico |
+| `V7__consentimento_e_auditoria.sql` | Autorização de acesso ao histórico e trilha de leitura |
+| `V8__tabelas_dotnet.sql` | Traz as seis tabelas da API .NET para o Flyway |
+| `V9__prefixo_t_clyvo.sql` | Prefixo `t_clyvo_` nas treze tabelas do núcleo clínico |
 
 Até agosto de 2026 havia um conjunto só, porque os dois bancos em uso eram Oracle e
 H2 — e o H2 tem `MODE=Oracle`. Com a entrada do MySQL isso acabou: **MySQL não tem

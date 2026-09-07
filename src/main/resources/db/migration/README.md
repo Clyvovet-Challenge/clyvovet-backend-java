@@ -114,9 +114,45 @@ O perfil `mysql` **não** tem baseline, de propósito. Um MySQL novo começa vaz
 V1 e a V2 precisam rodar de verdade. Ligar baseline ali pularia o schema e o seed, e
 a aplicação subiria contra um banco sem tabela.
 
+## Convenção de nome das tabelas
+
+Toda tabela leva o prefixo **`t_clyvo_`**. A V9 renomeou as treze do núcleo
+clínico, que até então usavam o nome puro da entidade; as seis da API .NET já
+haviam nascido assim na V8.
+
+O prefixo não é enfeite. O Oracle da FIAP é um schema de sala de aula: sem ele,
+`animal` é um nome que qualquer grupo pode ter usado, e não há como olhar a lista
+de tabelas e saber quais são deste projeto.
+
+**O teto de 30 caracteres decide o nome.** É o limite de identificador do Oracle
+até a 12.1, e o schema sempre o respeitou — o mais longo tem 27. Com o prefixo
+consumindo 8, sobram 22 para o nome da tabela. Foi isso que fez
+`disponibilidade_veterinario` virar `t_clyvo_disponibilidade_vet`: o nome inteiro
+daria 35. O MySQL aceitaria, o Oracle não, e um nome diferente em cada dialeto é
+exatamente a divergência que o `MigrationsMySqlTest` existe para impedir.
+
+**Os nomes de constraint e índice ficam fora dessa regra.** `fk_animal_tutor`,
+`idx_evento_vet_data` e `uk_autorizacao_animal_clinica` já usam abreviação e nunca
+carregaram o nome completo da tabela. Prefixá-los estouraria os 30 caracteres em
+vários — o `uk_` acima já tem 29 — sem ganhar informação nenhuma. Renomear uma
+tabela não os afeta: eles seguem a tabela automaticamente nos dois bancos,
+inclusive quando declarados em outra tabela que aponta para ela.
+
+## Nunca reescreva uma migration já aplicada
+
+Vale repetir aqui porque foi o que definiu o desenho da V9. O Flyway guarda o
+checksum de cada versão aplicada e recusa migrar quando ele muda. O Oracle da FIAP
+tem da V3 em diante no histórico — trocar os nomes direto na V1 seria mais limpo de
+ler e quebraria aquele banco. Rename em versão nova é a única forma que funciona no
+banco que já existe **e** no criado do zero.
+
 ## Ao adicionar uma migration nova
 
 1. Escreva em `oracle/` e em `mysql/`, com o mesmo número de versão.
-2. Rode `./mvnw test -Dtest=MigrationsMySqlTest` — ele pega erro de sintaxe em `mysql/`.
-3. Rode a suíte inteira — ela exercita `oracle/` via H2.
-4. Se o SQL for portável, deixe os corpos idênticos e diga isso no cabeçalho, como a V2 faz.
+2. Nomeie a tabela com o prefixo `t_clyvo_`, dentro dos 30 caracteres — ver acima.
+3. Rode `./mvnw test -Dtest=MigrationsMySqlTest` — ele pega erro de sintaxe em `mysql/`.
+4. Rode a suíte inteira — ela exercita `oracle/` via H2.
+5. Regere o DDL de entrega: `python scripts/gerar-script-bd.py`. O
+   `ScriptDoBancoTest` quebra se você esquecer.
+6. Se o SQL for portável, deixe os corpos idênticos e diga isso no cabeçalho, como a
+   V2 e a V9 fazem.

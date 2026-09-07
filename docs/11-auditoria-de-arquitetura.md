@@ -19,7 +19,7 @@ A decisão não foi tomada por conveniência de prazo. Foi tomada porque o códi
 satisfaz a condição que torna banco compartilhado seguro:
 
 > **Cada tabela tem exatamente um escritor.**
-> A API .NET lê `animal` e `tutor` e nunca escreve nelas — verificado em
+> A API .NET lê `t_clyvo_animal` e `t_clyvo_tutor` e nunca escreve nelas — verificado em
 > `AnimalRepository.cs`, que expõe apenas `GetByIdAsync` e `GetByTutorIdAsync`, e
 > por busca em todo o projeto dela por escrita nesses `DbSet`.
 
@@ -32,7 +32,7 @@ não tem, e cobram por isso em componentes que o time teria de operar.
 
 | | |
 |---|---|
-| **Dados** | `usuario`, `tutor`, `animal`, `clinica`, `veterinario`, `servico`, `evento_clinico`, `pagamento`, `disponibilidade_veterinario`, `bloqueio`, `alerta_clinico`, `autorizacao_acesso`, `acesso_historico` |
+| **Dados** | `t_clyvo_usuario`, `t_clyvo_tutor`, `t_clyvo_animal`, `t_clyvo_clinica`, `t_clyvo_veterinario`, `t_clyvo_servico`, `t_clyvo_evento_clinico`, `t_clyvo_pagamento`, `t_clyvo_disponibilidade_vet`, `t_clyvo_bloqueio`, `t_clyvo_alerta_clinico`, `t_clyvo_autorizacao_acesso`, `t_clyvo_acesso_historico` |
 | **Schema** | **Inteiro**, incluindo as seis tabelas `t_clyvo_*` que só a .NET consome (V8). O Flyway daqui é a fonte única |
 | **Identidade** | Emissão e validação de JWT. A .NET não tem noção de usuário hoje |
 
@@ -159,6 +159,34 @@ inclui coisas resolvidas.
 | `ddl-auto=validate` reprovava em **54 das 133 colunas** contra MySQL real — 33 de UUID, 14 de enum, 7 booleanas. Corrigido com duas propriedades de tipo JDBC e sete colunas em `INT` | `fix(mysql): faz o ddl-auto=validate passar contra um MySQL real` |
 | Convenção `NUMBER(1) → TINYINT` em quatro documentos reintroduziria a falha na próxima tabela | `docs: corrige a convencao de tipo booleano no MySQL` |
 | Metade do schema não era versionada — as `t_clyvo_*` nasciam de SQL avulso no repo .NET e não existiriam na nuvem | `feat(schema): V8 traz as tabelas da API .NET para o Flyway` |
+| Duas convenções de nome conviviam: treze tabelas sem prefixo (V1–V7) e seis com (V8). Num schema de sala de aula, `animal` não identifica dono | `feat(schema): V9 padroniza os nomes de tabela com o prefixo t_clyvo` |
+
+---
+
+## 3.1 O que a V9 deixou pendente na API .NET
+
+O rename das tabelas é o único ponto onde uma mudança daqui **quebra a outra API**,
+e por isso fica registrado em vez de ficar implícito.
+
+A .NET lê `animal` e `tutor` por nome, em `AnimalConfiguration.cs` e
+`TutorConfiguration.cs`. O EF Core não valida schema no boot: ela **sobe
+normalmente** e falha só na primeira consulta, dizendo que a tabela não existe.
+Enquanto os dois `ToTable` não acompanharem, os endpoints de lembrete que resolvem
+`nomeAnimal` retornam erro.
+
+Há um segundo efeito, menos óbvio. O `AppDbContext` da .NET declara
+`DbSet<Veterinario>` mapeado para `t_clyvo_veterinario` — uma entidade morta,
+apontando para uma tabela que até então **não existia**. Depois da V9 esse nome
+passou a existir, com o formato do veterinário do núcleo clínico, que não é o do
+modelo dela. O achado §2.7 da spec da .NET tratava isso como faxina; virou
+correção necessária.
+
+| O quê | Onde |
+|---|---|
+| `ToTable("t_clyvo_animal")` | `ClyvoVet.Api/Data/Configurations/AnimalConfiguration.cs` |
+| `ToTable("t_clyvo_tutor")` | `ClyvoVet.Api/Data/Configurations/TutorConfiguration.cs` |
+| Remover `Veterinario` e `Consulta` (entidade, configuration e `DbSet`) | `ClyvoVet.Api/Data/` e `Models/` |
+| Renomear as treze tabelas na PARTE 1 do DDL | `ClyvoVet-api/schema/script_bd.sql` |
 
 ---
 
