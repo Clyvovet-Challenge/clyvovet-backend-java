@@ -6,7 +6,14 @@ Três formas de executar, da mais simples à mais completa:
 |---|---|---|---|
 | Local | `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` | H2 em memória | máquina do dev |
 | Container | `docker compose up --build` | H2 em container | Docker local |
-| Nuvem | `bash deploy.sh` | H2 em container | VM Linux na Azure |
+| Integração | `docker compose up` em `local/` (repo do app) | MySQL 8 em container | Docker local, com as duas APIs |
+| **Nuvem** | `bash azure/01..08` | **MySQL Flexible Server (PaaS)** | **App Service Linux** |
+
+> O passo a passo da nuvem vive no [README da raiz](../README.md#deploy-na-azure--passo-a-passo),
+> e não aqui, por um motivo concreto: o vídeo de entrega da disciplina de DevOps
+> exige o deploy *"seguindo exatamente os passos descritos no README.md"*. Ter dois
+> roteiros é ter um deles errado. **Este documento explica o porquê; o README diz
+> como.**
 
 ---
 
@@ -133,119 +140,86 @@ Para conectar no console H2, use a JDBC URL `jdbc:h2:tcp://clyvovet-db:1521/clyv
 usuário `sa`, senha vazia.
 
 ---
+## Azure — App Service com banco PaaS
 
-## Azure
+### Por que não é mais uma VM
 
-[`deploy.sh`](../deploy.sh) provisiona uma VM Linux do zero e sobe a aplicação nela.
+Havia aqui um `deploy.sh` que provisionava VM Ubuntu, instalava Docker e subia o
+compose com H2. Ele foi removido, e o motivo é a régua da disciplina, não gosto:
 
-### Parâmetros
-
-| Variável | Valor |
+| O que aquele desenho fazia | Penalidade |
 |---|---|
-| `RESOURCE_GROUP` | `clyvovet-rg` |
-| `LOCATION` | `canadacentral` |
-| `VM_NAME` | `clyvovet-vm` |
-| `VM_IMAGE` | `Ubuntu2204` |
-| `VM_SIZE` | `Standard_B2s_v2` |
-| `ADMIN_USER` | `clyvovet` |
-| `DNS_LABEL` | `clyvovet-api` |
+| App rodando em container | **−40** |
+| Banco em container | **−40** |
+| H2 na nuvem — banco não permitido | **−40** |
 
-### Etapas do script
+A disciplina exige escolher **uma** opção e não misturar. A escolhida é a **Opção 2
+— Serviço de Aplicativo com banco PaaS**, onde *"nada pode ser containerizado"*.
 
-| # | Comando | O que faz |
-|---|---|---|
-| 1 | `az group create` | Cria o resource group em `canadacentral` |
-| 2 | `az vm create` | Provisiona a VM Ubuntu 22.04 com IP público Standard, DNS label e chave SSH gerada |
-| 3 | `az vm open-port --port 8080` | Libera a porta da API (prioridade 1001) |
-| 4 | `az vm open-port --port 80` | Libera HTTP (prioridade 1002) |
-| 5 | `az vm run-command invoke` | Instala `git`, `curl`, `nano` e Docker; habilita o serviço; adiciona o usuário ao grupo `docker` |
-| 6 | `az vm run-command invoke` | Clona ou atualiza o repositório (raso e esparso, ver abaixo) e roda `docker compose up -d --build` |
+### Os recursos
 
-### O que chega na VM
+| # | Recurso | Script | Detalhe |
+|---|---|---|---|
+| 1 | Resource Group | `01-resource-group.sh` | região `brazilsouth` |
+| 2 | MySQL Flexible Server | `02-banco-mysql.sh` | `Standard_B1ms`, Burstable, TLS obrigatório, nasce **vazio** |
+| 3 | App Service Plan | `03-plano-app-service.sh` | **B1** Linux, uma instância — o SKU mais barato **com** Always On |
+| 4 | Web App Java | `04-webapp-java.sh` | runtime `JAVA:17-java17` |
+| 5 | Web App .NET | `05-webapp-dotnet.sh` | runtime `DOTNETCORE:8.0`, mesmo plano |
+| — | App settings das duas | `06-configuracoes.sh` | nenhum segredo no arquivo |
 
-O clone é raso e esparso:
+Um script por recurso não é organização — é a régua: *"Entregue todos os scripts dos
+recursos criados na Azure"*, com **−10 por script faltando** e **−30** se algum
+recurso não vier da CLI.
 
-```bash
-git clone --depth 1 --filter=blob:none --sparse <url>
-git sparse-checkout set src
-```
+### O Dockerfile continua aqui, e isso não é contradição
 
-| Camada | O que contém |
-|---|---|
-| Disco da VM | arquivos da raiz (`Dockerfile`, `docker-compose.yml`, `pom.xml`, `mvnw`) e `src/` — cerca de 900 KB |
-| Contexto de build | o mesmo, menos o que o `.dockerignore` exclui |
-| Imagem final | JRE e o JAR |
+O que a disciplina proíbe é o **artefato publicado** ser um container. O `Dockerfile`
+segue servindo ao desenvolvimento local, ao `docker-compose` de integração e ao CI.
+O que vai para a Azure é o **jar** do `mvnw package`, entregue por
+`az webapp deploy --type jar` ao runtime Java nativo do App Service.
 
-`--depth 1` traz um único commit em vez do histórico inteiro; `--filter=blob:none`
-faz o conteúdo dos arquivos fora do escopo nem ser baixado; `sparse-checkout set src`
-deixa no disco apenas a raiz e `src/`. Com isso `docs/` e `documentos/` não
-chegam à máquina.
+Pelo mesmo motivo, o estágio `Imagem` do `azure-pipelines.yml` foi removido: um
+pipeline que publica imagem é o caminho mais curto para o artefato errado subir.
 
-O `git pull` da seção de operação continua funcionando — num clone parcial o git
-busca sob demanda o que faltar.
+### Dois detalhes de plataforma que decidem se a aplicação sobe
 
-### Primeiro deploy e redeploy
+**`SERVER_PORT=80` na Java.** O App Service Linux encaminha para a porta 80 dentro do
+container, e o Spring Boot sobe em 8080. Sem essa app setting a aplicação inicia
+normalmente, o health check externo nunca responde, e o App Service reinicia em loop
+— **sem mensagem óbvia no log**. Funciona porque o *relaxed binding* do Spring mapeia
+a variável `SERVER_PORT` para a propriedade `server.port`, sem tocar em nenhum
+`.properties`.
 
-O passo 6 distingue os dois casos:
+A API .NET não precisa do equivalente: a imagem `DOTNETCORE:8.0` resolve o
+`ASPNETCORE_URLS` sozinha.
 
-```bash
-if [ -d $REPO_DIR/.git ]; then
-  cd $REPO_DIR && git fetch --depth 1 origin main && git reset --hard FETCH_HEAD
-else
-  git clone --depth 1 --filter=blob:none --sparse $REPO_URL $REPO_DIR && cd $REPO_DIR
-fi
-```
+**TLS obrigatório.** O Flexible Server recusa conexão sem TLS. Daí `sslMode=REQUIRED`
+na URL JDBC e `SslMode=Required` na connection string da .NET.
 
-Antes o script só clonava. Num redeploy o diretório já existia, o `git clone`
-falhava com saída 128 e — como a cadeia é toda `&&` — o `docker compose up` nem
-chegava a rodar. O script terminava sem erro visível e sem atualizar nada.
+### Ordem de subida
 
-O redeploy usa `fetch` + `reset --hard` em vez de `pull` de propósito: a VM é alvo
-de deploy, não cópia de trabalho. O reset a deixa idêntica a `origin/main` mesmo
-que alguém tenha editado algo lá dentro, e não trava num conflito de merge como o
-`pull` travaria.
+A **Java sobe primeiro**, e isso é dependência, não preferência: o Flyway dela cria
+as 19 tabelas, incluindo as seis `t_clyvo_*` que a API .NET consome. Se a .NET subir
+antes, ela **sobe normalmente** — o EF Core não valida schema no boot — e falha só na
+primeira consulta, dizendo que a tabela não existe.
 
-### Execução
+No ambiente local isso está resolvido por `depends_on: service_healthy`. Na Azure, é
+a ordem dos scripts 07 e 08.
 
-```bash
-az login
-bash deploy.sh
-```
+### Uma instância, autoscale desligado
 
-Ao final, a aplicação fica em:
+Cinco componentes das duas APIs guardam estado no processo: revogação de token, rate
+limit e cache aqui; os dois `BackgroundService` na .NET. Com uma instância, nenhum é
+problema. Com duas, o logout deixa de funcionar e a notificação duplica — sem erro no
+log. O `06-configuracoes.sh` fixa `--number-of-workers 1` por isso.
 
-```
-http://clyvovet-api.canadacentral.cloudapp.azure.com:8080
-http://clyvovet-api.canadacentral.cloudapp.azure.com:8080/swagger-ui.html
-```
+Ver [12-plano-de-entrega-sprint3.md](12-plano-de-entrega-sprint3.md), seção 7.
 
-### Operação depois do deploy
+### Verificação e encerramento
 
-```bash
-# Acessar a VM
-ssh clyvovet@clyvovet-api.canadacentral.cloudapp.azure.com
+`09-verificar.sh` exercita o caminho inteiro — saúde, cadastro, login, CRUD de animal
+e o fluxo cruzado com a .NET — e imprime o SQL da demonstração de CRUD no banco. Sai
+com código diferente de zero se algo falhou.
 
-# Dentro da VM
-cd ~/clyvovet-backend-java
-docker compose ps
-docker compose logs -f clyvovet-api
-
-# Atualizar para a última versão do código
-git pull && docker compose up -d --build
-
-# Destruir tudo (da sua máquina)
-az group delete --name clyvovet-rg --yes --no-wait
-```
-
-### Observações
-
-- O script **clona o repositório público do GitHub**, não envia o código local. Um
-  `git push` é pré-requisito para que o deploy reflita suas mudanças.
-- O deploy é sempre no perfil `h2` — não há conectividade com o Oracle da FIAP a
-  partir da Azure.
-- Os dados vivem no volume Docker dentro da VM. Destruir o resource group apaga tudo.
-- A porta 80 é aberta mas nada escuta nela: não há reverse proxy configurado. A API
-  responde apenas na 8080.
-- Não há HTTPS, autenticação nem restrição de IP. Adequado para demonstração
-  acadêmica, não para dados reais.
-- `--generate-ssh-keys` reaproveita `~/.ssh/id_rsa` se já existir, ou cria um novo par.
+`99-destruir.sh` apaga o Resource Group inteiro, e só deve ser rodado **depois da
+correção**: recurso apagado equivale a entrega em localhost, que é zero de nota.

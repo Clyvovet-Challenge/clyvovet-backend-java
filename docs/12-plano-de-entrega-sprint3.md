@@ -79,7 +79,7 @@ nosso controle.
 |---|---|---|
 | Região | **`brazilsouth`** | verificado por CLI: App Service Linux (B1 e B2) **e** MySQL Burstable disponíveis na mesma região. A infra anterior tinha o grupo em `brazilsouth` e o banco em `chilecentral`, atravessando regiões em cada consulta |
 | Resource Group | um só, em `brazilsouth` | |
-| App Service Plan | **B2** Linux, compartilhado | B1 é 1 core e 1,75 GB para um Spring Boot com Hibernate **mais** um ASP.NET Core rodando dois `BackgroundService` em loop. B1 é onde "sem gargalo" deixa de valer, e você descobre durante a gravação |
+| App Service Plan | **B1** Linux, compartilhado | O F1 gratuito existe em `brazilsouth`, mas **não tem Always On**: o app dorme após ~20 min ocioso, e o feedback das entregas é em 26/09. B1 é o SKU mais barato **com** Always On. Se 1,75 GB apertarem para as duas APIs, subir para B2 é um comando e não recria nada |
 | Web App Java | runtime `JAVA:17-java17` | |
 | Web App .NET | runtime `DOTNETCORE:8.0` | as duas em prod: o app precisa das duas, e URL local numa e pública na outra é o tipo de configuração que falha ao vivo |
 | MySQL | Flexible Server `Standard_B1ms`, Burstable, 8.0 | PaaS, o que evita o −40 de banco containerizado |
@@ -115,9 +115,11 @@ Em ordem de execução. O que está acima destrava o que está abaixo.
    si, o que atende também o *"tabelas significativas para a solução"*.
 6. **PDF de entrega** — nome completo e RM de todos, link do GitHub, link do
    YouTube. *"Não pode ter mais nada no PDF"* (p. 12).
-7. **Remover o que dispara −40** — o `deploy.sh` provisiona VM com Docker Compose e
-   H2; o `azure-pipelines.yml` tem um estágio `Imagem` que constrói imagem Docker.
-   O `Dockerfile` pode ficar: o proibido é o **artefato publicado** sair dele.
+7. ✅ **Removido o que disparava −40** — o `deploy.sh` provisionava VM com Docker
+   Compose e H2 (três penalidades de −40 no mesmo arquivo: app containerizado,
+   banco containerizado e banco não permitido), e o `azure-pipelines.yml` tinha um
+   estágio `Imagem` que construía imagem Docker. O `Dockerfile` ficou: o proibido é
+   o **artefato publicado** sair dele.
 8. **Se sobrar tempo:** JWT compartilhado com a .NET, na ordem decidida — só
    depois do deploy estar verificado, para que uma quebra tenha causa óbvia.
 
@@ -218,7 +220,7 @@ script `az` que funciona mas que ninguém do grupo sabe explicar é uma entrega
 incompleta na prática.
 
 Por isso as decisões deste plano estão registradas **com o motivo**, e não só com o
-resultado: o "por que B2 e não B1", o "por que banco vazio e não `script_bd.sql`",
+resultado: o "por que B1 e não o F1 gratuito", o "por que banco vazio e não `script_bd.sql`",
 o "por que HS256 e não RS256". São exatamente as perguntas de uma banca.
 
 ---

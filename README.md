@@ -8,6 +8,58 @@ Flyway · Oracle 19c / MySQL / H2 · OpenAPI 3
 
 ---
 
+## Descrição da Solução
+
+O histórico clínico de um animal fica espalhado entre as clínicas que já o
+atenderam. Quando o tutor troca de veterinário, ou chega numa emergência, quem vai
+atender não sabe de alergia, condição crônica ou medicação em uso — e o tutor nem
+sempre lembra.
+
+O **CLYVO VET** resolve isso invertendo a posse do prontuário: o histórico pertence
+ao **tutor**, não à clínica. Todo atendimento de qualquer clínica vai para o mesmo
+prontuário do animal, o tutor decide quem pode ver o quê, e todo acesso fica
+auditado.
+
+Esta API é o backend principal da plataforma. Ela cobre identidade e autenticação,
+o núcleo clínico (tutores, animais, clínicas, veterinários, prontuário), a agenda
+com verificação de disponibilidade e bloqueios, a cobrança, e o mecanismo de
+consentimento que é o diferencial do produto. São **74 endpoints** sob `/api/v1`.
+
+O acesso ao histórico tem três níveis:
+
+| Nível | Quem vê | O que vê |
+|---|---|---|
+| 0 · Operacional | quem tem agendamento | nome, espécie, raça, porte |
+| 1 · Resumo de segurança | qualquer veterinário autenticado, **sempre** | alergia, condição crônica, medicação contínua, vacina, último peso |
+| 2 · Histórico completo | **só com consentimento do tutor** | linha do tempo, laudos, desfechos |
+
+O nível 1 existe por decisão clínica: negar informação de alergia numa emergência é
+pior do que expor um dado. E há **quebra de vidro** — acesso emergencial sem
+consentimento, que exige justificativa, notifica o tutor e fica registrado; uso
+recorrente pelo mesmo profissional gera alerta.
+
+O sistema é consumido por um **aplicativo móvel** em React Native/Expo e
+complementado por uma **API .NET** de engajamento (lembretes, sugestão de produtos,
+widget de saúde preditiva), que compartilha o mesmo banco.
+
+---
+
+## Benefícios para o Negócio
+
+| Problema hoje | O que a solução traz |
+|---|---|
+| O prontuário se perde a cada troca de clínica, e o tutor vira o transporte de informação | O histórico é único e acompanha o animal. A clínica recebe o paciente já com contexto na primeira consulta |
+| Numa emergência, quem atende decide sem saber de alergia ou medicação em uso | O resumo de segurança é visível a qualquer veterinário autenticado, sem depender de autorização prévia |
+| Compartilhar prontuário hoje é tudo ou nada, e sem rastro | Três níveis de acesso e trilha de auditoria: o tutor sabe quem leu o histórico do animal dele, e quando |
+| Falta agendada esquecida e retorno não remarcado são perda de receita invisível | Agenda com disponibilidade real, marcação de falta e vínculo retorno → consulta de origem, o que torna a taxa de retorno calculável |
+| Vacina e medicação contínua dependem da memória do tutor | Lembretes automáticos pela API de engajamento, ligados ao animal |
+
+**Para a clínica**, o ganho é receber o paciente com prontuário completo em vez de
+começar do zero. **Para o tutor**, é deixar de ser o responsável por lembrar e
+transportar a informação clínica do próprio animal.
+
+---
+
 ## Integrantes do Grupo
 
 | Nome | RM |
@@ -508,19 +560,123 @@ Os requisitos do Challenge que originaram o projeto estão em
 
 ---
 
-## Deploy
+## Deploy na Azure — passo a passo
+
+Arquitetura: **App Service + banco PaaS**, nada containerizado. Dois Web Apps
+compartilhando um App Service Plan, sobre um Azure Database for MySQL Flexible
+Server. Todos os recursos são criados por **Azure CLI**, um script por recurso, em
+[`azure/`](azure/).
+
+### Pré-requisitos
+
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) autenticado
+  (`az login`)
+- Java 17 e Maven Wrapper (já incluso: `./mvnw`)
+- .NET SDK 8, para publicar a segunda API
+- `zip`, `curl` e `python`
+
+### 1. Clonar o repositório
 
 ```bash
-# Local, com Docker
-JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
-
-# VM Linux na Azure (requer Azure CLI autenticado)
-bash deploy.sh
+git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
+cd clyvovet-backend-java
 ```
 
-O `deploy.sh` provisiona a VM, instala Docker, clona o repositório de forma rasa e
-esparsa e sobe o compose. É idempotente: num redeploy ele atualiza o clone em vez de
-falhar. Ver [`docs/05-deploy.md`](docs/05-deploy.md).
+Para publicar também a API .NET, clone-a ao lado:
+
+```bash
+git clone https://github.com/Clyvovet-Challenge/ClyvoVet-api.git ../ClyvoVet-api
+```
+
+### 2. Definir os segredos no ambiente
+
+Nenhum segredo vive no repositório — os scripts recusam rodar sem estas variáveis,
+em vez de assumir um valor padrão que acabaria commitado.
+
+```bash
+export MYSQL_PASSWORD='UmaSenhaForte123!'          # admin do MySQL
+export JWT_SECRET="$(openssl rand -base64 32)"     # mínimo 32 bytes
+export DOTNET_API_KEY="$(openssl rand -hex 24)"    # chave da API .NET
+export TELEGRAM_BOT_TOKEN='123456789:AA...'        # token do bot
+```
+
+### 3. Conferir o que a assinatura oferece
+
+Não cria nada — só consulta. Assinatura de estudante tem catálogo restrito, e ele
+varia por região.
+
+```bash
+bash azure/00-descobrir-recursos.sh
+```
+
+Se `brazilsouth` não aparecer com App Service Linux **e** MySQL Burstable ao mesmo
+tempo, ajuste `LOCATION` em [`azure/00-variaveis.sh`](azure/00-variaveis.sh) antes
+de seguir.
+
+### 4. Criar os recursos, um por vez
+
+```bash
+bash azure/01-resource-group.sh      # Resource Group
+bash azure/02-banco-mysql.sh         # MySQL Flexible Server + banco + firewall
+bash azure/03-plano-app-service.sh   # App Service Plan B1 Linux
+bash azure/04-webapp-java.sh         # Web App JAVA:17-java17
+bash azure/05-webapp-dotnet.sh       # Web App DOTNETCORE:8.0
+bash azure/06-configuracoes.sh       # app settings das duas APIs
+```
+
+O banco nasce **vazio**: o Flyway cria as 19 tabelas no primeiro boot da API Java,
+da V1 à V9. Não rode DDL à mão — é assim que o banco e o
+[`documentos/script_bd.sql`](documentos/script_bd.sql) deixam de divergir.
+
+### 5. Publicar as aplicações
+
+A ordem importa: a **Java sobe primeiro**, porque é o Flyway dela que cria as
+tabelas, inclusive as seis que a API .NET consome.
+
+```bash
+bash azure/07-deploy-java.sh         # build do jar + az webapp deploy --type jar
+bash azure/08-deploy-dotnet.sh       # dotnet publish + az webapp deploy --type zip
+```
+
+### 6. Verificar de ponta a ponta
+
+```bash
+bash azure/09-verificar.sh
+```
+
+Ele exercita saúde das duas APIs, cadastro, login, CRUD completo de animal na Java,
+e o fluxo cruzado — um lembrete criado na .NET resolvendo o `nomeAnimal` a partir da
+tabela que a Java acabou de gravar. Sai com código 0 se tudo passou, e imprime no
+final o SQL pronto para a demonstração de CRUD no banco.
+
+### Consultar o banco diretamente
+
+```bash
+mysql -h mysql-clyvovet-rm562312.mysql.database.azure.com       -u clyvovetadmin -p clyvovet --ssl-mode=REQUIRED
+```
+
+### Encerrar e parar de consumir crédito
+
+**Só depois da correção.** Recurso apagado equivale a entrega em localhost.
+
+```bash
+bash azure/99-destruir.sh
+```
+
+### Rodar localmente, sem Azure
+
+```bash
+./mvnw spring-boot:run                             # perfil dev, H2 em memória
+JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
+```
+
+O ambiente de integração com as duas APIs e um MySQL 8 real está em
+`local/docker-compose.yml`, no repositório do aplicativo móvel. Ele é ferramenta de
+desenvolvimento — **não** é o deploy, e nada dele vai para a nuvem.
+
+> **Sobre o `Dockerfile`:** ele fica no repositório e serve ao desenvolvimento, ao
+> compose de integração e ao CI. O artefato publicado na Azure **não sai dele** — é
+> o jar do `mvnw package`, entregue ao runtime Java nativo do App Service.
 
 ---
 
@@ -650,9 +806,22 @@ clyvovet-backend-java/
 │       ├── security/                   # JWT, bloqueio de conta, ownership
 │       └── support/
 │
-├── Dockerfile
+├── azure/                              # Provisionamento na Azure, um script por recurso
+│   ├── 00-descobrir-recursos.sh        # consulta o que a assinatura oferece
+│   ├── 00-variaveis.sh                 # configuração compartilhada, sem segredos
+│   ├── 01-resource-group.sh
+│   ├── 02-banco-mysql.sh               # Flexible Server PaaS, nasce vazio
+│   ├── 03-plano-app-service.sh         # B1 Linux, compartilhado pelas duas APIs
+│   ├── 04-webapp-java.sh
+│   ├── 05-webapp-dotnet.sh
+│   ├── 06-configuracoes.sh             # app settings das duas
+│   ├── 07-deploy-java.sh               # jar → App Service
+│   ├── 08-deploy-dotnet.sh             # zip → App Service
+│   ├── 09-verificar.sh                 # prova o caminho e imprime o SQL da demo
+│   └── 99-destruir.sh
+│
+├── Dockerfile                          # desenvolvimento e CI; NÃO é o artefato publicado
 ├── docker-compose.yml
-├── deploy.sh                           # Script Azure CLI para deploy em VM Linux
 ├── pom.xml
 └── mvnw / mvnw.cmd / .mvn/             # Maven Wrapper
 ```

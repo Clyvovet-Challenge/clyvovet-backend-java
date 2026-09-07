@@ -38,7 +38,7 @@ az webapp config appsettings set \
     --settings \
       SPRING_PROFILES_ACTIVE="mysql" \
       SERVER_PORT="80" \
-      JAVA_OPTS="-Xmx1024m -XX:+UseSerialGC" \
+      JAVA_OPTS="-Xmx512m -XX:+UseSerialGC" \
       DB_URL="jdbc:mysql://${HOST}:3306/${MYSQL_DB}?sslMode=REQUIRED&serverTimezone=UTC" \
       DB_USERNAME="$MYSQL_ADMIN" \
       DB_PASSWORD="$MYSQL_PASSWORD" \

@@ -29,10 +29,21 @@ export MYSQL_SKU="Standard_B1ms"
 export MYSQL_TIER="Burstable"
 export MYSQL_VERSION="8.0"
 
-# B2 e nao B1: as duas APIs dividem o plano, e uma delas roda dois
-# BackgroundService em loop continuo. B1 e 1 core e 1,75 GB para os dois.
+# B1 -- e nao o F1 gratuito, e nao B2.
+#
+# O F1 existe em brazilsouth, mas NAO TEM ALWAYS ON: o app dorme depois de ~20 min
+# ocioso. O feedback das entregas e em 26/09, entao o professor abriria a URL e
+# pegaria um cold start de Spring Boot num container de 1 GB. A regua trata
+# "aplicativo nao funcional" e "depender de intervencao do professor" como zero de
+# nota. Nao e economia -- e apostar a nota para nao gastar credito intocado.
+#
+# B1 e o SKU mais barato COM Always On, que e o risco real. Se o 09-verificar.sh
+# mostrar que 1,75 GB apertam para as duas APIs, subir e UM comando e nao recria
+# nada -- o plano e o unico recurso trocavel a quente:
+#
+#   az appservice plan update -g $RG -n $PLAN_NAME --sku B2
 export PLAN_NAME="plan-clyvovet-sprint3"
-export PLAN_SKU="B2"
+export PLAN_SKU="B1"
 
 export APP_JAVA="app-clyvovet-java-rm562312"
 export APP_DOTNET="app-clyvovet-dotnet-rm562312"

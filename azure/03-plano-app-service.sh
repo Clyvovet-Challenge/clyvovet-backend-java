@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Recurso 3 de 5: o App Service Plan que hospeda as duas APIs.
 #
-# POR QUE B2 E NAO B1
-# As duas APIs dividem este plano. B1 e 1 core e 1,75 GB para um Spring Boot com
-# Hibernate MAIS um ASP.NET Core rodando dois BackgroundService em loop continuo.
-# B2 dobra os dois. A diferenca de custo e pequena; a de risco, nao -- B1 e onde
-# "sem gargalo" deixa de valer, e voce descobre durante a gravacao do video.
+# POR QUE B1, E NAO O F1 GRATUITO
+# O F1 existe em brazilsouth, mas nao tem Always On: o app dorme apos ~20 min
+# ocioso, e quem abrir a URL depois disso espera um cold start. O B1 e o SKU mais
+# barato COM Always On -- o risco aqui nao e memoria, e o app estar dormindo na
+# hora da correcao.
+#
+# Se apertar, a troca para B2 e um comando e nao recria nada. Ver 00-variaveis.sh.
 #
 # --is-linux e obrigatorio: os runtimes JAVA:17-java17 e DOTNETCORE:8.0 sao Linux.
 #
