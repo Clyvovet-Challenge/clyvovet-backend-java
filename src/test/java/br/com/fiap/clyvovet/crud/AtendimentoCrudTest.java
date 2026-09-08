@@ -191,20 +191,81 @@ class AtendimentoCrudTest extends TesteDeApi {
      * O check do banco listava ESTORNADO enquanto o enum diz REEMBOLSADO, o que
      * tornava esse status impossivel de gravar. A migration V4 alinhou os dois —
      * este teste e o que impede a divergencia de voltar.
+     *
+     * <p>Ele chegava a REEMBOLSADO declarando o status no POST, e isso deixou de
+     * ser possivel: um pagamento nasce PENDENTE ou PAGO, como o proprio
+     * PagamentoRequest sempre documentou. Nascer REEMBOLSADO produzia o que a regra
+     * P11 existe para impedir — estorno de dinheiro que nunca entrou.</p>
+     *
+     * <p>Agora ele chega la pela porta: cria PENDENTE, confirma, estorna. Continua
+     * provando que a coluna aceita o valor, e de quebra prova o caminho inteiro.</p>
      */
     @Test
-    @DisplayName("pagamento: aceita o status REEMBOLSADO do enum")
+    @DisplayName("pagamento: chega a REEMBOLSADO pela acao propria")
     void pagamentoAceitaStatusReembolsado() throws Exception {
         String vet = tokenVeterinaria();
         String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
 
         String id = corpoDe(criar("/api/v1/pagamentos", vet,
-                PAGAMENTO.formatted("CARTAO", "120.00", "REEMBOLSADO", eventoId))
+                PAGAMENTO.formatted("CARTAO", "120.00", "PENDENTE", eventoId))
                 .andExpect(status().isCreated())).get("id").asText();
         removerDepois("/api/v1/pagamentos/" + id);
 
+        criar("/api/v1/pagamentos/" + id + "/confirmar", vet, """
+                {"dataPagamento":"%s"}""".formatted(java.time.LocalDate.now()))
+                .andExpect(status().isOk());
+        criar("/api/v1/pagamentos/" + id + "/estornar", vet, """
+                {"motivo":"Cobranca em duplicidade"}""")
+                .andExpect(status().isOk());
+
         assertThat(corpoDe(buscar("/api/v1/pagamentos/" + id, vet)).get("statusPagamento").asText())
                 .isEqualTo("REEMBOLSADO");
+    }
+
+    /**
+     * O buraco que o teste acima protegia sem querer.
+     *
+     * <p>Verificado contra a pilha no ar antes da correcao: POST /pagamentos com
+     * statusPagamento REEMBOLSADO respondia 201, enquanto
+     * POST /pagamentos/{id}/estornar num pendente respondia 409. A acao propria
+     * guardava a regra, e o cadastro passava por cima dela.</p>
+     */
+    @Test
+    @DisplayName("pagamento: nao nasce CANCELADO nem REEMBOLSADO")
+    void pagamentoNaoNasceEmEstadoDeTransicao() throws Exception {
+        String vet = tokenVeterinaria();
+        String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
+
+        for (String status : new String[]{"CANCELADO", "REEMBOLSADO"}) {
+            criar("/api/v1/pagamentos", vet,
+                    PAGAMENTO.formatted("PIX", "80.00", status, eventoId))
+                    .andExpect(status().isConflict());
+        }
+    }
+
+    /**
+     * O PUT edita, e nao faz mudar de estado. Mas o status e obrigatorio no corpo,
+     * entao reenviar o MESMO status tem de continuar funcionando -- senao um
+     * pagamento estornado ficaria impossivel de corrigir.
+     */
+    @Test
+    @DisplayName("pagamento: PUT nao pula a acao propria, mas ainda edita")
+    void putNaoMudaParaEstadoDeTransicao() throws Exception {
+        String vet = tokenVeterinaria();
+        String eventoId = eventoDeTeste(vet, animalDeTeste(tokenAdmin()));
+
+        String id = corpoDe(criar("/api/v1/pagamentos", vet,
+                PAGAMENTO.formatted("PIX", "80.00", "PENDENTE", eventoId))
+                .andExpect(status().isCreated())).get("id").asText();
+        removerDepois("/api/v1/pagamentos/" + id);
+
+        atualizar("/api/v1/pagamentos/" + id, vet,
+                PAGAMENTO.formatted("PIX", "80.00", "REEMBOLSADO", eventoId))
+                .andExpect(status().isConflict());
+
+        atualizar("/api/v1/pagamentos/" + id, vet,
+                PAGAMENTO.formatted("BOLETO", "95.00", "PENDENTE", eventoId))
+                .andExpect(status().isOk());
     }
 
     @Test
