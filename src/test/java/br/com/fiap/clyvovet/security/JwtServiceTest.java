@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.security;
 
 import br.com.fiap.clyvovet.model.Perfil;
+import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -82,5 +83,85 @@ class JwtServiceTest {
     void segredoFracoERecusado() {
         assertThatThrownBy(() -> new JwtService("Y3VydG8=", 15, 7))
                 .isInstanceOf(Exception.class);
+    }
+
+    // ================================================================
+    // Camada 0 do JWT compartilhado com a API .NET.
+    //
+    // Estes testes existem porque as duas regras abaixo sao invisiveis em
+    // producao ate darem errado: o refresh carregando identidade so aparece como
+    // credencial de 7 dias aceita pela outra API, e a claim ausente so aparece
+    // como listagem devolvendo dados de outro tutor.
+    // ================================================================
+
+    @Test
+    @DisplayName("access token de um tutor carrega a claim tutorId")
+    void accessTokenCarregaTutorId() {
+        Tutor tutor = new Tutor();
+        tutor.setId(UUID.randomUUID());
+        usuario.setTutor(tutor);
+
+        Claims claims = jwtService.lerClaims(jwtService.gerarAccessToken(usuario));
+
+        assertThat(jwtService.extrairTutorId(claims)).isEqualTo(tutor.getId());
+    }
+
+    @Test
+    @DisplayName("refresh token NAO carrega tutorId, mesmo para um tutor")
+    void refreshTokenNaoCarregaTutorId() {
+        Tutor tutor = new Tutor();
+        tutor.setId(UUID.randomUUID());
+        usuario.setTutor(tutor);
+
+        Claims claims = jwtService.lerClaims(jwtService.gerarRefreshToken(usuario));
+
+        // O refresh dura 7 dias e fica em disco no aparelho. Se ele carregasse
+        // identidade utilizavel, seria uma credencial de sete dias valida na API
+        // .NET -- que nao enxerga a revogacao por jti feita no logout daqui.
+        assertThat(jwtService.extrairTutorId(claims)).isNull();
+    }
+
+    @Test
+    @DisplayName("usuario sem tutor (ADMIN, VETERINARIO) gera token sem a claim")
+    void usuarioSemTutorNaoCarregaTutorId() {
+        usuario.setPerfil(Perfil.ADMIN);
+        usuario.setTutor(null);
+
+        Claims claims = jwtService.lerClaims(jwtService.gerarAccessToken(usuario));
+
+        // Ausencia significa "este token nao identifica um tutor", e nunca
+        // "sem restricao". Quem recorta por dono precisa NEGAR aqui.
+        assertThat(jwtService.extrairTutorId(claims)).isNull();
+        assertThat(claims.get("tutorId")).isNull();
+    }
+
+    @Test
+    @DisplayName("token declara emissor e publico, que a validacao do .NET exige por padrao")
+    void tokenDeclaraEmissorEPublico() {
+        Claims claims = jwtService.lerClaims(jwtService.gerarAccessToken(usuario));
+
+        assertThat(claims.getIssuer()).isEqualTo("clyvovet-api-java");
+        assertThat(claims.getAudience()).contains("clyvovet");
+    }
+
+    @Test
+    @DisplayName("a chave HMAC sai do segredo DECODIFICADO de base64, nao dos bytes da string")
+    void chaveSaiDoBase64Decodificado() {
+        // O contrato que a API .NET tem de reproduzir. Ela precisa usar
+        // Convert.FromBase64String(segredo) -- o idioma comum em .NET,
+        // Encoding.UTF8.GetBytes(segredo), produz uma chave DIFERENTE com o
+        // mesmo valor de configuracao, e entao nenhuma assinatura confere.
+        //
+        // Este teste prova o lado Java do contrato: um segredo cujo base64
+        // decodifica para bytes conhecidos gera um token que so e aceito por um
+        // servico construido com o mesmo base64.
+        String mesmoValor = SEGREDO;
+        JwtService outroProcesso = new JwtService(mesmoValor, 15, 7);
+
+        String token = jwtService.gerarAccessToken(usuario);
+
+        assertThat(outroProcesso.tokenValido(token)).isTrue();
+        assertThat(new String(io.jsonwebtoken.io.Decoders.BASE64.decode(SEGREDO)))
+                .isEqualTo("teste-clyvovet-chave-hmac-sha256-para-testes");
     }
 }
