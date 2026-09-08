@@ -35,6 +35,7 @@ public class SecurityConfig {
 
     private static final String ADMIN = "ADMIN";
     private static final String VETERINARIO = "VETERINARIO";
+    private static final String ADMIN_CLINICA = "ADMIN_CLINICA";
     private static final long UM_ANO_EM_SEGUNDOS = 31_536_000L;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -131,10 +132,19 @@ public class SecurityConfig {
         rotas
             // --- Somente ADMIN ---
             .requestMatchers(api("/auth/usuarios")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.POST,   api("/clinicas", "/veterinarios")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.PUT,    api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.PATCH,  api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.DELETE, api("/clinicas/**", "/veterinarios/**")).hasRole(ADMIN)
+            // CRIAR e EXCLUIR clinica continuam da plataforma: quem entra e quem sai
+            // dela e decisao do negocio, nao do estabelecimento sobre si mesmo.
+            .requestMatchers(HttpMethod.POST,   api("/clinicas")).hasRole(ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/clinicas/**")).hasRole(ADMIN)
+
+            // Editar os proprios dados, e cadastrar os proprios profissionais, sim.
+            // De novo: a rota abre o verbo, e o @PreAuthorize decide de QUEM.
+            .requestMatchers(HttpMethod.PUT,    api("/clinicas/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.PATCH,  api("/clinicas/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.POST,   api("/veterinarios")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.PUT,    api("/veterinarios/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.PATCH,  api("/veterinarios/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/veterinarios/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
 
             // --- Cobranca: as transicoes de pagamento sao do corpo clinico ---
             // O extrato e o saldo ficam de fora: o tutor precisa ver a propria
@@ -146,10 +156,16 @@ public class SecurityConfig {
 
             // --- Catalogo de servicos: quem define o que a clinica oferece ---
             // Preco e duracao decidem quanto se cobra e como a agenda e ocupada.
-            // Ate existir o perfil ADMIN_CLINICA (spec 08, N2), isso e da plataforma.
-            .requestMatchers(HttpMethod.POST,   api("/servicos")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.PUT,    api("/servicos/**")).hasRole(ADMIN)
-            .requestMatchers(HttpMethod.DELETE, api("/servicos/**")).hasRole(ADMIN)
+            //
+            // O ADMIN_CLINICA entra aqui, e era o que faltava para a clinica poder
+            // administrar a si mesma -- o comentario antigo desta linha ja dizia
+            // "ate existir o perfil ADMIN_CLINICA". Mas a rota so abre o VERBO: ela
+            // nao sabe de QUAL clinica e o servico. Quem amarra isso e o
+            // @PreAuthorize do controller, com podeGerirCatalogoDe. Sem ele, um
+            // administrador mexeria no catalogo da concorrente.
+            .requestMatchers(HttpMethod.POST,   api("/servicos")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.PUT,    api("/servicos/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            .requestMatchers(HttpMethod.DELETE, api("/servicos/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
 
             // --- Agenda do veterinario: a grade e de quem atende ---
             // PEDIDO DE ALTERACAO DE CADASTRO
@@ -160,10 +176,13 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, api("/animais/*/solicitacoes-alteracao"))
                 .hasRole(VETERINARIO)
 
+            // O ADMIN_CLINICA gerencia a grade de qualquer profissional da casa; o
+            // veterinario, so a propria. A distincao vive em podeGerenciarAgendaDe,
+            // porque depende de qual profissional o recurso aponta.
             .requestMatchers(HttpMethod.POST,   api("/disponibilidades", "/bloqueios"))
-                .hasAnyRole(VETERINARIO, ADMIN)
+                .hasAnyRole(VETERINARIO, ADMIN_CLINICA, ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/disponibilidades/**", "/bloqueios/**"))
-                .hasAnyRole(VETERINARIO, ADMIN)
+                .hasAnyRole(VETERINARIO, ADMIN_CLINICA, ADMIN)
 
             // --- Acoes clinicas sobre um atendimento ---
             //

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -40,12 +41,15 @@ public class VeterinarioController {
         return ResponseEntity.ok(veterinarioService.buscarPorId(id));
     }
 
+    // Cadastrar profissional e da clinica -- mas so na dela.
+    @PreAuthorize("@seguranca.ehAdministradorDe(#request.clinicaId)")
     @PostMapping
     @Operation(summary = "Cadastrar novo veterinário")
     public ResponseEntity<VeterinarioResponse> criar(@Valid @RequestBody VeterinarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(veterinarioService.criar(request));
     }
 
+    @PreAuthorize("@seguranca.podeGerirVeterinario(#id)")
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar veterinário existente")
     public ResponseEntity<VeterinarioResponse> atualizar(
@@ -54,6 +58,7 @@ public class VeterinarioController {
         return ResponseEntity.ok(veterinarioService.atualizar(id, request));
     }
 
+    @PreAuthorize("@seguranca.podeGerirVeterinario(#id)")
     @PatchMapping("/{id}")
     @Operation(summary = "Atualizar parcialmente um veterinário: envie apenas os campos que mudam")
     public ResponseEntity<VeterinarioResponse> atualizarParcialmente(
@@ -62,6 +67,7 @@ public class VeterinarioController {
         return ResponseEntity.ok(veterinarioService.atualizarParcialmente(id, patch));
     }
 
+    @PreAuthorize("@seguranca.podeGerirVeterinario(#id)")
     @DeleteMapping("/{id}")
     @Operation(summary = "Remover veterinário")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {

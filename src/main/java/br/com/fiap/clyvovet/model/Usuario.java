@@ -10,8 +10,9 @@ import java.util.UUID;
 /**
  * Identidade de quem faz login, separada das entidades de dominio.
  *
- * O vinculo com Tutor ou Veterinario e opcional e mutuamente exclusivo na
- * pratica: ADMIN nao aponta para nenhum dos dois. E o vinculo com Tutor que
+ * O vinculo e opcional e, na pratica, mutuamente exclusivo — um por perfil:
+ * TUTOR aponta para tutor, VETERINARIO para veterinario, ADMIN_CLINICA para
+ * clinica, e o ADMIN da plataforma para nenhum. E o vinculo com Tutor que
  * viabiliza a regra de ownership — um tutor so enxerga os proprios pets.
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
@@ -52,6 +53,21 @@ public class Usuario {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "veterinario_id")
     private Veterinario veterinario;
+
+    /**
+     * A clinica que este usuario ADMINISTRA.
+     *
+     * <p>Nao confundir com a clinica ONDE ele trabalha: essa continua vindo por
+     * {@code veterinario.clinica}. Um veterinario atende numa clinica; o
+     * ADMIN_CLINICA responde por ela. Sao alcances diferentes, e por isso sao
+     * dois caminhos.</p>
+     *
+     * <p>Fica nulo em todos os outros perfis. O banco cobra a coerencia:
+     * {@code chk_usuario_clinica} recusa ADMIN_CLINICA sem clinica.</p>
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "clinica_id")
+    private Clinica clinica;
 
     public boolean estaBloqueado() {
         return bloqueadoAte != null && bloqueadoAte.isAfter(LocalDateTime.now());

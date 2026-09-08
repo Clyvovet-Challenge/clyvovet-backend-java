@@ -34,4 +34,10 @@ public class UsuarioRequest {
     private UUID tutorId;
 
     private UUID veterinarioId;
+
+    /**
+     * A clinica que este usuario administra. Obrigatorio para ADMIN_CLINICA, e
+     * proibido nos demais perfis.
+     */
+    private UUID clinicaId;
 }

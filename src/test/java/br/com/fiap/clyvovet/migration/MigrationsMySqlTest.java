@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v11() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v12() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(11);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
+        assertThat(resultado.migrationsExecuted).isEqualTo(12);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
     }
 
     @Test

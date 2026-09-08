@@ -8,6 +8,7 @@ import br.com.fiap.clyvovet.mapper.UsuarioMapper;
 import br.com.fiap.clyvovet.model.Perfil;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
+import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
@@ -30,6 +31,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final TutorRepository tutorRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final ClinicaRepository clinicaRepository;
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -65,6 +67,9 @@ public class UsuarioService {
         }
         if (request.getVeterinarioId() != null) {
             usuario.setVeterinario(veterinarioRepository.obterPorId(request.getVeterinarioId()));
+        }
+        if (request.getClinicaId() != null) {
+            usuario.setClinica(clinicaRepository.obterPorId(request.getClinicaId()));
         }
 
         validarVinculo(usuario);
@@ -135,24 +140,48 @@ public class UsuarioService {
      * O ADMIN fica de fora dos dois lados. Ele nao precisa de vinculo, e um
      * vinculo nele e inerte: o recorte do ADMIN e irrestrito de qualquer forma.
      */
+    /**
+     * Cada perfil exige exatamente UM vinculo, e proibe os outros.
+     *
+     * <p>Era escrito aos pares — "TUTOR sem tutor", "TUTOR com veterinario" — e a
+     * lista crescia ao quadrado a cada perfil novo. Com quatro perfis e tres
+     * vinculos seriam doze condicoes escritas a mao, e a chance de esquecer uma
+     * cresce junto.</p>
+     *
+     * <p>E havia um buraco que a forma antiga escondia: <b>o ADMIN da plataforma
+     * nao era verificado</b>. Nada impedia cria-lo apontando para um tutor, e o
+     * {@code getTutorId()} do {@link br.com.fiap.clyvovet.security.UsuarioAutenticado}
+     * passaria a devolver esse id — um ADMIN que, em qualquer regra que pergunte
+     * "voce e dono disto?", responderia pelo tutor alheio.</p>
+     *
+     * <p>Declarando qual vinculo pertence a qual perfil, o que sobra e proibido por
+     * construcao, e o perfil novo entra numa linha.</p>
+     */
     private void validarVinculo(Usuario usuario) {
         Perfil perfil = usuario.getPerfil();
 
-        if (perfil == Perfil.TUTOR && usuario.getTutor() == null) {
-            throw new RegraDeNegocioException("tutorId",
-                    "Usuario com perfil TUTOR precisa ser vinculado a um tutor");
+        UUID tutor = usuario.getTutor() != null ? usuario.getTutor().getId() : null;
+        UUID veterinario = usuario.getVeterinario() != null ? usuario.getVeterinario().getId() : null;
+        UUID clinica = usuario.getClinica() != null ? usuario.getClinica().getId() : null;
+
+        exigir(perfil, "tutorId", "um tutor", tutor, perfil == Perfil.TUTOR);
+        exigir(perfil, "veterinarioId", "um veterinario", veterinario, perfil == Perfil.VETERINARIO);
+        exigir(perfil, "clinicaId", "uma clinica", clinica, perfil == Perfil.ADMIN_CLINICA);
+    }
+
+    /**
+     * Um vinculo precisa existir quando o perfil o exige, e nao pode existir
+     * quando nao exige. As duas metades na mesma regra, para nao ser possivel
+     * escrever uma e esquecer a outra.
+     */
+    private void exigir(Perfil perfil, String campo, String descricao, UUID valor, boolean obrigatorio) {
+        if (obrigatorio && valor == null) {
+            throw new RegraDeNegocioException(campo,
+                    "Usuario com perfil " + perfil + " precisa ser vinculado a " + descricao);
         }
-        if (perfil == Perfil.TUTOR && usuario.getVeterinario() != null) {
-            throw new RegraDeNegocioException("veterinarioId",
-                    "Usuario com perfil TUTOR nao pode ser vinculado a um veterinario");
-        }
-        if (perfil == Perfil.VETERINARIO && usuario.getVeterinario() == null) {
-            throw new RegraDeNegocioException("veterinarioId",
-                    "Usuario com perfil VETERINARIO precisa ser vinculado a um veterinario");
-        }
-        if (perfil == Perfil.VETERINARIO && usuario.getTutor() != null) {
-            throw new RegraDeNegocioException("tutorId",
-                    "Usuario com perfil VETERINARIO nao pode ser vinculado a um tutor");
+        if (!obrigatorio && valor != null) {
+            throw new RegraDeNegocioException(campo,
+                    "Usuario com perfil " + perfil + " nao pode ser vinculado a " + descricao);
         }
     }
 }

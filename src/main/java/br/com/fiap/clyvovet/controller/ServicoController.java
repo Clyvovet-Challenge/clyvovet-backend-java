@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,12 +29,16 @@ public class ServicoController {
         return ResponseEntity.ok(servicoService.daClinica(clinicaId));
     }
 
+    // A rota abre o verbo para ADMIN_CLINICA; esta linha decide de QUAL clinica.
+    // Sem ela, um administrador cadastraria servico no catalogo da concorrente.
+    @PreAuthorize("@seguranca.podeGerirCatalogoDe(#request.clinicaId)")
     @PostMapping("/servicos")
     @Operation(summary = "Cadastrar serviço no catálogo")
     public ResponseEntity<ServicoResponse> criar(@Valid @RequestBody ServicoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(servicoService.criar(request));
     }
 
+    @PreAuthorize("@seguranca.podeGerirServico(#id)")
     @PutMapping("/servicos/{id}")
     @Operation(summary = "Atualizar serviço do catálogo")
     public ResponseEntity<ServicoResponse> atualizar(
@@ -41,6 +46,7 @@ public class ServicoController {
         return ResponseEntity.ok(servicoService.atualizar(id, request));
     }
 
+    @PreAuthorize("@seguranca.podeGerirServico(#id)")
     @DeleteMapping("/servicos/{id}")
     @Operation(summary = "Desativar serviço. Não remove: o histórico de preços depende dele")
     public ResponseEntity<Void> desativar(@PathVariable UUID id) {

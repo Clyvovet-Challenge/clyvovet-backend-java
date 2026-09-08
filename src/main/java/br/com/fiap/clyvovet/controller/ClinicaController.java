@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -46,6 +47,8 @@ public class ClinicaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(clinicaService.criar(request));
     }
 
+    // O ADMIN_CLINICA edita a PROPRIA clinica, e so ela.
+    @PreAuthorize("@seguranca.ehAdministradorDe(#id)")
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar clínica existente")
     public ResponseEntity<ClinicaResponse> atualizar(
@@ -54,6 +57,7 @@ public class ClinicaController {
         return ResponseEntity.ok(clinicaService.atualizar(id, request));
     }
 
+    @PreAuthorize("@seguranca.ehAdministradorDe(#id)")
     @PatchMapping("/{id}")
     @Operation(summary = "Atualizar parcialmente um clínica: envie apenas os campos que mudam")
     public ResponseEntity<ClinicaResponse> atualizarParcialmente(

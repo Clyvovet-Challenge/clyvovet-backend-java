@@ -51,8 +51,22 @@ public class UsuarioAutenticado implements UserDetails {
         return usuario.getVeterinario() != null ? usuario.getVeterinario().getId() : null;
     }
 
-    /** Id da clinica do veterinario vinculado. Sustenta as regras de escopo por clinica. */
+    /**
+     * A clinica deste usuario. Sustenta as regras de escopo por clinica.
+     *
+     * <p>Ha DOIS caminhos, e a ordem importa. O vinculo direto
+     * ({@code usuario.clinica}) e o do ADMIN_CLINICA, que responde pelo
+     * estabelecimento. O transitivo ({@code veterinario.clinica}) e o do
+     * profissional que atende nela.</p>
+     *
+     * <p>O direto vem primeiro porque e o mais especifico: se um dia alguem for as
+     * duas coisas — o dono da clinica que tambem atende —, o alcance que vale e o
+     * de quem responde pelo negocio, nao o de quem faz consulta.</p>
+     */
     public UUID getClinicaId() {
+        if (usuario.getClinica() != null) {
+            return usuario.getClinica().getId();
+        }
         if (usuario.getVeterinario() == null || usuario.getVeterinario().getClinica() == null) {
             return null;
         }

@@ -159,6 +159,28 @@ public class HistoricoService {
         if (clinicaId != null && temAutorizacaoVigente(animal.getId(), clinicaId)) {
             return NivelAcesso.COMPLETO;
         }
+
+        // O ADMIN_CLINICA PARA AQUI, e o veterinario nao.
+        //
+        // O nivel 1 existe por uma razao nomeada — proteger a vida do animal. E o
+        // que permite ao profissional saber que o cachorro na mesa e alergico a
+        // dipirona ANTES de aplicar, mesmo sem consentimento e mesmo sem nunca o ter
+        // atendido. A credencial e a autenticacao do veterinario, e a justificativa
+        // e o atendimento em curso.
+        //
+        // O administrador da clinica nao atende ninguem. Ele responde pelo negocio:
+        // servicos, profissionais, agenda, faturamento. Deixa-lo cair no ramo abaixo
+        // — que era o comportamento antes desta linha — entregava alergia, condicao
+        // cronica, medicacao continua e o telefone do tutor de QUALQUER animal da
+        // plataforma a quem so precisa administrar um estabelecimento. Verificado em
+        // teste: o pedido respondia 200 com o resumo montado.
+        //
+        // Com consentimento ele passa, no ramo acima: ai a autorizacao foi dada a
+        // clinica, e ele responde por ela.
+        if (perfil == Perfil.ADMIN_CLINICA) {
+            return NivelAcesso.OPERACIONAL;
+        }
+
         // Sem consentimento a clinica ainda ve o que foi realizado nela (C0b).
         return NivelAcesso.RESUMO_DE_SEGURANCA;
     }

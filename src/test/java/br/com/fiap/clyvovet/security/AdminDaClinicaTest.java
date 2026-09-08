@@ -1,0 +1,228 @@
+package br.com.fiap.clyvovet.security;
+
+import br.com.fiap.clyvovet.support.SeedV2;
+import br.com.fiap.clyvovet.support.TesteDeApi;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * O ADMIN_CLINICA — o administrador de UMA clinica.
+ *
+ * <p>Ate a V12 ele nao existia: {@code t_clyvo_usuario} ligava a um tutor ou a um
+ * veterinario, e a nada mais. O escopo por clinica era transitivo (usuario →
+ * veterinario → clinica), e quem gerenciava servicos, profissionais e agenda era o
+ * ADMIN da plataforma, que enxerga todas as clinicas.</p>
+ *
+ * <p>O risco do perfil novo cabe numa frase: <b>ele abre verbos que antes eram so do
+ * ADMIN</b>. A regra de rota nao sabe de qual clinica e o recurso — quem sabe e o
+ * {@code @PreAuthorize} do controller. Esta classe existe para provar que a segunda
+ * metade esta no lugar, porque sem ela o perfil vira um caminho para mexer na
+ * concorrente.</p>
+ */
+class AdminDaClinicaTest extends TesteDeApi {
+
+    private static final String SENHA = "Clinica@12345";
+    private static final String DA_VETCARE = "admin.vetcare@clinica.test";
+    private static final String DA_PETMED = "admin.petmed@clinica.test";
+
+    private String vetcare;
+    private String petmed;
+
+    @BeforeEach
+    void criarOsDoisAdministradores() throws Exception {
+        String admin = tokenAdmin();
+        criarSeAusente(admin, DA_VETCARE, SeedV2.CLINICA_VETCARE);
+        criarSeAusente(admin, DA_PETMED, SeedV2.CLINICA_PETMED);
+        vetcare = token(DA_VETCARE, SENHA);
+        petmed = token(DA_PETMED, SENHA);
+    }
+
+    /** A suite compartilha o banco: na segunda classe que rodar, o usuario ja existe. */
+    private void criarSeAusente(String admin, String email, String clinicaId) throws Exception {
+        criar("/api/v1/auth/usuarios", admin, """
+                {"email":"%s","senha":"%s","perfil":"ADMIN_CLINICA","clinicaId":"%s"}"""
+                .formatted(email, SENHA, clinicaId));
+    }
+
+    // ================================================================
+    // O vinculo, no cadastro
+    // ================================================================
+
+    @Test
+    @DisplayName("ADMIN_CLINICA sem clinica e recusado")
+    void semClinicaERecusado() throws Exception {
+        criar("/api/v1/auth/usuarios", tokenAdmin(), """
+                {"email":"sem.clinica@test.com","senha":"%s","perfil":"ADMIN_CLINICA"}"""
+                .formatted(SENHA))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("clinicaId"));
+    }
+
+    /**
+     * O buraco que a validacao antiga escondia.
+     *
+     * <p>Ela era escrita aos pares — "TUTOR sem tutor", "TUTOR com veterinario" — e
+     * nunca verificava o ADMIN. Nada impedia cria-lo apontando para um tutor, e a
+     * partir dai {@code UsuarioAutenticado.getTutorId()} devolveria esse id: um
+     * ADMIN que, em qualquer regra que pergunte "voce e dono disto?", responderia
+     * pelo tutor alheio.</p>
+     */
+    @Test
+    @DisplayName("ADMIN da plataforma nao pode nascer vinculado a um tutor")
+    void adminNaoAceitaVinculoDeTutor() throws Exception {
+        criar("/api/v1/auth/usuarios", tokenAdmin(), """
+                {"email":"admin.com.tutor@test.com","senha":"%s","perfil":"ADMIN","tutorId":"%s"}"""
+                .formatted(SENHA, SeedV2.TUTOR_LUCAS))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.campo").value("tutorId"));
+    }
+
+    @Test
+    @DisplayName("ADMIN_CLINICA nao pode nascer vinculado a um veterinario")
+    void adminDeClinicaNaoAceitaVinculoDeVeterinario() throws Exception {
+        criar("/api/v1/auth/usuarios", tokenAdmin(), """
+                {"email":"hibrido@test.com","senha":"%s","perfil":"ADMIN_CLINICA",
+                 "clinicaId":"%s","veterinarioId":"%s"}"""
+                .formatted(SENHA, SeedV2.CLINICA_VETCARE, SeedV2.VET_CAMILA))
+                .andExpect(status().isConflict());
+    }
+
+    // ================================================================
+    // A propria clinica, e so ela
+    // ================================================================
+
+    @Test
+    @DisplayName("edita a propria clinica")
+    void editaAPropriaClinica() throws Exception {
+        atualizarParcialmente("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE, vetcare, """
+                {"telefone":"1133224455"}""")
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("NAO edita a clinica concorrente")
+    void naoEditaAConcorrente() throws Exception {
+        atualizarParcialmente("/api/v1/clinicas/" + SeedV2.CLINICA_PETMED, vetcare, """
+                {"telefone":"1199998888"}""")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("nao cria nem exclui clinica -- quem entra e sai da plataforma e o ADMIN")
+    void naoCriaNemExcluiClinica() throws Exception {
+        criar("/api/v1/clinicas", vetcare, """
+                {"nome":"Clinica Nova","cnpj":"11222333000181","telefone":"1133334444",
+                 "email":"nova@clinica.com","endereco":{"logradouro":"Rua A","numero":"1",
+                 "bairro":"Centro","cidade":"Sao Paulo","estado":"SP","cep":"01001000"}}""")
+                .andExpect(status().isForbidden());
+
+        remover("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE, vetcare)
+                .andExpect(status().isForbidden());
+    }
+
+    // ================================================================
+    // Catalogo de servicos
+    // ================================================================
+
+    @Test
+    @DisplayName("cadastra servico na propria clinica")
+    void cadastraServicoNaPropria() throws Exception {
+        String id = idDe(criar("/api/v1/servicos", vetcare, """
+                {"clinicaId":"%s","nome":"Banho terapeutico %s","tipoEvento":"OUTRO",
+                 "preco":90.00,"duracaoMinutos":45}"""
+                .formatted(SeedV2.CLINICA_VETCARE, System.nanoTime()))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/servicos/" + id);
+    }
+
+    /**
+     * O caso que a regra de rota sozinha nao pega: o verbo esta liberado para o
+     * perfil, e o corpo aponta para outra clinica.
+     */
+    @Test
+    @DisplayName("NAO cadastra servico no catalogo da concorrente")
+    void naoCadastraServicoNaConcorrente() throws Exception {
+        criar("/api/v1/servicos", vetcare, """
+                {"clinicaId":"%s","nome":"Servico intruso %s","tipoEvento":"CONSULTA",
+                 "preco":10.00,"duracaoMinutos":30}"""
+                .formatted(SeedV2.CLINICA_PETMED, System.nanoTime()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("NAO altera nem apaga servico da concorrente")
+    void naoMexeEmServicoAlheio() throws Exception {
+        String doPetmed = idDe(criar("/api/v1/servicos", petmed, """
+                {"clinicaId":"%s","nome":"Consulta PetMed %s","tipoEvento":"CONSULTA",
+                 "preco":120.00,"duracaoMinutos":30}"""
+                .formatted(SeedV2.CLINICA_PETMED, System.nanoTime()))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/servicos/" + doPetmed);
+
+        atualizar("/api/v1/servicos/" + doPetmed, vetcare, """
+                {"clinicaId":"%s","nome":"Sequestrado","tipoEvento":"CONSULTA",
+                 "preco":1.00,"duracaoMinutos":30}""".formatted(SeedV2.CLINICA_PETMED))
+                .andExpect(status().isForbidden());
+
+        remover("/api/v1/servicos/" + doPetmed, vetcare)
+                .andExpect(status().isForbidden());
+    }
+
+    // ================================================================
+    // Agenda dos profissionais da casa
+    // ================================================================
+
+    @Test
+    @DisplayName("gerencia a grade de um veterinario da casa")
+    void gerenciaAGradeDaCasa() throws Exception {
+        String id = idDe(criar("/api/v1/disponibilidades", vetcare, """
+                {"veterinarioId":"%s","diaSemana":"DOMINGO","horaInicio":"08:00","horaFim":"12:00",
+                 "vigenciaInicio":"%s"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now()))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/disponibilidades/" + id);
+    }
+
+    /**
+     * O exploit que {@code podeGerenciarAgendaDe} ja documentava para o veterinario,
+     * agora fechado tambem para o perfil novo: sem grade, a clinica inteira some da
+     * busca por vagas.
+     */
+    @Test
+    @DisplayName("NAO mexe na grade de veterinario da concorrente")
+    void naoMexeNaGradeAlheia() throws Exception {
+        criar("/api/v1/disponibilidades", vetcare, """
+                {"veterinarioId":"%s","diaSemana":"DOMINGO","horaInicio":"08:00","horaFim":"12:00",
+                 "vigenciaInicio":"%s"}"""
+                .formatted(SeedV2.VET_RAFAEL_DA_PETMED, LocalDate.now()))
+                .andExpect(status().isForbidden());
+    }
+
+    // ================================================================
+    // O que administrar o negocio NAO concede
+    // ================================================================
+
+    /**
+     * Administrar um estabelecimento nao e o mesmo que atender. O perfil ficou de
+     * fora de {@code temVisaoAmpla} de proposito: aquilo abre o cadastro de todos os
+     * tutores da plataforma, com CPF e e-mail, a quem so precisa gerir uma clinica.
+     */
+    @Test
+    @DisplayName("nao enxerga o cadastro de tutores da plataforma")
+    void naoListaTutores() throws Exception {
+        buscar("/api/v1/tutores", vetcare).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("nao le o historico de um animal que nunca passou pela clinica")
+    void naoLeHistoricoAlheio() throws Exception {
+        buscar("/api/v1/animais/" + SeedV2.ANIMAL_MIMI_DA_MARIA + "/historico", vetcare)
+                .andExpect(status().isConflict());
+    }
+}
