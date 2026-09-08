@@ -55,6 +55,23 @@ source ./00-variaveis.sh
 exigir DOTNET_API_KEY     || exit 1
 exigir TELEGRAM_BOT_TOKEN || exit 1
 
+# O PRIMEIRO ADMIN DA PLATAFORMA
+#
+# O banco e provisionado vazio e as migrations criam clinicas, veterinarios e
+# tutores -- mas NENHUM usuario. E correto: banco de entrega nao deve receber
+# usuario de desenvolvimento com senha conhecida. So que POST /auth/usuarios exige
+# perfil ADMIN, e POST /auth/registrar so cria TUTOR: sem um ADMIN inicial, ninguem
+# consegue criar o primeiro, e os fluxos de veterinario e de administracao ficam
+# inalcancaveis -- inclusive na hora de gravar o video.
+#
+# A aplicacao cria este usuario UMA vez, no boot, e so se ainda nao houver nenhum
+# ADMIN. Depois do primeiro acesso, troque a senha e remova as duas app settings:
+#
+#   az webapp config appsettings delete -g $RG -n $APP_JAVA \
+#      --setting-names CLYVOVET_ADMIN_EMAIL CLYVOVET_ADMIN_SENHA
+exigir ADMIN_EMAIL        || exit 1
+exigir ADMIN_SENHA        || exit 1
+
 az account set --subscription "$SUBSCRIPTION"
 
 HOST="${MYSQL_SERVER}.mysql.database.azure.com"
@@ -72,6 +89,8 @@ az webapp config appsettings set \
       DB_USERNAME="$MYSQL_ADMIN" \
       DB_PASSWORD="$MYSQL_PASSWORD" \
       JWT_SECRET="$JWT_SECRET" \
+      CLYVOVET_ADMIN_EMAIL="$ADMIN_EMAIL" \
+      CLYVOVET_ADMIN_SENHA="$ADMIN_SENHA" \
       CLYVOVET_CORS_ORIGENS="${URL_JAVA},${URL_DOTNET},http://localhost:8081" \
     -o none
 echo "    ok"

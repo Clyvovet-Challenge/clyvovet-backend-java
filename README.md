@@ -622,7 +622,17 @@ export MYSQL_PASSWORD='UmaSenhaForte123!'          # admin do MySQL
 export JWT_SECRET="$(openssl rand -base64 32)"     # mínimo 32 bytes
 export DOTNET_API_KEY="$(openssl rand -hex 24)"    # chave da API .NET
 export TELEGRAM_BOT_TOKEN='123456789:AA...'        # token do bot
+export ADMIN_EMAIL='admin@clyvovet.com'            # primeiro ADMIN da plataforma
+export ADMIN_SENHA="$(openssl rand -base64 18)"    # anote: só aparece aqui
 ```
+
+> **Por que um ADMIN inicial.** As migrations criam clínicas, veterinários e
+> tutores, mas **nenhum usuário** — banco de entrega não recebe usuário de
+> desenvolvimento com senha conhecida. Só que `POST /auth/usuarios` exige perfil
+> ADMIN e `POST /auth/registrar` só cria TUTOR: sem este passo, ninguém consegue
+> criar o primeiro, e os fluxos de veterinário e de administração ficam
+> inalcançáveis. A aplicação cria o usuário uma única vez, no boot, e apenas se
+> ainda não houver nenhum ADMIN.
 
 ### 3. Conferir o que a assinatura oferece
 
