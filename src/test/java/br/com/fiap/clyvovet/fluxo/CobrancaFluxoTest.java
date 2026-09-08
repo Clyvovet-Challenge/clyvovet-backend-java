@@ -67,16 +67,28 @@ class CobrancaFluxoTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("o PATCH não muda o status: a transição é ação própria")
+    @DisplayName("o PATCH recusa o status: a transição é ação própria")
     void patchNaoMudaStatus() throws Exception {
         // Com o status no corpo do PATCH, um {"statusPagamento":"PAGO"}
         // contornaria todas as transições de uma vez.
         String id = criarPendente("200.00");
+        String vet = tokenVeterinaria();
 
-        atualizarParcialmente("/api/v1/pagamentos/" + id, tokenVeterinaria(), """
+        // Este teste afirmava 200, e o que ele queria provar era o EFEITO: o status
+        // não muda. Isso continua valendo, e agora a resposta também diz o que
+        // aconteceu. Antes ela respondia 200 e não fazia nada -- quem integra lia o
+        // 200, acreditava que mudou, e só descobria depois, olhando o extrato.
+        atualizarParcialmente("/api/v1/pagamentos/" + id, vet, """
                 {"statusPagamento":"PAGO"}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campo").value("statusPagamento"));
+
+        // E o que o PATCH aceita continua sendo aceito.
+        atualizarParcialmente("/api/v1/pagamentos/" + id, vet, """
+                {"descricao":"Descricao corrigida"}""")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusPagamento").value("PENDENTE"));
+                .andExpect(jsonPath("$.statusPagamento").value("PENDENTE"))
+                .andExpect(jsonPath("$.descricao").value("Descricao corrigida"));
     }
 
     @Test

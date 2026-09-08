@@ -1,7 +1,8 @@
 package br.com.fiap.clyvovet.dto.pagamento;
 
 import br.com.fiap.clyvovet.model.FormaPagamento;
-import br.com.fiap.clyvovet.model.StatusPagamento;
+import br.com.fiap.clyvovet.exception.CampoNaoAceitoException;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -48,4 +49,22 @@ public class PagamentoPatchRequest {
     // corpo do PATCH, um {"statusPagamento":"PAGO"} contornaria as transicoes
     // de uma vez, e as regras P1 a P13 seriam decorativas. As transicoes
     // acontecem em POST /pagamentos/{id}/confirmar e /estornar.
+
+    /**
+     * Mas omitir o campo fechava so metade da porta.
+     *
+     * <p>Sem isto, o campo deixava de ter EFEITO e a requisicao continuava
+     * respondendo <b>200</b>. Verificado contra a pilha no ar: PATCH com
+     * {@code statusPagamento: "REEMBOLSADO"} devolvia 200 e o registro seguia
+     * PENDENTE. Quem integra le o 200, acredita que mudou, e so descobre depois,
+     * olhando o extrato.</p>
+     *
+     * <p>Nao e {@code FAIL_ON_UNKNOWN_PROPERTIES}: aquela chave e global, e liga-la
+     * faria toda rota da API recusar qualquer campo extra -- mudanca grande demais
+     * para o problema. Aqui a recusa fica no DTO que a exige.</p>
+     */
+    @JsonAnySetter
+    private void recusarCampoDesconhecido(String nome, Object valorIgnorado) {
+        throw new CampoNaoAceitoException(nome);
+    }
 }

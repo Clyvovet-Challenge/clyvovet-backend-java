@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.exception;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import br.com.fiap.clyvovet.dto.exception.ErroValidacao;
 import jakarta.persistence.EntityNotFoundException;
@@ -114,6 +115,39 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErroValidacao(
                 ex.getName(),
                 "Valor inválido para '" + ex.getName() + "': esperado " + esperado));
+    }
+
+    /**
+     * Corpo que o Jackson não consegue ler: JSON quebrado, tipo incompatível, ou um
+     * campo que o DTO não aceita.
+     *
+     * <p>O caso que motivou o handler é o terceiro. {@code PagamentoPatchRequest}
+     * deixou de ter {@code statusPagamento} para fechar a regra P14 — as transições
+     * acontecem em {@code /confirmar} e {@code /estornar}, e não no cadastro. Só que
+     * fechar por omissão fecha pela metade: o campo deixava de ter efeito e a
+     * requisição continuava respondendo <b>200</b>. Verificado contra a pilha no ar —
+     * {@code PATCH} com {@code statusPagamento: "REEMBOLSADO"} devolvia 200 e o
+     * registro seguia PENDENTE.</p>
+     *
+     * <p>Uma resposta que mente é pior que um erro: quem integra lê o 200, acredita
+     * que mudou, e só descobre depois, olhando o extrato. Com
+     * {@code ignoreUnknown = false} no DTO a requisição passa a falhar, e este
+     * handler é quem diz <b>qual</b> campo não é aceito — sem ele, a resposta seria
+     * um 400 sem conteúdo útil.</p>
+     *
+     * <p>Os demais casos ganham de brinde uma mensagem melhor que o 400 vazio que o
+     * Spring devolvia. A mensagem interna do Jackson não vai junto de propósito: ela
+     * carrega nomes de classe e de pacote do servidor.</p>
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErroValidacao> handleCorpoIlegivel(HttpMessageNotReadableException ex) {
+        if (ex.getMostSpecificCause() instanceof CampoNaoAceitoException recusado) {
+            return ResponseEntity.badRequest().body(new ErroValidacao(
+                    recusado.getCampo(), recusado.getMessage()));
+        }
+
+        return ResponseEntity.badRequest().body(new ErroValidacao(
+                "corpo", "Corpo da requisição inválido ou mal formatado"));
     }
 
     /**
