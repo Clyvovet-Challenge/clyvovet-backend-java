@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v10() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v11() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(10);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(resultado.migrationsExecuted).isEqualTo(11);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
     }
 
     @Test
@@ -174,10 +174,14 @@ class MigrationsMySqlTest {
         var jdbc = new JdbcTemplate(ds);
 
         var id = UUID.randomUUID().toString();
+        // O nome carrega o id porque uk_servico_clinica_nome e UNIQUE (clinica_id,
+        // nome), e a V11 semeia catalogo. Um literal fixo aqui faria este teste --
+        // que verifica a DDL da V6, e nao o conteudo do catalogo -- passar a
+        // depender de nenhuma migracao futura escolher o mesmo nome.
         jdbc.update("""
                 insert into t_clyvo_servico (id, clinica_id, nome, tipo_evento, preco, duracao_minutos)
-                values (?, ?, 'Consulta clinica geral', 'CONSULTA', 180.00, 30)
-                """, id, CLINICA_VETCARE);
+                values (?, ?, ?, 'CONSULTA', 180.00, 30)
+                """, id, CLINICA_VETCARE, "Servico de teste " + id);
 
         assertThat(jdbc.queryForObject(
                 "select duracao_minutos from t_clyvo_servico where id = ?", Integer.class, id))
