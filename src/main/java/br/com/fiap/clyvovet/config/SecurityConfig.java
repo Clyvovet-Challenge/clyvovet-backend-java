@@ -152,6 +152,14 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, api("/servicos/**")).hasRole(ADMIN)
 
             // --- Agenda do veterinario: a grade e de quem atende ---
+            // PEDIDO DE ALTERACAO DE CADASTRO
+            // Quem PEDE e o veterinario -- o tutor nao precisa pedir para mexer no
+            // proprio pet, e o ADMIN escreve direto. Quem RESPONDE e o dono, e isso
+            // e verificado por @PreAuthorize no controller, porque depende de qual
+            // animal o pedido aponta e nao do perfil de quem chama.
+            .requestMatchers(HttpMethod.POST, api("/animais/*/solicitacoes-alteracao"))
+                .hasRole(VETERINARIO)
+
             .requestMatchers(HttpMethod.POST,   api("/disponibilidades", "/bloqueios"))
                 .hasAnyRole(VETERINARIO, ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/disponibilidades/**", "/bloqueios/**"))

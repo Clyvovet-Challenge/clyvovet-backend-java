@@ -22,6 +22,7 @@ public enum Recurso {
     PAGAMENTO("Pagamento não encontrado"),
     DISPONIBILIDADE("Disponibilidade não encontrada"),
     SERVICO("Serviço não encontrado"),
+    SOLICITACAO_ALTERACAO("Solicitação de alteração não encontrada"),
     TUTOR("Tutor não encontrado"),
     USUARIO("Usuário não encontrado"),
     VETERINARIO("Veterinário não encontrado");
