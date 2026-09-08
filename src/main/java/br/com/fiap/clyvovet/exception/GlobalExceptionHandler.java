@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.exception;
 
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import br.com.fiap.clyvovet.dto.exception.ErroValidacao;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -84,6 +86,34 @@ public class GlobalExceptionHandler {
      * Falha de login. A mensagem e a generica definida no AuthService: distinguir
      * "senha errada" de "e-mail inexistente" permitiria enumerar a base.
      */
+    /**
+     * Parametro de query obrigatorio ausente.
+     *
+     * Sem este handler a excecao escapava para o /error do container, e a resposta
+     * que chegava ao cliente era um 401 de autenticacao -- ver o comentario do
+     * dispatcherTypeMatchers no SecurityConfig. Aquele problema esta corrigido la;
+     * este handler existe para que a resposta diga QUAL parametro faltou, em vez de
+     * um 400 sem conteudo util.
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErroValidacao> handleParametroAusente(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest().body(new ErroValidacao(
+                ex.getParameterName(),
+                "Parâmetro obrigatório ausente: " + ex.getParameterName()));
+    }
+
+    /**
+     * Valor de parametro que nao converte para o tipo esperado -- uma data mal
+     * formatada, um UUID invalido. Mesma origem do handler acima.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErroValidacao> handleTipoInvalido(MethodArgumentTypeMismatchException ex) {
+        String esperado = ex.getRequiredType() == null ? "outro tipo" : ex.getRequiredType().getSimpleName();
+        return ResponseEntity.badRequest().body(new ErroValidacao(
+                ex.getName(),
+                "Valor inválido para '" + ex.getName() + "': esperado " + esperado));
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErroValidacao> handleCredenciais(BadCredentialsException ex) {
         return respostaDe(HttpStatus.UNAUTHORIZED, "credenciais", ex.getMessage());

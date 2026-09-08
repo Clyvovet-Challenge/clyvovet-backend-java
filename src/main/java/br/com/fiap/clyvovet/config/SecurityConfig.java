@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.config;
 import br.com.fiap.clyvovet.security.JwtAuthenticationFilter;
 import br.com.fiap.clyvovet.security.RateLimitFilter;
 import br.com.fiap.clyvovet.security.RespostaErroSeguranca;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -91,6 +92,28 @@ public class SecurityConfig {
     private void configurarRotas(
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry rotas) {
         rotas
+            // O DESPACHO DE ERRO PRECISA PASSAR, E ISSO NAO E DETALHE
+            //
+            // Quando uma excecao escapa do @RestControllerAdvice -- parametro
+            // obrigatorio ausente, tipo que nao converte, 404 de rota inexistente --
+            // o container reencaminha para /error. Esse reencaminho e uma NOVA
+            // passagem pela cadeia de filtros, e nela nao ha autenticacao: o
+            // SecurityContext e por requisicao.
+            //
+            // Sem esta linha, o entry point respondia 401 com "Autenticacao
+            // necessaria. Envie um access token valido" -- mesmo com um token
+            // perfeitamente valido, que funcionava em todo o resto da API.
+            //
+            // Verificado antes da correcao, contra a pilha local:
+            //   GET /agendamentos/vagas?de=..&ate=..        (falta servicoId)
+            //     token valido    -> 401 "autenticacao necessaria"   [errado]
+            //     token completo  -> 404                             [certo]
+            //
+            // O custo do sintoma nao e so confusao: o cliente HTTP do app trata 401
+            // como sessao expirada, tenta renovar, falha de novo, e o usuario era
+            // deslogado por causa de uma query string malformada.
+            .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+
             // --- Publico ---
             .requestMatchers(api("/auth/login", "/auth/refresh", "/auth/logout", "/auth/registrar")).permitAll()
             // Swagger publico: e por ele que a API e avaliada e testada.

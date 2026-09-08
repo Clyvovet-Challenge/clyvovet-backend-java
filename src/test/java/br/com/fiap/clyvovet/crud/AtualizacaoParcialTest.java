@@ -21,7 +21,11 @@ class AtualizacaoParcialTest extends TesteDeApi {
     @Test
     @DisplayName("PATCH altera so o campo enviado e preserva o resto")
     void patchAlteraApenasOCampoEnviado() throws Exception {
-        String vet = tokenVeterinaria();
+        // ADMIN, e nao o token de veterinaria: este teste verifica a semantica do
+        // PATCH, e o pet e de outro tutor. Usar a veterinaria aqui so funcionava
+        // porque a escrita no cadastro estava aberta a todo VETERINARIO -- o que
+        // era o defeito, e nao a regra. Ver o comentario no AnimalController.
+        String vet = tokenAdmin();
         String url = "/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS;
 
         JsonNode antes = corpoDe(buscar(url, vet).andExpect(status().isOk()));
@@ -49,7 +53,7 @@ class AtualizacaoParcialTest extends TesteDeApi {
         String url = "/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS;
 
         JsonNode depois = corpoDe(
-                atualizarParcialmente(url, tokenVeterinaria(), """
+                atualizarParcialmente(url, tokenAdmin(), """
                         {"observacao":"retorno em 30 dias"}""").andExpect(status().isOk()));
 
         assertThat(depois.get("tutorId").asText()).isEqualTo(SeedV2.TUTOR_LUCAS);

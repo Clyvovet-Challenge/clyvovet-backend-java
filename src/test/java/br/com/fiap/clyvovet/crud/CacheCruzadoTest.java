@@ -50,7 +50,11 @@ class CacheCruzadoTest extends TesteDeApi {
     @Test
     @DisplayName("renomear o animal atualiza o nome dentro da listagem de eventos")
     void animalRenomeadoAparecemNaListaDeEventos() throws Exception {
-        String vet = tokenVeterinaria();
+        // ADMIN, e nao o token de veterinaria: este teste verifica a invalidacao de
+        // cache, e o pet e de outro tutor. Usar a veterinaria aqui so funcionava
+        // porque a escrita no cadastro estava aberta a todo VETERINARIO -- o que
+        // era o defeito, e nao a regra. Ver o comentario no AnimalController.
+        String vet = tokenAdmin();
 
         buscar("/api/v1/eventos-clinicos?size=50", vet).andExpect(status().isOk());
 

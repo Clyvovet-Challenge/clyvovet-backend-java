@@ -76,8 +76,33 @@ public class AnimalController {
     // Duas verificacoes, porque sao duas perguntas diferentes: o pet e meu
     // (#id) e o dono que estou gravando continua sendo eu (#request.tutorId).
     // Sem a segunda, um tutor transferia o proprio pet para outro tutor.
+    /*
+     * ESCRITA NO CADASTRO EXIGE SER O DONO, E NAO BASTA SER VETERINARIO.
+     *
+     * Estas tres rotas usavam @seguranca.podeAcessarAnimal, que passa por
+     * temVisaoAmpla() e devolve true para TODO VETERINARIO. Verificado contra a
+     * pilha local, com um veterinario sem nenhuma autorizacao do tutor:
+     *
+     *   PATCH  /animais/{de outro tutor}  -> 200, e a coluna mudou no banco
+     *   DELETE /animais/{de outro tutor}  -> 204, e a linha sumiu
+     *   t_clyvo_autorizacao_acesso        -> 0 registros
+     *
+     * A regra do produto e explicita: o veterinario so altera os dados do animal
+     * "desde que tenha uma confirmacao e autorizacao do dono". Esse consentimento
+     * de MUTACAO nao existe -- o AutorizacaoAcesso que existe hoje libera LEITURA
+     * do historico e nasce dentro do agendamento (ver StatusAutorizacao, que
+     * documenta nao haver estado PENDENTE nem fila de aprovacao).
+     *
+     * Sem mecanismo de autorizacao, a unica resposta correta e negar. Leitura
+     * continua ampla: o profissional precisa do cadastro para atender, e e por
+     * isso que o GET permanece com podeAcessarAnimal.
+     *
+     * O caminho completo -- o veterinario PEDIR e o tutor APROVAR -- e trabalho de
+     * produto, nao correcao de defeito. Enquanto ele nao existir, quem edita o
+     * cadastro e o dono, e o ADMIN da plataforma.
+     */
     @PutMapping("/{id}")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id) and @seguranca.podeAcessarTutor(#request.tutorId)")
     @Operation(summary = "Atualizar animal existente")
     public ResponseEntity<AnimalResponse> atualizar(
             @PathVariable UUID id,
@@ -88,7 +113,7 @@ public class AnimalController {
     @PatchMapping("/{id}")
     // O patch sem tutorId nao troca o dono, e ai a segunda checagem
     // nao se aplica -- ver SegurancaService.podeAtribuirTutor.
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id) and @seguranca.podeAtribuirTutor(#patch.tutorId)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id) and @seguranca.podeAtribuirTutor(#patch.tutorId)")
     @Operation(summary = "Atualizar parcialmente um animal: envie apenas os campos que mudam")
     public ResponseEntity<AnimalResponse> atualizarParcialmente(
             @PathVariable UUID id,
@@ -97,7 +122,7 @@ public class AnimalController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@seguranca.podeAcessarAnimal(#id)")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id)")
     @Operation(summary = "Remover animal")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         animalService.deletar(id);
