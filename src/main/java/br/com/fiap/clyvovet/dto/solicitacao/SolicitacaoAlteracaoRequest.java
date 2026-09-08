@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.dto.solicitacao;
 
 import br.com.fiap.clyvovet.model.SexoAnimal;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -47,6 +48,7 @@ public class SolicitacaoAlteracaoRequest {
 
     private SexoAnimal sexo;
 
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
 
     @Pattern(regexp = "\\d{15}", message = "Microchip deve ter 15 dígitos")

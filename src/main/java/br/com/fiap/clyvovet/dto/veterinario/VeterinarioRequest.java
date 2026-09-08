@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public class VeterinarioRequest {
     @Size(min = 3, max = 100)
     private String nome;
     @NotNull
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
     @NotNull
     private Sexo sexo;

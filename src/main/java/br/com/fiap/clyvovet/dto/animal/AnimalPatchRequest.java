@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.dto.animal;
 
 import br.com.fiap.clyvovet.model.SexoAnimal;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,7 @@ public class AnimalPatchRequest {
 
     private SexoAnimal sexo;
 
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
 
     // Limite igual ao da coluna, VARCHAR2(1000).

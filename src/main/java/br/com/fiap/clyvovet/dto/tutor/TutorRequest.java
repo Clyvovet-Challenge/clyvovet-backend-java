@@ -30,6 +30,7 @@ public class TutorRequest {
     @NotNull
     private Sexo sexo;
     @NotNull
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
     @Valid
     @NotNull

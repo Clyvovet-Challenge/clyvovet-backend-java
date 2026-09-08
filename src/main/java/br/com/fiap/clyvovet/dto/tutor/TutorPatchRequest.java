@@ -4,6 +4,7 @@ import br.com.fiap.clyvovet.dto.endereco.EnderecoRequest;
 import br.com.fiap.clyvovet.model.Sexo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -59,6 +60,7 @@ public class TutorPatchRequest {
 
     private Sexo sexo;
 
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
 
     @Valid

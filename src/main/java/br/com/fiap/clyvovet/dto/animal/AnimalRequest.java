@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.dto.animal;
 import br.com.fiap.clyvovet.model.SexoAnimal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,16 @@ public class AnimalRequest {
     @NotNull
     private SexoAnimal sexo;
     @NotNull
+    /**
+     * Nenhum dos sete DTOs com data de nascimento validava isto, e o resultado era
+     * aceitar um cadastro nascido em 2999 — verificado contra a pilha local, um
+     * animal com dataNascimento 2999-01-01 entrava com 201.
+     *
+     * O projeto já usava @PastOrPresent nos DTOs de pagamento; aqui a anotação
+     * estava só faltando. Ela ignora nulo, então continua valendo como campo
+     * opcional no PATCH.
+     */
+    @PastOrPresent(message = "Data de nascimento não pode ser futura")
     private LocalDate dataNascimento;
     // Limite igual ao da coluna, VARCHAR2(1000): sem ele um texto maior passa
     // pela validacao e so falha no INSERT, virando erro de servidor.

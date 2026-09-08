@@ -1,5 +1,7 @@
 package br.com.fiap.clyvovet.exception;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import br.com.fiap.clyvovet.dto.exception.ErroValidacao;
 import jakarta.persistence.EntityNotFoundException;
@@ -112,6 +114,45 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErroValidacao(
                 ex.getName(),
                 "Valor inválido para '" + ex.getName() + "': esperado " + esperado));
+    }
+
+    /**
+     * {@code ?sort=campoQueNaoExiste} — ordenação por propriedade que a entidade
+     * não tem.
+     *
+     * <p>Sem este handler a exceção escapava e virava <b>500</b>: qualquer cliente
+     * derrubava um endpoint de listagem com uma query string. Verificado contra a
+     * pilha no ar — {@code GET /api/v1/animais?sort=naoExiste,asc} respondia 500
+     * com token perfeitamente válido.</p>
+     *
+     * <h3>Duas exceções, porque há dois caminhos</h3>
+     *
+     * <p>{@link PropertyReferenceException} é o que o Spring Data lança quando
+     * resolve a propriedade por reflexão, nas consultas derivadas do nome do
+     * método. Mas os repositórios deste projeto usam {@code @Query} com JPQL
+     * escrito à mão: ali o {@code Sort} é <b>anexado</b> à consulta, e quem reclama
+     * é o Hibernate, com {@code UnknownPathException} embrulhada em
+     * {@link InvalidDataAccessApiUsageException}. Tratar só a primeira não resolvia
+     * nada — foi o que os testes mostraram.</p>
+     *
+     * <h3>Não há injeção por aqui</h3>
+     *
+     * <p>{@code ?sort='; DROP TABLE,asc} não vira SQL: o próprio Spring Data
+     * recusa antes, dizendo que a expressão "must only contain property
+     * references". Ela cai neste mesmo handler e vira 400.</p>
+     *
+     * <p>A mensagem devolve a propriedade pedida, e não a lista das válidas:
+     * enumerá-las revelaria os campos da entidade, incluindo os que não aparecem em
+     * nenhuma resposta.</p>
+     */
+    @ExceptionHandler({PropertyReferenceException.class, InvalidDataAccessApiUsageException.class})
+    public ResponseEntity<ErroValidacao> handleOrdenacaoInvalida(Exception ex) {
+        String propriedade = ex instanceof PropertyReferenceException erro
+                ? "'" + erro.getPropertyName() + "'"
+                : "esse campo";
+
+        return ResponseEntity.badRequest().body(new ErroValidacao(
+                "sort", "Não é possível ordenar por " + propriedade + "."));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
