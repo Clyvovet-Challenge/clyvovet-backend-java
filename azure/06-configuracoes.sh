@@ -18,6 +18,35 @@
 #   2. sslMode=REQUIRED e SslMode=Required. O MySQL Flexible Server exige TLS. Sem
 #      isso a conexao e recusada no handshake.
 #
+# O JWT COMPARTILHADO, E O INTERRUPTOR DELE
+#
+#   Jwt__Secret na .NET recebe O MESMO VALOR de JWT_SECRET que vai para a Java.
+#   Nao e um segredo novo: as duas assinam o mesmo token. O valor e base64, e as
+#   duas o DECODIFICAM antes de usar como chave HMAC -- a .NET com
+#   Convert.FromBase64String, nunca Encoding.UTF8.GetBytes, porque com o mesmo
+#   valor os dois caminhos produzem chaves diferentes e nenhuma assinatura confere.
+#
+#   Api__EscopoPorTutor sai em "false" DE PROPOSITO, mesmo sendo o padrao do
+#   codigo. A app setting precisa EXISTIR para poder ser virada sem redeploy:
+#
+#       az webapp config appsettings set -g $RG -n $APP_DOTNET \
+#          --settings Api__EscopoPorTutor=true
+#
+#   A ORDEM DE DESLIGAR IMPORTA, E ERRAR NELA E PIOR QUE NAO DESLIGAR.
+#   Para reverter, sempre:
+#
+#       1o  Api__EscopoPorTutor=false     -> volta ao comportamento de antes
+#       2o  so entao mexer no Jwt__Secret
+#
+#   O caminho inverso -- tirar o segredo primeiro, com o escopo ainda ligado --
+#   deixa a API sem conseguir identificar ninguem enquanto ainda exige identidade,
+#   e o resultado e 401 em toda rota protegida. E o pior estado possivel, e ele so
+#   existe nessa ordem.
+#
+#   Nao existe Jwt:Secret no appsettings.json, e isso e deliberado: este projeto
+#   versiona placeholder para todo segredo ("SUA_API_KEY"), e um placeholder aqui
+#   faria a validacao deixar de ser inerte por padrao -- destruindo o interruptor.
+#
 #     bash azure/06-configuracoes.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -57,6 +86,8 @@ az webapp config appsettings set \
       Telegram__BotToken="$TELEGRAM_BOT_TOKEN" \
       Cors__Origens="${URL_JAVA},${URL_DOTNET},http://localhost:8081" \
       Database__MaxPoolSize="15" \
+      Jwt__Secret="$JWT_SECRET" \
+      Api__EscopoPorTutor="false" \
     -o none
 echo "    ok"
 

@@ -62,6 +62,38 @@ TOKEN="$(curl -s -m 30 -X POST "$JAVA/api/v1/auth/login" \
 
 echo
 echo "=============================================================="
+echo " 2b. PARIDADE DO SEGREDO ENTRE AS DUAS APIS"
+echo "=============================================================="
+# A checagem mais barata do JWT compartilhado, e a que pega o erro mais caro.
+#
+# As duas APIs assinam com o MESMO valor de Jwt__Secret / JWT_SECRET, mas a chave
+# HMAC sao os bytes do base64 DECODIFICADO. Se a .NET derivasse a chave dos bytes
+# da string (o idioma comum em ASP.NET), o valor seria o mesmo e a chave seria
+# outra: nenhuma assinatura conferiria, e o sintoma em producao e 401 em tudo,
+# sem nada no log.
+#
+# Com Api__EscopoPorTutor=false o token e ignorado, entao 200 aqui nao prova a
+# paridade -- prova apenas que o token nao ATRAPALHA. A prova completa exige o
+# escopo ligado, e por isso o resultado abaixo e informativo e nao entra em
+# "falhou": ele existe para ser lido antes de virar a flag.
+COD_COM_TOKEN="$(curl -s -o /dev/null -w '%{http_code}' -m 30 \
+  "$DOTNET/api/v1/lembretes?tamanho=1" \
+  -H "X-Api-Key: $DOTNET_API_KEY" -H "Authorization: Bearer $TOKEN")"
+ESCOPO="$(az webapp config appsettings list -g "$RG" -n "$APP_DOTNET" \
+  --query "[?name=='Api__EscopoPorTutor'].value | [0]" -o tsv 2>/dev/null)"
+
+printf '  Api__EscopoPorTutor = %s\n' "${ESCOPO:-nao definida}"
+if [ "$ESCOPO" = "true" ]; then
+    checar "GET /lembretes com Bearer (escopo LIGADO)" "200" "$COD_COM_TOKEN"
+    echo "         200 aqui prova que as duas APIs derivam a MESMA chave."
+else
+    printf '  [info] GET /lembretes com Bearer devolveu %s\n' "$COD_COM_TOKEN"
+    echo "         Com o escopo desligado o token e ignorado; isto nao prova paridade."
+    echo "         Para provar: ligue a flag e rode este script de novo."
+fi
+
+echo
+echo "=============================================================="
 echo " 3. CRUD NA API JAVA -- t_clyvo_animal"
 echo "=============================================================="
 ANIMAL="$(curl -s -m 30 -X POST "$JAVA/api/v1/animais" \
@@ -82,8 +114,14 @@ echo
 echo "=============================================================="
 echo " 4. INTEGRACAO CRUZADA -- a prova de que o banco e compartilhado"
 echo "=============================================================="
+# O Bearer vai junto da chave DE PROPOSITO, mesmo com Api__EscopoPorTutor=false.
+# Este script e o portao que decide se o deploy esta bom o bastante para gravar --
+# se ele so mandasse a X-Api-Key, ligar o escopo transformaria a verificacao em
+# falha garantida, e justamente no passo que prova que o banco e compartilhado.
+# Mandando os dois headers, o script vale nas duas configuracoes.
 LEMBRETE="$(curl -s -m 30 -X POST "$DOTNET/api/v1/lembretes" \
-  -H "X-Api-Key: $DOTNET_API_KEY" -H 'Content-Type: application/json' \
+  -H "X-Api-Key: $DOTNET_API_KEY" -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
   -d "{\"animalId\":\"${ANIMAL}\",\"titulo\":\"Vacina V10 - ${SELO}\",\"tipo\":0,\"agendadoEm\":\"2026-12-01T10:00:00\",\"recorrente\":false}")"
 NOME="$(echo "$LEMBRETE" | python -c "import sys,json;print(json.load(sys.stdin).get('nomeAnimal',''))" 2>/dev/null)"
 if [ "$NOME" = "Verificado ${SELO}" ]; then
@@ -99,7 +137,8 @@ echo " 5. DELETE -- fecha o CRUD"
 echo "=============================================================="
 ID_LEMBRETE="$(echo "$LEMBRETE" | python -c "import sys,json;print(json.load(sys.stdin).get('id',''))" 2>/dev/null)"
 checar "DELETE /lembretes/{id} (.NET)" "204" \
-  "$(curl -s -o /dev/null -w '%{http_code}' -m 30 -X DELETE "$DOTNET/api/v1/lembretes/$ID_LEMBRETE" -H "X-Api-Key: $DOTNET_API_KEY")"
+  "$(curl -s -o /dev/null -w '%{http_code}' -m 30 -X DELETE "$DOTNET/api/v1/lembretes/$ID_LEMBRETE" \
+     -H "X-Api-Key: $DOTNET_API_KEY" -H "Authorization: Bearer $TOKEN")"
 checar "DELETE /animais/{id} (Java)" "204" \
   "$(curl -s -o /dev/null -w '%{http_code}' -m 30 -X DELETE "$JAVA/api/v1/animais/$ANIMAL" -H "Authorization: Bearer $TOKEN")"
 

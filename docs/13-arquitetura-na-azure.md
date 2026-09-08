@@ -159,6 +159,68 @@ subir com uma chave conhecida.
 
 ---
 
+## 5.1 O JWT compartilhado, e como desligá-lo sem redeploy
+
+A API .NET autentica por `X-Api-Key` — uma chave **de aplicação**, não de usuário.
+Ela prova que a chamada veio do app, e nada mais: quem extrair a chave do
+aplicativo lê os lembretes de qualquer tutor. Fechar isso exige que a .NET saiba
+*quem* está chamando, e a única fonte dessa informação é o token que a Java emite.
+
+A mudança entra em **quatro camadas**, cada uma removível sozinha:
+
+| Camada | Onde | Estado | Como se desliga |
+|---|---|---|---|
+| 0 — claim `tutorId` no access token | Java | ligada | aditiva; ninguém a exige |
+| 1 — validar o token e identificar | .NET | **inerte** sem segredo | `Jwt__Secret` ausente |
+| 2 — recortar por dono | .NET | **desligada** | `Api__EscopoPorTutor=false` |
+| 3 — o app manda o `Bearer` | app | — | a .NET ignora se a 1 estiver inerte |
+
+Os dois interruptores são **app settings**: viram sem recompilar, sem republicar.
+
+```bash
+# ligar o recorte
+az webapp config appsettings set -g rg-clyvovet-sprint3    -n app-clyvovet-dotnet-rm562312 --settings Api__EscopoPorTutor=true
+```
+
+### A ordem de desligar importa, e errar nela é pior que não desligar
+
+```
+1º  Api__EscopoPorTutor=false     → volta ao comportamento anterior
+2º  só então mexer no Jwt__Secret
+```
+
+O caminho inverso — tirar o segredo primeiro, com o escopo ainda ligado — deixa a
+API **sem conseguir identificar ninguém enquanto ainda exige identidade**, e o
+resultado é 401 em toda rota protegida. É o pior estado possível, e ele só existe
+nessa ordem.
+
+### O detalhe que decide se funciona: base64, não UTF-8
+
+As duas APIs recebem **o mesmo valor** e assinam o mesmo token. Mas a chave HMAC
+são os bytes do valor **decodificado de base64** — a Java faz
+`Keys.hmacShaKeyFor(Decoders.BASE64.decode(segredo))`, e a .NET tem de fazer
+`Convert.FromBase64String`.
+
+O idioma padrão de todo tutorial ASP.NET é `Encoding.UTF8.GetBytes(segredo)`, que
+com o **mesmo valor de configuração** produz uma **chave diferente**. Não há erro
+de compilação, não há aviso, não há nada no log: só 401 em cem por cento das
+chamadas. Os dois lados travam esse contrato por teste — `JwtServiceTest` no Java e
+`ValidadorDeTokenJwtTests` na .NET asseveram os mesmos bytes.
+
+### A camada 1 não consegue derrubar o boot
+
+Hoje nenhuma configuração da API .NET impede `app.Run()`, e a validação do token
+não podia ser a primeira. A chave é montada dentro de `try`: segredo ausente, valor
+que não é base64 ou chave curta demais deixam o validador **inerte**, com log de
+erro — nunca exceção. Com o recorte desligado, um segredo errado não tem
+consequência nenhuma; uma aplicação que não sobe tem.
+
+Pelo mesmo motivo `Jwt:Secret` **não existe** no `appsettings.json`. Este projeto
+versiona placeholder para todo segredo (`"SUA_API_KEY"`), e um placeholder aqui
+faria a camada deixar de ser inerte por padrão — destruindo o interruptor.
+
+---
+
 ## 6. O que **não** está no desenho, e é deliberado
 
 | Ausente | Por quê |
