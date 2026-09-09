@@ -2,9 +2,12 @@ package br.com.fiap.clyvovet.fluxo;
 
 import br.com.fiap.clyvovet.support.SeedV2;
 import br.com.fiap.clyvovet.support.TesteDeApi;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -116,8 +119,126 @@ class AgendaDoProfissionalTest extends TesteDeApi {
     }
 
     // ================================================================
+    // O que a agenda precisava e a API nao expunha
+    // ================================================================
+
+    /**
+     * Os bloqueios de um profissional, que antes não se listavam.
+     *
+     * <p>A API sabia CRIAR e APAGAR bloqueio, e não sabia mostrar: o id aparecia uma
+     * única vez, na resposta do POST. Quem marcasse as férias fechava a tela e não
+     * tinha mais como conferir nem desfazer — e a agenda ficava fechada por um motivo
+     * invisível.</p>
+     */
+    @Test
+    @DisplayName("lista os bloqueios de um profissional")
+    void listaOsBloqueios() throws Exception {
+        String id = idDe(criar("/api/v1/bloqueios", admin, """
+                {"veterinarioId":"%s","dataInicio":"%s","dataFim":"%s","motivo":"Congresso"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now().plusDays(10), LocalDate.now().plusDays(12)))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/bloqueios/" + id);
+
+        JsonNode bloqueios = corpoDe(
+                buscar("/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/bloqueios", admin)
+                        .andExpect(status().isOk()));
+
+        boolean achou = false;
+        for (JsonNode bloqueio : bloqueios) {
+            if (id.equals(bloqueio.get("id").asText())) {
+                achou = true;
+                assertThat(bloqueio.get("motivo").asText()).isEqualTo("Congresso");
+            }
+        }
+        assertThat(achou).isTrue();
+    }
+
+    /**
+     * O bloqueio que JÁ TERMINOU sai da lista; o que ainda alcança hoje, fica.
+     *
+     * <p>O corte é por {@code dataFim}, e não por {@code dataInicio}: férias que
+     * começaram semana passada e terminam amanhã continuam fechando a agenda, e
+     * sumir com elas esconderia a causa dos horários que não aparecem.</p>
+     */
+    @Test
+    @DisplayName("bloqueio vencido nao aparece; o que ainda alcanca hoje, sim")
+    void bloqueioVencidoSai() throws Exception {
+        String vencido = idDe(criar("/api/v1/bloqueios", admin, """
+                {"veterinarioId":"%s","dataInicio":"%s","dataFim":"%s","motivo":"Ferias antigas"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now().minusDays(30), LocalDate.now().minusDays(20)))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/bloqueios/" + vencido);
+
+        String emCurso = idDe(criar("/api/v1/bloqueios", admin, """
+                {"veterinarioId":"%s","dataInicio":"%s","dataFim":"%s","motivo":"Ferias em curso"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now().minusDays(2), LocalDate.now().plusDays(2)))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/bloqueios/" + emCurso);
+
+        JsonNode lista = corpoDe(
+                buscar("/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/bloqueios", admin));
+
+        assertThat(contem(lista, vencido)).isFalse();
+        assertThat(contem(lista, emCurso)).isTrue();
+    }
+
+    /**
+     * A cobrança de UM atendimento.
+     *
+     * <p>Sem este filtro, a tela de cobrança teria de varrer a listagem inteira,
+     * página a página, para descobrir quais lançamentos são daquele atendimento — e
+     * nenhuma página traz garantia de conter todos.</p>
+     */
+    @Test
+    @DisplayName("filtra os pagamentos por atendimento")
+    void filtraPagamentosPorAtendimento() throws Exception {
+        String atendimento = atendimentoComId("2018-05-14", "15:00", SeedV2.VET_CAMILA);
+        String outro = atendimentoComId("2018-05-15", "16:00", SeedV2.VET_CAMILA);
+
+        pagar(atendimento, "80.00");
+        pagar(atendimento, "40.00");
+        pagar(outro, "25.00");
+
+        assertThat(totalDe(buscar("/api/v1/pagamentos?eventoClinicoId=" + atendimento, admin)))
+                .isEqualTo(2);
+        // A segunda consulta em sequência: se o filtro não estivesse na chave do
+        // cache, ela receberia a página da primeira.
+        assertThat(totalDe(buscar("/api/v1/pagamentos?eventoClinicoId=" + outro, admin)))
+                .isEqualTo(1);
+    }
+
+    // ================================================================
     // Apoio
     // ================================================================
+
+    private boolean contem(JsonNode lista, String id) {
+        for (JsonNode item : lista) {
+            if (id.equals(item.get("id").asText())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String atendimentoComId(String data, String hora, String veterinarioId) throws Exception {
+        String id = idDe(criar("/api/v1/eventos-clinicos", admin, """
+                {"data":"%s","hora":"%s","descricao":"Cobranca do teste",
+                 "tipoEvento":"CONSULTA","veterinarioId":"%s","animalId":"%s","clinicaId":"%s"}"""
+                .formatted(data, hora, veterinarioId,
+                        SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_VETCARE))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/eventos-clinicos/" + id);
+        return id;
+    }
+
+    private void pagar(String eventoId, String valor) throws Exception {
+        String id = idDe(criar("/api/v1/pagamentos", admin, """
+                {"formaPagamento":"PIX","valor":%s,"statusPagamento":"PENDENTE",
+                 "eventoClinicoId":"%s","descricao":"Teste"}"""
+                .formatted(valor, eventoId))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/pagamentos/" + id);
+    }
 
     private static String agenda(String veterinarioId, String janela) {
         return "/api/v1/eventos-clinicos?veterinarioId=" + veterinarioId + "&" + janela;

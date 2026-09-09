@@ -38,12 +38,14 @@ public class PagamentoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar pagamentos com paginação e filtros por status e forma de pagamento")
+    @Operation(summary = "Listar pagamentos. O filtro eventoClinicoId traz a cobrança de um atendimento")
     public ResponseEntity<Page<PagamentoResponse>> listarTodos(
             @RequestParam(required = false) StatusPagamento statusPagamento,
             @RequestParam(required = false) FormaPagamento formaPagamento,
+            @RequestParam(required = false) UUID eventoClinicoId,
             @PageableDefault(size = 10, sort = "dataPagamento") Pageable pageable) {
-        return ResponseEntity.ok(pagamentoService.listarTodos(statusPagamento, formaPagamento, pageable));
+        return ResponseEntity.ok(pagamentoService.listarTodos(
+                statusPagamento, formaPagamento, eventoClinicoId, pageable));
     }
 
     // Um tutor so enxerga a cobranca dos atendimentos dos proprios pets.

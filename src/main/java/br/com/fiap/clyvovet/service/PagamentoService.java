@@ -34,13 +34,26 @@ public class PagamentoService {
     private final SegurancaService seguranca;
 
     /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
+    /**
+     * Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}.
+     *
+     * <p>O filtro por evento existe para a tela de cobranca de UM atendimento: sem
+     * ele, saber quais pagamentos pertencem aquele evento exigiria varrer a listagem
+     * inteira, pagina a pagina, e filtrar no cliente — e nenhuma pagina traz garantia
+     * de conter todos.</p>
+     *
+     * <p>Ele entra na CHAVE junto com os demais. Chave mais estreita que o filtro
+     * serve a lista de um atendimento a quem pediu a de outro.</p>
+     */
     @Cacheable(value = "pagamentos",
-            key = "#statusPagamento + '-' + #formaPagamento"
+            key = "#statusPagamento + '-' + #formaPagamento + '-' + #eventoClinicoId"
                     + " + '-' + @seguranca.recorte().chaveDeCache() + '-' + #pageable")
-    public Page<PagamentoResponse> listarTodos(StatusPagamento statusPagamento, FormaPagamento formaPagamento, Pageable pageable) {
+    public Page<PagamentoResponse> listarTodos(StatusPagamento statusPagamento,
+                                               FormaPagamento formaPagamento,
+                                               UUID eventoClinicoId, Pageable pageable) {
         RecorteDeAcesso recorte = seguranca.recorte();
         return pagamentoRepository.buscarPorFiltros(statusPagamento, formaPagamento,
-                        recorte.tutorId(), recorte.clinicaId(), pageable)
+                        recorte.tutorId(), recorte.clinicaId(), eventoClinicoId, pageable)
                 .map(pagamentoMapper::toResponse);
     }
 

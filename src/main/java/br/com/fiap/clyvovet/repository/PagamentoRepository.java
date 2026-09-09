@@ -22,12 +22,14 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
             "(:statusPagamento IS NULL OR p.statusPagamento = :statusPagamento) AND " +
             "(:formaPagamento IS NULL OR p.formaPagamento = :formaPagamento) AND " +
             "(:tutorId IS NULL OR p.eventoClinico.animal.tutor.id = :tutorId) AND " +
-            "(:clinicaId IS NULL OR p.eventoClinico.clinica.id = :clinicaId)")
+            "(:clinicaId IS NULL OR p.eventoClinico.clinica.id = :clinicaId) AND " +
+            "(:eventoClinicoId IS NULL OR p.eventoClinico.id = :eventoClinicoId)")
     Page<Pagamento> buscarPorFiltros(
             @Param("statusPagamento") StatusPagamento statusPagamento,
             @Param("formaPagamento") FormaPagamento formaPagamento,
             @Param("tutorId") UUID tutorId,
             @Param("clinicaId") UUID clinicaId,
+            @Param("eventoClinicoId") UUID eventoClinicoId,
             Pageable pageable);
 
     /** Soma dos pagamentos de um evento num status. Null se nao houver nenhum. */

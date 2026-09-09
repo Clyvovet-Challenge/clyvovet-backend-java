@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +44,20 @@ public class AgendaCadastroService {
         veterinarioRepository.garantirQueExiste(veterinarioId);
         return disponibilidadeRepository
                 .findByVeterinarioIdOrderByDiaSemanaAscHoraInicioAsc(veterinarioId)
+                .stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Os bloqueios de um profissional, do dia informado em diante.
+     *
+     * <p>Leitura aberta a quem esta autenticado, como a grade: saber que a agenda de
+     * alguem esta fechada na proxima semana e o que evita marcar em cima. O que
+     * continua fechado e ESCREVER — criar e apagar passam por
+     * {@code garantirQueEDonoDaAgenda}.</p>
+     */
+    public List<BloqueioResponse> bloqueiosDe(UUID veterinarioId, LocalDate desde) {
+        veterinarioRepository.garantirQueExiste(veterinarioId);
+        return bloqueioRepository.vigentesDe(veterinarioId, desde != null ? desde : LocalDate.now())
                 .stream().map(this::toResponse).toList();
     }
 

@@ -22,6 +22,28 @@ public interface BloqueioRepository extends RepositorioBase<Bloqueio> {
             @Param("veterinarioId") UUID veterinarioId,
             @Param("data") LocalDate data);
 
+    /**
+     * Os bloqueios de um profissional que ainda valem para alguma coisa.
+     *
+     * <p>Existe porque a API sabia CRIAR e APAGAR bloqueio, e nao sabia LISTAR: quem
+     * marcasse as ferias fechava a tela e nunca mais via aquilo. Nem para conferir,
+     * nem para desfazer — apagar exige o id, e o id so aparecia na resposta do POST,
+     * uma unica vez.</p>
+     *
+     * <p>O corte e por {@code dataFim}, e nao por {@code dataInicio}: ferias que
+     * comecaram semana passada e terminam amanha continuam bloqueando a agenda, e
+     * some-las da tela seria esconder a causa dos horarios que nao aparecem.</p>
+     */
+    @Query("""
+            SELECT b FROM Bloqueio b
+            WHERE b.veterinario.id = :veterinarioId
+              AND b.dataFim >= :desde
+            ORDER BY b.dataInicio
+            """)
+    List<Bloqueio> vigentesDe(
+            @Param("veterinarioId") UUID veterinarioId,
+            @Param("desde") LocalDate desde);
+
     default Bloqueio obterPorId(UUID id) {
         return obterPorId(id, Recurso.BLOQUEIO);
     }

@@ -10,9 +10,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +36,18 @@ public class AgendaController {
     @Operation(summary = "Grade de horários de um veterinário")
     public ResponseEntity<List<DisponibilidadeResponse>> grade(@PathVariable UUID veterinarioId) {
         return ResponseEntity.ok(agendaCadastroService.gradeDe(veterinarioId));
+    }
+
+    /**
+     * A API sabia criar e apagar bloqueio, e nao sabia lista-lo: quem marcasse as
+     * ferias nunca mais via aquilo, nem para conferir nem para desfazer.
+     */
+    @GetMapping("/veterinarios/{veterinarioId}/bloqueios")
+    @Operation(summary = "Bloqueios de um veterinário — férias, folgas e almoço — de uma data em diante")
+    public ResponseEntity<List<BloqueioResponse>> bloqueios(
+            @PathVariable UUID veterinarioId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde) {
+        return ResponseEntity.ok(agendaCadastroService.bloqueiosDe(veterinarioId, desde));
     }
 
     @PostMapping("/disponibilidades")
