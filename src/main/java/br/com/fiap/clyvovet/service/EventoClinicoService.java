@@ -7,6 +7,7 @@ import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.mapper.EventoClinicoMapper;
 import br.com.fiap.clyvovet.mapper.RelacionamentosDoEvento;
 import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.StatusEvento;
 import br.com.fiap.clyvovet.model.TipoEvento;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -38,14 +40,26 @@ public class EventoClinicoService {
     private final EventoClinicoMapper eventoClinicoMapper;
     private final SegurancaService seguranca;
 
-    /** Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}. */
+    /**
+     * Ver a nota sobre a chave de cache em {@link AnimalService#listarTodos}.
+     *
+     * <p><b>Todo filtro novo entra na chave, e isso nao e opcional.</b> A chave mais
+     * estreita que o filtro serve a pagina de um pedido a outro: a agenda de terca do
+     * veterinario A responderia a consulta de quarta do veterinario B, com os mesmos
+     * dez atendimentos. E o mesmo defeito da ruptura B1, que ali vazava entre clinicas
+     * e aqui vazaria entre dias e profissionais.</p>
+     */
     @Cacheable(value = "eventos",
-            key = "#tipoEvento + '-' + #animalNome + '-' + @seguranca.recorte().chaveDeCache()"
+            key = "#tipoEvento + '-' + #animalNome + '-' + #veterinarioId + '-' + #statusEvento"
+                    + " + '-' + #de + '-' + #ate + '-' + @seguranca.recorte().chaveDeCache()"
                     + " + '-' + #pageable")
-    public Page<EventoClinicoResponse> listarTodos(TipoEvento tipoEvento, String animalNome, Pageable pageable) {
+    public Page<EventoClinicoResponse> listarTodos(TipoEvento tipoEvento, String animalNome,
+                                                   UUID veterinarioId, StatusEvento statusEvento,
+                                                   LocalDate de, LocalDate ate, Pageable pageable) {
         RecorteDeAcesso recorte = seguranca.recorte();
         return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome,
-                        recorte.tutorId(), recorte.clinicaId(), pageable)
+                        recorte.tutorId(), recorte.clinicaId(),
+                        veterinarioId, statusEvento, de, ate, pageable)
                 .map(eventoClinicoMapper::toResponse);
     }
 

@@ -174,6 +174,11 @@ public class SecurityConfig {
             // @PreAuthorize do controller, com podeGerirCatalogoDe. Sem ele, um
             // administrador mexeria no catalogo da concorrente.
             .requestMatchers(HttpMethod.POST,   api("/servicos")).hasAnyRole(ADMIN_CLINICA, ADMIN)
+            // Reativar e uma acao, e o matcher acima e EXATO: sem esta linha,
+            // /servicos/{id}/reativar cairia em anyRequest().authenticated() e um
+            // tutor devolveria ao catalogo um servico que a clinica tirou do ar. E a
+            // mesma armadilha ja documentada em /eventos-clinicos/*/concluir.
+            .requestMatchers(HttpMethod.POST,   api("/servicos/*/reativar")).hasAnyRole(ADMIN_CLINICA, ADMIN)
             .requestMatchers(HttpMethod.PUT,    api("/servicos/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/servicos/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
 

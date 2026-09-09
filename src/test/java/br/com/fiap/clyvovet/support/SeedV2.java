@@ -18,6 +18,15 @@ public final class SeedV2 {
     /** Da PETMED, e nao da VETCARE: e com ele que se prova o recorte por clinica. */
     public static final String VET_RAFAEL_DA_PETMED = "33333333-3333-3333-3333-000000000002";
 
+    /**
+     * O COLEGA da Camila, na mesma VetCare.
+     *
+     * <p>O recorte por clinica nao separa estes dois — e justamente por isso ele
+     * serve: e com ele que se prova o filtro por veterinario, que precisa distinguir
+     * duas agendas dentro da MESMA casa.</p>
+     */
+    public static final String VET_TOMAS_DA_VETCARE = "33333333-3333-3333-3333-000000000005";
+
     /** Lucas e dono do Bolinha; Maria, da Mimi e do Rex. */
     public static final String ANIMAL_BOLINHA_DO_LUCAS = "44444444-4444-4444-4444-000000000001";
     public static final String ANIMAL_MIMI_DA_MARIA = "44444444-4444-4444-4444-000000000002";

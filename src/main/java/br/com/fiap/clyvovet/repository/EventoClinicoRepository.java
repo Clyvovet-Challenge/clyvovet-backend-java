@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.repository;
 
 import br.com.fiap.clyvovet.exception.Recurso;
 import br.com.fiap.clyvovet.model.EventoClinico;
+import br.com.fiap.clyvovet.model.StatusEvento;
 import br.com.fiap.clyvovet.model.TipoEvento;
 import br.com.fiap.clyvovet.repository.projecao.ContagemPorDesfecho;
 import br.com.fiap.clyvovet.repository.projecao.ContagemPorRotulo;
@@ -18,17 +19,39 @@ import java.util.UUID;
 
 public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> {
 
-    /** Ver a nota sobre tutorId em {@link AnimalRepository}. */
+    /**
+     * Ver a nota sobre tutorId em {@link AnimalRepository}.
+     *
+     * <p>Os quatro filtros do fim — veterinario, status e o intervalo de datas —
+     * existem porque sem eles <b>o veterinario nao consegue ver a propria agenda</b>.
+     * A API tinha {@code /agendamentos/meus} para o tutor e nada equivalente para
+     * quem atende: o profissional recebia a lista da clinica inteira, de todos os
+     * dias e de todos os colegas, paginada de dez em dez.</p>
+     *
+     * <p>Sao filtros de CONVENIENCIA, e nao de seguranca — o recorte continua sendo
+     * tutorId/clinicaId, que sai do {@code recorte()} e nao do cliente. Passar o
+     * {@code veterinarioId} de um colega mostra a agenda dele, e isso e proposital:
+     * a clinica ja enxerga os proprios atendimentos, e e assim que o administrador
+     * ve a agenda da casa, profissional por profissional.</p>
+     */
     @Query("SELECT e FROM EventoClinico e WHERE " +
             "(:tipoEvento IS NULL OR e.tipoEvento = :tipoEvento) AND " +
             "(:animalNome IS NULL OR LOWER(e.animal.nome) LIKE LOWER(CONCAT('%', :animalNome, '%')) ESCAPE '\\') AND " +
             "(:tutorId IS NULL OR e.animal.tutor.id = :tutorId) AND " +
-            "(:clinicaId IS NULL OR e.clinica.id = :clinicaId)")
+            "(:clinicaId IS NULL OR e.clinica.id = :clinicaId) AND " +
+            "(:veterinarioId IS NULL OR e.veterinario.id = :veterinarioId) AND " +
+            "(:statusEvento IS NULL OR e.statusEvento = :statusEvento) AND " +
+            "(:de IS NULL OR e.data >= :de) AND " +
+            "(:ate IS NULL OR e.data <= :ate)")
     Page<EventoClinico> buscarPorFiltros(
             @Param("tipoEvento") TipoEvento tipoEvento,
             @Param("animalNome") String animalNome,
             @Param("tutorId") UUID tutorId,
             @Param("clinicaId") UUID clinicaId,
+            @Param("veterinarioId") UUID veterinarioId,
+            @Param("statusEvento") StatusEvento statusEvento,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate,
             Pageable pageable);
 
     /**

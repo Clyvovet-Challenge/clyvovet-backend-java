@@ -24,9 +24,12 @@ public class ServicoController {
 
     /** Aninhado na clinica porque servico nao existe fora de uma. */
     @GetMapping("/clinicas/{clinicaId}/servicos")
-    @Operation(summary = "Serviços ativos de uma clínica")
-    public ResponseEntity<List<ServicoResponse>> daClinica(@PathVariable UUID clinicaId) {
-        return ResponseEntity.ok(servicoService.daClinica(clinicaId));
+    @Operation(summary = "Catálogo de uma clínica. Só os ativos, salvo para quem a administra: "
+            + "incluirInativos=true traz também os desativados, que é a visão de gestão")
+    public ResponseEntity<List<ServicoResponse>> daClinica(
+            @PathVariable UUID clinicaId,
+            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return ResponseEntity.ok(servicoService.daClinica(clinicaId, incluirInativos));
     }
 
     // A rota abre o verbo para ADMIN_CLINICA; esta linha decide de QUAL clinica.
@@ -44,6 +47,13 @@ public class ServicoController {
     public ResponseEntity<ServicoResponse> atualizar(
             @PathVariable UUID id, @Valid @RequestBody ServicoRequest request) {
         return ResponseEntity.ok(servicoService.atualizar(id, request));
+    }
+
+    @PreAuthorize("@seguranca.podeGerirServico(#id)")
+    @PostMapping("/servicos/{id}/reativar")
+    @Operation(summary = "Voltar a oferecer um serviço desativado")
+    public ResponseEntity<ServicoResponse> reativar(@PathVariable UUID id) {
+        return ResponseEntity.ok(servicoService.reativar(id));
     }
 
     @PreAuthorize("@seguranca.podeGerirServico(#id)")

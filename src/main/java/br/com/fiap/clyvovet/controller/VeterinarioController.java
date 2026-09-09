@@ -27,12 +27,13 @@ public class VeterinarioController {
     private final VeterinarioService veterinarioService;
 
     @GetMapping
-    @Operation(summary = "Listar veterinários com paginação e filtros por nome e especialidade")
+    @Operation(summary = "Listar veterinários. O filtro clinicaId é o que monta a equipe da casa")
     public ResponseEntity<Page<VeterinarioResponse>> listarTodos(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String especialidade,
+            @RequestParam(required = false) UUID clinicaId,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
-        return ResponseEntity.ok(veterinarioService.listarTodos(nome, especialidade, pageable));
+        return ResponseEntity.ok(veterinarioService.listarTodos(nome, especialidade, clinicaId, pageable));
     }
 
     @GetMapping("/{id}")

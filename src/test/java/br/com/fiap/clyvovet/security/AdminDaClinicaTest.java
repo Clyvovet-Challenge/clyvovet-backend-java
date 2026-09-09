@@ -6,8 +6,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -163,9 +166,83 @@ class AdminDaClinicaTest extends TesteDeApi {
                 .andExpect(status().isForbidden());
     }
 
+    /**
+     * Desativar deixou de ser sem volta.
+     *
+     * <p>{@code ServicoRequest} nao tem o campo {@code ativo}, entao nem o PUT trazia
+     * o servico de volta — e a listagem escondia o desativado, o que tirava da tela o
+     * que receberia o clique. A clinica que parasse de oferecer banho e voltasse atras
+     * precisava cadastrar OUTRO servico, com outro id, partindo em dois o historico de
+     * preco de tudo que ja tinha sido cobrado.</p>
+     */
+    @Test
+    @DisplayName("desativa, ve no catalogo de gestao, e reativa")
+    void desativaEReativa() throws Exception {
+        String id = idDe(criar("/api/v1/servicos", vetcare, """
+                {"clinicaId":"%s","nome":"Banho e tosa %s","tipoEvento":"OUTRO",
+                 "preco":70.00,"duracaoMinutos":60}"""
+                .formatted(SeedV2.CLINICA_VETCARE, System.nanoTime()))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/servicos/" + id);
+
+        remover("/api/v1/servicos/" + id, vetcare).andExpect(status().isNoContent());
+        assertThat(contem(catalogo(vetcare, false), id)).isFalse();
+        assertThat(contem(catalogo(vetcare, true), id)).isTrue();
+
+        criar("/api/v1/servicos/" + id + "/reativar", vetcare, "")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ativo").value(true));
+        assertThat(contem(catalogo(vetcare, false), id)).isTrue();
+    }
+
+    /** O catalogo de gestao mostra preco e o que foi tirado do ar: nao e do tutor. */
+    @Test
+    @DisplayName("o catalogo com desativados nao e de quem nao administra")
+    void catalogoDeGestaoEDeQuemAdministra() throws Exception {
+        buscar("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE + "/servicos?incluirInativos=true",
+                tokenTutor(LUCAS))
+                .andExpect(status().isForbidden());
+        // Na concorrente, nem o administrador de clinica passa.
+        buscar("/api/v1/clinicas/" + SeedV2.CLINICA_PETMED + "/servicos?incluirInativos=true", vetcare)
+                .andExpect(status().isForbidden());
+        // E o catalogo normal continua aberto a quem vai agendar.
+        buscar("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE + "/servicos", tokenTutor(LUCAS))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("o tutor nao reativa servico nenhum")
+    void tutorNaoReativa() throws Exception {
+        criar("/api/v1/servicos/" + SeedV2.ID_INEXISTENTE + "/reativar", tokenTutor(LUCAS), "")
+                .andExpect(status().isForbidden());
+    }
+
     // ================================================================
     // Agenda dos profissionais da casa
     // ================================================================
+
+    /**
+     * "A minha equipe" so existe com o filtro por clinica.
+     *
+     * <p>Sem ele a tela teria de puxar a plataforma inteira, pagina a pagina, e
+     * filtrar no cliente — e mostrar o numero errado enquanto nao terminasse.</p>
+     */
+    @Test
+    @DisplayName("lista os profissionais da casa, e so eles")
+    void listaAEquipeDaCasa() throws Exception {
+        JsonNode equipe = corpoDe(buscar(
+                "/api/v1/veterinarios?clinicaId=" + SeedV2.CLINICA_VETCARE + "&size=50", vetcare)
+                .andExpect(status().isOk()));
+
+        assertThat(totalDe(equipe)).isPositive();
+        for (JsonNode profissional : equipe.get("content")) {
+            assertThat(profissional.get("clinicaId").asText()).isEqualTo(SeedV2.CLINICA_VETCARE);
+        }
+        // Sem o filtro, a listagem traz a plataforma toda -- e continua trazendo.
+        assertThat(totalDe(buscar("/api/v1/veterinarios?size=50", vetcare)))
+                .isGreaterThan(totalDe(equipe));
+    }
+
 
     @Test
     @DisplayName("gerencia a grade de um veterinario da casa")
@@ -244,6 +321,21 @@ class AdminDaClinicaTest extends TesteDeApi {
      * animal, e 26 animais de todas as clinicas na lista, cada um com o nome e o id
      * do tutor.</p>
      */
+    private JsonNode catalogo(String token, boolean incluirInativos) throws Exception {
+        return corpoDe(buscar("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE + "/servicos"
+                + (incluirInativos ? "?incluirInativos=true" : ""), token)
+                .andExpect(status().isOk()));
+    }
+
+    private boolean contem(JsonNode catalogo, String servicoId) {
+        for (JsonNode servico : catalogo) {
+            if (servicoId.equals(servico.get("id").asText())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Test
     @DisplayName("nao lista o cadastro de animais da plataforma")
     void naoListaAnimais() throws Exception {

@@ -14,10 +14,12 @@ public interface VeterinarioRepository extends RepositorioBase<Veterinario> {
 
     @Query("SELECT v FROM Veterinario v WHERE " +
             "(:nome IS NULL OR LOWER(v.nome) LIKE LOWER(CONCAT('%', :nome, '%')) ESCAPE '\\') AND " +
-            "(:especialidade IS NULL OR LOWER(v.especialidade) LIKE LOWER(CONCAT('%', :especialidade, '%')) ESCAPE '\\')")
+            "(:especialidade IS NULL OR LOWER(v.especialidade) LIKE LOWER(CONCAT('%', :especialidade, '%')) ESCAPE '\\') AND " +
+            "(:clinicaId IS NULL OR v.clinica.id = :clinicaId)")
     Page<Veterinario> buscarPorFiltros(
             @Param("nome") String nome,
             @Param("especialidade") String especialidade,
+            @Param("clinicaId") UUID clinicaId,
             Pageable pageable);
 
     /** Corpo clinico de uma clinica. Sustenta a busca de vagas por clinica. */

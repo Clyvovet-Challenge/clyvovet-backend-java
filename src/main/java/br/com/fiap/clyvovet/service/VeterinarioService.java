@@ -28,9 +28,21 @@ public class VeterinarioService {
     private final VeterinarioMapper veterinarioMapper;
 
     // Ver a nota sobre #pageable na chave em TutorService.
-    @Cacheable(value = "veterinarios", key = "#nome + '-' + #especialidade + '-' + #pageable")
-    public Page<VeterinarioResponse> listarTodos(String nome, String especialidade, Pageable pageable) {
-        return veterinarioRepository.buscarPorFiltros(nome, especialidade, pageable)
+    /**
+     * O filtro por clinica e o que faz existir "a minha equipe".
+     *
+     * <p>O administrador da clinica gerencia os profissionais da casa, e a listagem
+     * so sabia filtrar por nome e especialidade — para montar a equipe dele, a tela
+     * teria de puxar a plataforma inteira e filtrar no cliente, paginacao e tudo.</p>
+     *
+     * <p>Nao e recorte de seguranca: o cadastro de veterinario e publico a quem esta
+     * autenticado, e precisa ser — e por ele que o tutor escolhe com quem marcar.</p>
+     */
+    @Cacheable(value = "veterinarios",
+            key = "#nome + '-' + #especialidade + '-' + #clinicaId + '-' + #pageable")
+    public Page<VeterinarioResponse> listarTodos(String nome, String especialidade,
+                                                 UUID clinicaId, Pageable pageable) {
+        return veterinarioRepository.buscarPorFiltros(nome, especialidade, clinicaId, pageable)
                 .map(veterinarioMapper::toResponse);
     }
 
