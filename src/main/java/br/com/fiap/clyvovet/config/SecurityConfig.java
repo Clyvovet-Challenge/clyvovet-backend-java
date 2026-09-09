@@ -137,6 +137,11 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST,   api("/clinicas")).hasRole(ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/clinicas/**")).hasRole(ADMIN)
 
+            // O painel e leitura de quem trabalha na casa. O tutor nao entra: nao ha
+            // versao "so a minha parte" de faturamento e taxa de falta.
+            .requestMatchers(HttpMethod.GET, api("/clinicas/*/painel"))
+                .hasAnyRole(VETERINARIO, ADMIN_CLINICA, ADMIN)
+
             // Editar os proprios dados, e cadastrar os proprios profissionais, sim.
             // De novo: a rota abre o verbo, e o @PreAuthorize decide de QUEM.
             .requestMatchers(HttpMethod.PUT,    api("/clinicas/**")).hasAnyRole(ADMIN_CLINICA, ADMIN)
@@ -151,8 +156,13 @@ public class SecurityConfig {
             // conta, e o ownership por recurso ja resolve quem ve o que.
             .requestMatchers(HttpMethod.POST, api("/pagamentos/*/confirmar", "/pagamentos/*/estornar"))
                 .hasAnyRole(VETERINARIO, ADMIN)
+            // O gestor da clinica entra aqui junto com o painel, e os dois andam
+            // juntos: o painel diz QUANTO esta em aberto, e esta lista diz DE QUEM.
+            // O total sem os nomes nao vira ligacao nenhuma. A lista ja e recortada
+            // por clinica dentro do service (recorte().clinicaId()), entao ele ve os
+            // devedores da propria casa e de nenhuma outra.
             .requestMatchers(HttpMethod.GET, api("/pagamentos/inadimplencia"))
-                .hasAnyRole(VETERINARIO, ADMIN)
+                .hasAnyRole(VETERINARIO, ADMIN_CLINICA, ADMIN)
 
             // --- Catalogo de servicos: quem define o que a clinica oferece ---
             // Preco e duracao decidem quanto se cobra e como a agenda e ocupada.
@@ -238,6 +248,19 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST,   api("/tutores")).hasAnyRole(VETERINARIO, ADMIN)
             .requestMatchers(HttpMethod.DELETE, api("/tutores/**")).hasAnyRole(VETERINARIO, ADMIN)
 
+            // A LISTAGEM de animais nao e para o ADMIN_CLINICA, e o motivo e a
+            // incoerencia que ele produzia: por id, podeAcessarAnimal ja respondia
+            // 403 a esse perfil -- ele nao esta em temVisaoAmpla e nao tem tutor --,
+            // mas a listagem filtra SO por tutorId, que nele e nulo. O resultado
+            // medido contra a pilha local: 403 para abrir um animal, e 26 animais de
+            // todas as clinicas na lista, com nome e id do tutor de cada um.
+            //
+            // O matcher exato precisa vir ANTES de "/animais/**", que casa tambem com
+            // "/animais" sozinho. E o gestor nao fica cego: os pacientes da casa dele
+            // chegam por /eventos-clinicos, ja recortado pela clinica. O que a
+            // listagem acrescentava era o cadastro das OUTRAS.
+            .requestMatchers(HttpMethod.GET, api("/animais")).hasAnyRole("TUTOR", VETERINARIO, ADMIN)
+
             // Animal: tutor cria e edita os proprios; o ownership em si e
             // verificado por @PreAuthorize no controller.
             .requestMatchers(api("/animais/**")).authenticated()
@@ -283,7 +306,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(origensPermitidas));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // PATCH estava faltando, e a API tem quatro recursos que so se editam por
+        // ele -- inclusive PATCH /clinicas/{id}, a unica escrita do ADMIN_CLINICA
+        // sobre a propria clinica. O sintoma nao aparece aqui e sim no navegador: o
+        // preflight OPTIONS responde sem o metodo na lista, e a requisicao nem chega
+        // a sair. Do app nativo funcionava, porque ali nao ha CORS.
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setExposedHeaders(List.of("Retry-After"));
         config.setMaxAge(3600L);

@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.mapper;
 
 import br.com.fiap.clyvovet.dto.auth.UsuarioResponse;
+import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.Perfil;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
@@ -63,6 +64,34 @@ class UsuarioMapperTest {
         assertThat(response.tutorId()).isNull();
     }
 
+    /**
+     * Os dois caminhos ate a clinica, no mesmo teste porque e a mesma pergunta.
+     *
+     * <p>O ADMIN_CLINICA responde pela clinica (vinculo direto); o veterinario atende
+     * nela (vinculo pelo profissional). O {@code /auth/me} precisa responder nos dois
+     * casos — e o campo existe justamente porque nao respondia em nenhum.</p>
+     */
+    @Test
+    @DisplayName("a clinica chega pelo vinculo direto e tambem pelo veterinario")
+    void clinicaPelosDoisCaminhos() {
+        Clinica clinica = new Clinica();
+        clinica.setId(UUID.randomUUID());
+        clinica.setNome("VetCare Prime");
+
+        Usuario administrador = usuario(Perfil.ADMIN_CLINICA);
+        administrador.setClinica(clinica);
+        assertThat(mapper.toResponse(administrador).clinicaId()).isEqualTo(clinica.getId());
+        assertThat(mapper.toResponse(administrador).clinicaNome()).isEqualTo("VetCare Prime");
+
+        Veterinario veterinario = new Veterinario();
+        veterinario.setId(UUID.randomUUID());
+        veterinario.setNome("Camila Ferreira");
+        veterinario.setClinica(clinica);
+        Usuario profissional = usuario(Perfil.VETERINARIO);
+        profissional.setVeterinario(veterinario);
+        assertThat(mapper.toResponse(profissional).clinicaId()).isEqualTo(clinica.getId());
+    }
+
     @Test
     @DisplayName("admin sem vinculo nenhum nao estoura")
     void adminSemVinculo() {
@@ -72,6 +101,8 @@ class UsuarioMapperTest {
         assertThat(response.tutorNome()).isNull();
         assertThat(response.veterinarioId()).isNull();
         assertThat(response.veterinarioNome()).isNull();
+        assertThat(response.clinicaId()).isNull();
+        assertThat(response.clinicaNome()).isNull();
     }
 
     /**

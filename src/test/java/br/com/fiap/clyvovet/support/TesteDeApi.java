@@ -45,6 +45,9 @@ public abstract class TesteDeApi {
     private static final String SENHA_VETERINARIA = "vet12345";
     private static final String SENHA_TUTOR = "tutor12345";
 
+    /** Senha dos administradores de clinica criados pelos testes. */
+    protected static final String SENHA_ADMIN_DE_CLINICA = "Clinica@12345";
+
     @Autowired
     protected MockMvc mockMvc;
 
@@ -109,6 +112,25 @@ public abstract class TesteDeApi {
 
     protected String tokenTutor(String email) throws Exception {
         return token(email, SENHA_TUTOR);
+    }
+
+    /**
+     * Cria, se ainda nao existir, e loga o administrador de uma clinica.
+     *
+     * <p>O perfil ADMIN_CLINICA nao vem do seed: ele exige um clinicaId, e qual
+     * clinica depende do que cada teste quer provar. Por isso a fixture e montada
+     * aqui, e nao no {@code DevDataSeeder}.</p>
+     *
+     * <p>O status do POST e ignorado de proposito. A suite compartilha o banco e
+     * nao ha rollback entre classes: na segunda classe que pedir o mesmo e-mail, o
+     * usuario ja existe e a criacao devolve 409. O que importa e o login em
+     * seguida — se o cadastro tivesse falhado de verdade, ele e que quebraria.</p>
+     */
+    protected String tokenAdminDaClinica(String email, String clinicaId) throws Exception {
+        criar("/api/v1/auth/usuarios", tokenAdmin(), """
+                {"email":"%s","senha":"%s","perfil":"ADMIN_CLINICA","clinicaId":"%s"}"""
+                .formatted(email, SENHA_ADMIN_DE_CLINICA, clinicaId));
+        return token(email, SENHA_ADMIN_DE_CLINICA);
     }
 
     protected String token(String email, String senha) throws Exception {

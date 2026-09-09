@@ -3,6 +3,10 @@ package br.com.fiap.clyvovet.repository;
 import br.com.fiap.clyvovet.exception.Recurso;
 import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.TipoEvento;
+import br.com.fiap.clyvovet.repository.projecao.ContagemPorDesfecho;
+import br.com.fiap.clyvovet.repository.projecao.ContagemPorRotulo;
+import br.com.fiap.clyvovet.repository.projecao.ContagemPorServico;
+import br.com.fiap.clyvovet.repository.projecao.ContagemPorStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -124,6 +128,97 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
     List<EventoClinico> realizadosAte(
             @Param("limite") LocalDate limite,
             @Param("clinicaId") UUID clinicaId);
+
+    // ==================================================================
+    // Painel da clinica -- agregacoes do periodo
+    //
+    // Todas ancoradas em e.data, a data do ATENDIMENTO, e nunca na data em que
+    // o dinheiro entrou. E o que faz as caixas do painel serem comparaveis entre
+    // si: os R$ 3.000 embaixo de "12 realizados" sao os desses doze, e nao a
+    // soma de pagamentos que por acaso caiu na janela.
+    // ==================================================================
+
+    /**
+     * Quantos atendimentos em cada estado, no periodo — marcados, atendidos,
+     * faltas e cancelamentos, que e a primeira pergunta de quem administra.
+     *
+     * <p>Sem GROUP BY seriam quatro consultas com quatro COUNT, e a quinta
+     * situacao do ciclo de vida nasceria fora do painel sem ninguem notar.</p>
+     */
+    @Query("""
+            SELECT new br.com.fiap.clyvovet.repository.projecao.ContagemPorStatus(
+                       e.statusEvento, COUNT(e))
+            FROM EventoClinico e
+            WHERE e.clinica.id = :clinicaId
+              AND e.data BETWEEN :de AND :ate
+            GROUP BY e.statusEvento
+            """)
+    List<ContagemPorStatus> contagemPorStatus(
+            @Param("clinicaId") UUID clinicaId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
+
+    /**
+     * Como terminaram os atendimentos concluidos: melhora, estavel, piora, obito.
+     *
+     * <p>So REALIZADO entra. O agendado ainda nao terminou, e o cancelado nunca
+     * comecou — contar qualquer um dos dois como "sem desfecho" transformaria
+     * agenda cheia em prognostico ruim.</p>
+     */
+    @Query("""
+            SELECT new br.com.fiap.clyvovet.repository.projecao.ContagemPorDesfecho(
+                       e.desfecho, COUNT(e))
+            FROM EventoClinico e
+            WHERE e.clinica.id = :clinicaId
+              AND e.data BETWEEN :de AND :ate
+              AND e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.REALIZADO
+            GROUP BY e.desfecho
+            """)
+    List<ContagemPorDesfecho> contagemPorDesfecho(
+            @Param("clinicaId") UUID clinicaId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
+
+    /**
+     * Quais racas a clinica mais atende.
+     *
+     * <p>O {@code LEFT JOIN} nao e detalhe de estilo: {@code e.animal.raca} geraria
+     * INNER JOIN, e o atendimento sem raca preenchida sairia da conta em silencio —
+     * a soma das barras deixaria de bater com o total de realizados logo acima, na
+     * mesma tela.</p>
+     */
+    @Query("""
+            SELECT new br.com.fiap.clyvovet.repository.projecao.ContagemPorRotulo(
+                       a.raca, COUNT(e))
+            FROM EventoClinico e
+            LEFT JOIN e.animal a
+            WHERE e.clinica.id = :clinicaId
+              AND e.data BETWEEN :de AND :ate
+              AND e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.REALIZADO
+            GROUP BY a.raca
+            ORDER BY COUNT(e) DESC
+            """)
+    List<ContagemPorRotulo> contagemPorRaca(
+            @Param("clinicaId") UUID clinicaId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
+
+    /** Quantos atendimentos por servico do catalogo. Ver a nota em {@link ContagemPorServico}. */
+    @Query("""
+            SELECT new br.com.fiap.clyvovet.repository.projecao.ContagemPorServico(
+                       s.id, s.nome, COUNT(e))
+            FROM EventoClinico e
+            JOIN e.servico s
+            WHERE e.clinica.id = :clinicaId
+              AND e.data BETWEEN :de AND :ate
+              AND e.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.REALIZADO
+            GROUP BY s.id, s.nome
+            ORDER BY COUNT(e) DESC
+            """)
+    List<ContagemPorServico> contagemPorServico(
+            @Param("clinicaId") UUID clinicaId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
 
     default EventoClinico obterPorId(UUID id) {
         return obterPorId(id, Recurso.EVENTO_CLINICO);

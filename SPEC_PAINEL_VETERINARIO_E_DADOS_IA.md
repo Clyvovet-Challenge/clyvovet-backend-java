@@ -1,6 +1,33 @@
 # Spec — Painel do Veterinário e Dados + IA
 
-**Data:** 25/08/2026 · **Status:** especificação, nada implementado · **Alvo:** backend Java (este repositório)
+**Data:** 25/08/2026 · **Status:** ver o aviso abaixo · **Alvo:** backend Java (este repositório)
+
+> ## ⚠️ O que já existe, e o que este documento ainda não é
+>
+> **Atualizado em 08/09/2026.** Parte do terreno que esta spec descrevia mudou desde
+> 25/08, e o que ela pede continua não implementado. Para não virar um documento falso:
+>
+> **Já existe, e não é isto aqui:** o **painel da CLÍNICA** —
+> `GET /api/v1/clinicas/{id}/painel?de&ate` — que responde movimento (marcados ×
+> realizados × faltas × cancelados), faturamento por situação do pagamento, desfechos,
+> raças mais atendidas e serviços do catálogo. Ator diferente (`ADMIN_CLINICA`, criado
+> na V12), recorte diferente (a clínica, não o profissional) e escopo bem menor.
+> Implementação em `PainelService` / `PainelController`, provada em
+> `PainelDaClinicaTest`.
+>
+> **Continua não implementado:** tudo desta spec — retenção, risco de abandono,
+> benchmark, gasto por medicamento, impacto de vida. Todos dependem de dados que a
+> base não tem: `raca_referencia`, `status_vital`, prescrição. Nada disso foi criado.
+>
+> **Ficou desatualizado aqui dentro:** a numeração das migrations (a spec reserva V5 e
+> V6 para si; as duas já existem com outro conteúdo, e a próxima livre é a **V13**), e
+> os riscos 4 e 5 da Parte VI, que descrevem a ausência de escopo do veterinário —
+> `UsuarioAutenticado.getVeterinarioId()` e o recorte por clínica passaram a existir.
+>
+> **Continua valendo, e foi aproveitado:** o **risco 3** — `animal.raca` é texto livre,
+> e sem normalização a agregação por raça produz grupos duplicados. O painel da clínica
+> aplica o paliativo que esta spec prescreve (`UPPER(TRIM(...))` como chave), com a
+> mesma ressalva: resolve caixa e espaço, **não** resolve acento nem sinônimo.
 
 Documento derivado da leitura completa do código, do DDL das migrations e da documentação
 em [`docs/`](docs/). Serve de base para gerar os prompts de implementação camada por camada.

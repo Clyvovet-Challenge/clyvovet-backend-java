@@ -27,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 class AdminDaClinicaTest extends TesteDeApi {
 
-    private static final String SENHA = "Clinica@12345";
     private static final String DA_VETCARE = "admin.vetcare@clinica.test";
     private static final String DA_PETMED = "admin.petmed@clinica.test";
 
@@ -36,18 +35,8 @@ class AdminDaClinicaTest extends TesteDeApi {
 
     @BeforeEach
     void criarOsDoisAdministradores() throws Exception {
-        String admin = tokenAdmin();
-        criarSeAusente(admin, DA_VETCARE, SeedV2.CLINICA_VETCARE);
-        criarSeAusente(admin, DA_PETMED, SeedV2.CLINICA_PETMED);
-        vetcare = token(DA_VETCARE, SENHA);
-        petmed = token(DA_PETMED, SENHA);
-    }
-
-    /** A suite compartilha o banco: na segunda classe que rodar, o usuario ja existe. */
-    private void criarSeAusente(String admin, String email, String clinicaId) throws Exception {
-        criar("/api/v1/auth/usuarios", admin, """
-                {"email":"%s","senha":"%s","perfil":"ADMIN_CLINICA","clinicaId":"%s"}"""
-                .formatted(email, SENHA, clinicaId));
+        vetcare = tokenAdminDaClinica(DA_VETCARE, SeedV2.CLINICA_VETCARE);
+        petmed = tokenAdminDaClinica(DA_PETMED, SeedV2.CLINICA_PETMED);
     }
 
     // ================================================================
@@ -59,7 +48,7 @@ class AdminDaClinicaTest extends TesteDeApi {
     void semClinicaERecusado() throws Exception {
         criar("/api/v1/auth/usuarios", tokenAdmin(), """
                 {"email":"sem.clinica@test.com","senha":"%s","perfil":"ADMIN_CLINICA"}"""
-                .formatted(SENHA))
+                .formatted(SENHA_ADMIN_DE_CLINICA))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.campo").value("clinicaId"));
     }
@@ -78,7 +67,7 @@ class AdminDaClinicaTest extends TesteDeApi {
     void adminNaoAceitaVinculoDeTutor() throws Exception {
         criar("/api/v1/auth/usuarios", tokenAdmin(), """
                 {"email":"admin.com.tutor@test.com","senha":"%s","perfil":"ADMIN","tutorId":"%s"}"""
-                .formatted(SENHA, SeedV2.TUTOR_LUCAS))
+                .formatted(SENHA_ADMIN_DE_CLINICA, SeedV2.TUTOR_LUCAS))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.campo").value("tutorId"));
     }
@@ -89,7 +78,7 @@ class AdminDaClinicaTest extends TesteDeApi {
         criar("/api/v1/auth/usuarios", tokenAdmin(), """
                 {"email":"hibrido@test.com","senha":"%s","perfil":"ADMIN_CLINICA",
                  "clinicaId":"%s","veterinarioId":"%s"}"""
-                .formatted(SENHA, SeedV2.CLINICA_VETCARE, SeedV2.VET_CAMILA))
+                .formatted(SENHA_ADMIN_DE_CLINICA, SeedV2.CLINICA_VETCARE, SeedV2.VET_CAMILA))
                 .andExpect(status().isConflict());
     }
 
@@ -205,6 +194,33 @@ class AdminDaClinicaTest extends TesteDeApi {
     }
 
     // ================================================================
+    // A conta a receber da casa
+    // ================================================================
+
+    /**
+     * A lista de inadimplencia acompanha o painel.
+     *
+     * <p>O painel responde "quanto esta em aberto"; sozinho, esse numero nao vira
+     * ligacao nenhuma. Quem responde "de quem" e esta lista — e ela ja nasce
+     * recortada pela clinica de quem pergunta, dentro do service.</p>
+     */
+    @Test
+    @DisplayName("ve os devedores da propria clinica")
+    void veAInadimplenciaDaCasa() throws Exception {
+        buscar("/api/v1/pagamentos/inadimplencia", vetcare).andExpect(status().isOk());
+    }
+
+    /** Cobrar e do caixa; confirmar e estornar continuam sendo do corpo clinico. */
+    @Test
+    @DisplayName("nao confirma nem estorna pagamento")
+    void naoMexeNoPagamento() throws Exception {
+        criar("/api/v1/pagamentos/" + SeedV2.ID_INEXISTENTE + "/confirmar", vetcare,
+                """
+                {"dataPagamento":"2026-01-10"}""")
+                .andExpect(status().isForbidden());
+    }
+
+    // ================================================================
     // O que administrar o negocio NAO concede
     // ================================================================
 
@@ -217,6 +233,21 @@ class AdminDaClinicaTest extends TesteDeApi {
     @DisplayName("nao enxerga o cadastro de tutores da plataforma")
     void naoListaTutores() throws Exception {
         buscar("/api/v1/tutores", vetcare).andExpect(status().isForbidden());
+    }
+
+    /**
+     * A listagem de animais era a porta lateral do mesmo cadastro.
+     *
+     * <p>Por id, {@code podeAcessarAnimal} ja recusava este perfil. A listagem, nao:
+     * ela filtra apenas por {@code tutorId}, que aqui e nulo, e nulo significa "sem
+     * recorte". Verificado contra a pilha local antes da correcao — 403 para abrir um
+     * animal, e 26 animais de todas as clinicas na lista, cada um com o nome e o id
+     * do tutor.</p>
+     */
+    @Test
+    @DisplayName("nao lista o cadastro de animais da plataforma")
+    void naoListaAnimais() throws Exception {
+        buscar("/api/v1/animais", vetcare).andExpect(status().isForbidden());
     }
 
     @Test

@@ -4,6 +4,7 @@ import br.com.fiap.clyvovet.exception.Recurso;
 import br.com.fiap.clyvovet.model.FormaPagamento;
 import br.com.fiap.clyvovet.model.Pagamento;
 import br.com.fiap.clyvovet.model.StatusPagamento;
+import br.com.fiap.clyvovet.repository.projecao.ValorPorServicoEStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -59,6 +60,35 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
             @Param("de") LocalDate de,
             @Param("ate") LocalDate ate,
             @Param("clinicaId") UUID clinicaId);
+
+    /**
+     * O caixa do periodo de uma clinica, quebrado por servico e por status.
+     *
+     * <p>O recorte e {@code e.data} — a data do atendimento —, e nao
+     * {@code p.dataPagamento}. Sao dois regimes contabeis diferentes, e a escolha
+     * aqui e deliberada: o painel poe o faturamento ao lado do numero de
+     * atendimentos, entao o dinheiro mostrado precisa ser o DAQUELES atendimentos.
+     * Pela data de pagamento, "10 realizados, R$ 4.000" poderia estar somando a
+     * cirurgia do mes passado que so foi quitada agora.</p>
+     *
+     * <p>Uma consequencia honesta disso: o que foi atendido na janela e ainda nao
+     * foi pago aparece em {@code pendente}, e nao some. E exatamente o que o
+     * administrador precisa ver.</p>
+     */
+    @Query("""
+            SELECT new br.com.fiap.clyvovet.repository.projecao.ValorPorServicoEStatus(
+                       s.id, p.statusPagamento, SUM(p.valor), COUNT(p))
+            FROM Pagamento p
+            JOIN p.eventoClinico e
+            LEFT JOIN e.servico s
+            WHERE e.clinica.id = :clinicaId
+              AND e.data BETWEEN :de AND :ate
+            GROUP BY s.id, p.statusPagamento
+            """)
+    List<ValorPorServicoEStatus> totaisPorServicoEStatus(
+            @Param("clinicaId") UUID clinicaId,
+            @Param("de") LocalDate de,
+            @Param("ate") LocalDate ate);
 
     default Pagamento obterPorId(UUID id) {
         return obterPorId(id, Recurso.PAGAMENTO);

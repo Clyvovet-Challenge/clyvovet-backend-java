@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.mapper;
 
 import br.com.fiap.clyvovet.dto.auth.UsuarioResponse;
+import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
 import br.com.fiap.clyvovet.model.Veterinario;
@@ -26,6 +27,10 @@ public class UsuarioMapper {
                 Referencias.de(usuario.getTutor(), Tutor::getId),
                 Referencias.de(usuario.getTutor(), Tutor::getNome),
                 Referencias.de(usuario.getVeterinario(), Veterinario::getId),
-                Referencias.de(usuario.getVeterinario(), Veterinario::getNome));
+                Referencias.de(usuario.getVeterinario(), Veterinario::getNome),
+                // getClinicaEfetiva, e nao getClinica: o veterinario tambem tem uma
+                // clinica, e o app dele precisa dela pelo mesmo motivo.
+                Referencias.de(usuario.getClinicaEfetiva(), Clinica::getId),
+                Referencias.de(usuario.getClinicaEfetiva(), Clinica::getNome));
     }
 }

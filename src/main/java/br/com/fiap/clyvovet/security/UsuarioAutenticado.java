@@ -1,5 +1,6 @@
 package br.com.fiap.clyvovet.security;
 
+import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -62,15 +63,14 @@ public class UsuarioAutenticado implements UserDetails {
      * <p>O direto vem primeiro porque e o mais especifico: se um dia alguem for as
      * duas coisas — o dono da clinica que tambem atende —, o alcance que vale e o
      * de quem responde pelo negocio, nao o de quem faz consulta.</p>
+     *
+     * <p>A resolucao em si mora em {@link Usuario#getClinicaEfetiva()}: o
+     * {@code /auth/me} precisa da mesma resposta, e duas copias dela sao duas
+     * chances de divergir.</p>
      */
     public UUID getClinicaId() {
-        if (usuario.getClinica() != null) {
-            return usuario.getClinica().getId();
-        }
-        if (usuario.getVeterinario() == null || usuario.getVeterinario().getClinica() == null) {
-            return null;
-        }
-        return usuario.getVeterinario().getClinica().getId();
+        Clinica clinica = usuario.getClinicaEfetiva();
+        return clinica != null ? clinica.getId() : null;
     }
 
     @Override

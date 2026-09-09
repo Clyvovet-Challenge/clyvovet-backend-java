@@ -337,6 +337,41 @@ public class SegurancaService {
                 .orElse(true);
     }
 
+    /**
+     * Se quem chama pode abrir o painel DESTA clinica.
+     *
+     * <p>Passam o ADMIN da plataforma, o ADMIN_CLINICA da casa e — esta e a parte
+     * que merece justificativa — o VETERINARIO que atende nela.</p>
+     *
+     * <p>O veterinario entra porque ele JA alcanca cada linha que o painel soma: a
+     * lista de inadimplencia da clinica, o extrato dos tutores dela e os
+     * atendimentos, todos recortados pela mesma clinica e todos abertos ao corpo
+     * clinico. Negar so o total seria uma regra que parece mais estrita do que e —
+     * bastaria somar a mao o que a API ja entrega item a item. Regra que nao segura
+     * nada e pior que regra nenhuma: ela e lida como protecao.</p>
+     *
+     * <p>O TUTOR nao passa em nenhuma. Nao ha versao "so a minha parte" disto: o
+     * painel e faturamento, taxa de falta e desfecho clinico de pacientes que nao
+     * sao dele.</p>
+     */
+    public boolean podeVerPainelDe(UUID clinicaId) {
+        if (ehAdministradorDaPlataforma()) {
+            return true;
+        }
+        if (clinicaId == null) {
+            return false;
+        }
+        UsuarioAutenticado usuario = autenticado();
+        if (usuario == null) {
+            return false;
+        }
+        Perfil perfil = usuario.getUsuario().getPerfil();
+        if (perfil != Perfil.ADMIN_CLINICA && perfil != Perfil.VETERINARIO) {
+            return false;
+        }
+        return clinicaId.equals(usuario.getClinicaId());
+    }
+
     /** A clinica de um veterinario, ou null se ele nao existe ou nao tem uma. */
     private UUID clinicaDoVeterinario(UUID veterinarioId) {
         if (veterinarioId == null) {

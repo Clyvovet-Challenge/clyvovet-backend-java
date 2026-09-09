@@ -49,20 +49,18 @@ class CoberturaDeAutorizacaoTest extends TesteDeApi {
             Map.entry("AuthController#registrar", "publico: auto-cadastro, sempre cria TUTOR"),
 
             // --- Recurso da plataforma, fechado por ROLE na regra de rota ---
-            // Nao ha "dono" a verificar: clinica e veterinario sao cadastro da
-            // plataforma, e a rota ja exige ADMIN.
+            // Nao ha "dono" a verificar: entrar e sair da plataforma e decisao do
+            // negocio, e a rota ja exige ADMIN.
+            //
+            // A lista era MAIOR aqui. Nove entradas sairam quando o ADMIN_CLINICA
+            // passou a existir: editar clinica, cadastrar e editar veterinario e
+            // mexer no catalogo deixaram de ser "ADMIN na regra de rota" e ganharam
+            // @PreAuthorize, porque a rota passou a admitir dois perfis e nao sabe
+            // de QUAL clinica e o recurso. As entradas continuaram aqui dizendo o
+            // contrario, e o teste as aceitava.
             Map.entry("AuthController#criarUsuario", "ADMIN na regra de rota"),
             Map.entry("ClinicaController#criar", "ADMIN na regra de rota"),
-            Map.entry("ClinicaController#atualizar", "ADMIN na regra de rota"),
-            Map.entry("ClinicaController#atualizarParcialmente", "ADMIN na regra de rota"),
             Map.entry("ClinicaController#deletar", "ADMIN na regra de rota"),
-            Map.entry("VeterinarioController#criar", "ADMIN na regra de rota"),
-            Map.entry("VeterinarioController#atualizar", "ADMIN na regra de rota"),
-            Map.entry("VeterinarioController#atualizarParcialmente", "ADMIN na regra de rota"),
-            Map.entry("VeterinarioController#deletar", "ADMIN na regra de rota"),
-            Map.entry("ServicoController#criar", "ADMIN na regra de rota"),
-            Map.entry("ServicoController#atualizar", "ADMIN na regra de rota"),
-            Map.entry("ServicoController#desativar", "ADMIN na regra de rota"),
 
             // --- Corpo clinico, sem dono por recurso ---
             Map.entry("TutorController#criar", "cadastro novo: nao ha dono anterior a verificar"),
@@ -141,6 +139,42 @@ class CoberturaDeAutorizacaoTest extends TesteDeApi {
         assertThat(DECIDIDOS_FORA_DA_ANOTACAO.keySet())
                 .as("entradas que nao correspondem a nenhum endpoint")
                 .isSubsetOf(existentes);
+    }
+
+    /**
+     * Entrada na lista para um endpoint que JA tem @PreAuthorize e pior que
+     * redundante.
+     *
+     * <p>Ela e uma isencao permanente: no dia em que alguem apagar a anotacao, o
+     * primeiro teste desta classe continua verde, porque a chave esta na lista. O
+     * guarda deixa de guardar exatamente o endpoint que mais mudou de mao.</p>
+     *
+     * <p>Nao e hipotese. Nove entradas ficaram assim quando o ADMIN_CLINICA passou a
+     * existir, todas dizendo "ADMIN na regra de rota" sobre rotas que passaram a
+     * aceitar dois perfis — e nada apontou para elas.</p>
+     */
+    @Test
+    @DisplayName("a lista não isenta quem já decide pela anotação")
+    void listaSemEntradaRedundante() {
+        List<String> jaDecidemPelaAnotacao = new ArrayList<>();
+
+        for (Map.Entry<RequestMappingInfo, HandlerMethod> rota : mapeamento.getHandlerMethods().entrySet()) {
+            HandlerMethod handler = rota.getValue();
+            if (!handler.getBeanType().getPackageName().startsWith("br.com.fiap.clyvovet.controller")) {
+                continue;
+            }
+            boolean anotado = handler.getMethodAnnotation(PreAuthorize.class) != null
+                    || handler.getBeanType().getAnnotation(PreAuthorize.class) != null;
+            String chave = handler.getBeanType().getSimpleName() + "#" + handler.getMethod().getName();
+            if (anotado && DECIDIDOS_FORA_DA_ANOTACAO.containsKey(chave)) {
+                jaDecidemPelaAnotacao.add(chave);
+            }
+        }
+
+        assertThat(jaDecidemPelaAnotacao)
+                .as("estes endpoints tem @PreAuthorize e continuam na lista de excecoes: "
+                        + "tire-os de lá, senao a lista os isenta caso a anotacao seja removida")
+                .isEmpty();
     }
 
     private boolean escreve(RequestMappingInfo info) {

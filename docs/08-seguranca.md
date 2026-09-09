@@ -32,12 +32,33 @@ Não há sessão: cada requisição se sustenta pelo próprio token.
 | Perfil | Quem é | Enxerga |
 |---|---|---|
 | `TUTOR` | Dono do pet | Apenas o próprio cadastro, pets, eventos e pagamentos |
-| `VETERINARIO` | Profissional da clínica | Toda a base clínica; registra atendimentos e cobranças |
+| `VETERINARIO` | Profissional que atende | O cadastro de qualquer animal (nível 0, para atender quem chega pela primeira vez) e o **atendimento da própria clínica** — ou de fora, com consentimento do tutor |
+| `ADMIN_CLINICA` | Quem responde pelo estabelecimento | O que aconteceu na própria clínica: agenda, catálogo, profissionais, faturamento e painel. **Não** o cadastro de tutores e animais da plataforma |
 | `ADMIN` | Administração | Tudo, mais a gestão de clínicas, veterinários e usuários |
 
-`Usuario` é uma entidade separada das de domínio, com FK opcional para `Tutor` e
-`Veterinario`. É esse vínculo que viabiliza o ownership. Detalhes do mapeamento em
-[02-modelo-de-dados.md](02-modelo-de-dados.md).
+`Usuario` é uma entidade separada das de domínio, com FK opcional para `Tutor`,
+`Veterinario` e `Clinica`. É esse vínculo que viabiliza o ownership. Detalhes do
+mapeamento em [02-modelo-de-dados.md](02-modelo-de-dados.md).
+
+### Por que o gestor da clínica não é um veterinário com mais poder
+
+São alcances diferentes, e não graus do mesmo alcance. O veterinário alcança o
+**cadastro de qualquer animal** porque precisa: ele atende um paciente que nunca viu,
+e o nível 0 do histórico existe para isso. O gestor não atende ninguém — ele responde
+pelo negócio. Dar a ele a mesma visão entregaria CPF e e-mail de todos os tutores da
+plataforma a quem só precisa administrar uma casa.
+
+Por isso `ADMIN_CLINICA` fica **fora** de `temVisaoAmpla()`, e o que é da clínica dele
+chega por outro caminho: `recorte()` devolve `daClinica(...)`, que filtra as listagens,
+e `podeAlcancarOAtendimento` deixa passar o que aconteceu na casa.
+
+A clínica de um usuário tem **dois caminhos**, resolvidos num único lugar
+(`Usuario.getClinicaEfetiva()`): o vínculo direto, do gestor que responde pela clínica,
+e o transitivo (`veterinario.clinica`), do profissional que atende nela. O direto vem
+primeiro — se alguém for as duas coisas, vale o alcance de quem responde pelo negócio.
+O `GET /api/v1/auth/me` devolve `clinicaId` e `clinicaNome` justamente daí: sem esse
+campo o perfil existia e era inútil no cliente, que não tinha como descobrir por qual
+clínica ele responde.
 
 ---
 
@@ -82,25 +103,46 @@ No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bea
 
 ## Matriz de autorização
 
-| Recurso | Operação | TUTOR | VETERINARIO | ADMIN |
-|---|---|---|---|---|
-| `/api/v1/auth/login`, `/refresh`, `/registrar` | — | público | público | público |
-| `/api/v1/auth/usuarios` | POST | ✗ | ✗ | ✓ |
-| `/swagger-ui/**`, `/v3/api-docs/**` | GET | público | público | público |
-| `/api/v1/tutores` | GET lista | ✗ | ✓ | ✓ |
-| `/api/v1/tutores/{id}` | GET, PUT, PATCH | só o próprio | ✓ | ✓ |
-| `/api/v1/tutores` | POST, DELETE | ✗ | ✓ | ✓ |
-| `/api/v1/animais` | GET lista | só os próprios | ✓ | ✓ |
-| `/api/v1/animais/{id}` | GET, PUT, PATCH, DELETE | só os próprios | ✓ | ✓ |
-| `/api/v1/animais` | POST | ✓ | ✓ | ✓ |
-| `/api/v1/clinicas`, `/api/v1/veterinarios` | GET | ✓ | ✓ | ✓ |
-| `/api/v1/clinicas`, `/api/v1/veterinarios` | POST, PUT, PATCH, DELETE | ✗ | ✗ | ✓ |
-| `/api/v1/eventos-clinicos` | GET | só dos próprios pets | ✓ | ✓ |
-| `/api/v1/eventos-clinicos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✓ |
-| `/api/v1/pagamentos` | GET | só dos próprios pets | ✓ | ✓ |
-| `/api/v1/pagamentos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✓ |
+| Recurso | Operação | TUTOR | VETERINARIO | ADMIN_CLINICA | ADMIN |
+|---|---|---|---|---|---|
+| `/api/v1/auth/login`, `/refresh`, `/registrar` | — | público | público | público | público |
+| `/api/v1/auth/usuarios` | POST | ✗ | ✗ | ✗ | ✓ |
+| `/swagger-ui/**`, `/v3/api-docs/**` | GET | público | público | público | público |
+| `/api/v1/tutores` | GET lista | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/tutores/{id}` | GET, PUT, PATCH | só o próprio | ✓ | ✗ | ✓ |
+| `/api/v1/tutores` | POST, DELETE | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/animais` | GET lista | só os próprios | ✓ | ✗ | ✓ |
+| `/api/v1/animais/{id}` | GET, PUT, PATCH, DELETE | só os próprios | ✓ | ✗ | ✓ |
+| `/api/v1/animais` | POST | ✓ | ✓ | ✗ | ✓ |
+| `/api/v1/clinicas`, `/api/v1/veterinarios` | GET | ✓ | ✓ | ✓ | ✓ |
+| `/api/v1/clinicas` | POST, DELETE | ✗ | ✗ | ✗ | ✓ |
+| `/api/v1/clinicas/{id}` | PUT, PATCH | ✗ | ✗ | só a própria | ✓ |
+| `/api/v1/veterinarios` | POST, PUT, PATCH, DELETE | ✗ | ✗ | só os da casa | ✓ |
+| `/api/v1/servicos` | POST, PUT, DELETE | ✗ | ✗ | só o próprio catálogo | ✓ |
+| `/api/v1/disponibilidades`, `/bloqueios` | POST, DELETE | ✗ | só a própria grade | qualquer grade da casa | ✓ |
+| `/api/v1/eventos-clinicos` | GET | só dos próprios pets | da própria clínica | da própria clínica | ✓ |
+| `/api/v1/eventos-clinicos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/eventos-clinicos/{id}/concluir`, `/retorno`, `/marcar-faltas` | POST | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/pagamentos` | GET | só dos próprios pets | da própria clínica | da própria clínica | ✓ |
+| `/api/v1/pagamentos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/pagamentos/{id}/confirmar`, `/estornar` | POST | ✗ | ✓ | ✗ | ✓ |
+| `/api/v1/pagamentos/inadimplencia` | GET | ✗ | ✓ | ✓ | ✓ |
+| `/api/v1/clinicas/{id}/painel` | GET | ✗ | só a própria | só a própria | ✓ |
+| `/api/v1/auditoria/**` | GET | ✗ | ✗ | ✗ | ✓ |
 
 A cadeia termina em `anyRequest().authenticated()`: rota nova nasce protegida.
+
+> **A regra de rota abre o VERBO; ela não sabe de qual clínica é o recurso.** Toda linha
+> acima que diz "só a própria" ou "só os da casa" é decidida em duas partes: o
+> `hasAnyRole(...)` deixa o perfil entrar, e um `@PreAuthorize("@seguranca....")` no
+> controller decide **de quem** é o registro. Sem a segunda metade, o `ADMIN_CLINICA`
+> seria um caminho para mexer no catálogo, na agenda e no cadastro da concorrente.
+
+> **A listagem também é uma porta.** `GET /api/v1/animais` filtra apenas por `tutorId`,
+> e `tutorId` nulo significa "sem recorte" — o que fazia o gestor da clínica **listar os
+> 26 animais de todas as clínicas**, com nome e id do tutor de cada um, enquanto
+> `GET /api/v1/animais/{id}` respondia 403 para ele. Medido contra a pilha local e
+> fechado por rota. É o mesmo erro da ruptura B1, na outra ponta.
 
 ---
 
@@ -289,6 +331,19 @@ gerados em tempo de execução — hash de senha não é versionado em migration
 
 Os dois tutores têm pets distintos de propósito: é o que permite exercitar o
 isolamento sem cadastrar nada à mão.
+
+**Não há `ADMIN_CLINICA` no seed, e isso é deliberado:** o perfil exige um
+`clinicaId`, e qual clínica depende do que se quer exercitar. Ele é criado pelo ADMIN,
+e é o único perfil cujo cadastro o banco cobra — `chk_usuario_clinica` recusa
+`ADMIN_CLINICA` sem clínica, e a API responde 409 antes disso:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/usuarios   -H "Authorization: Bearer $TOKEN_DO_ADMIN" -H 'Content-Type: application/json'   -d '{"email":"gestor@clinica.com","senha":"Gestor@12345",
+       "perfil":"ADMIN_CLINICA","clinicaId":"11111111-1111-1111-1111-000000000001"}'
+```
+
+Depois, `GET /api/v1/auth/me` devolve o `clinicaId` dele — que é por onde começa toda
+rota da clínica, o painel inclusive.
 
 ---
 

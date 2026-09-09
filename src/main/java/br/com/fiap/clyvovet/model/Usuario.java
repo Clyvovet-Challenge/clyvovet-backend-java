@@ -69,6 +69,29 @@ public class Usuario {
     @JoinColumn(name = "clinica_id")
     private Clinica clinica;
 
+    /**
+     * A clinica a que este usuario pertence, resolvida uma unica vez.
+     *
+     * <p>Sao dois caminhos, e a ordem importa. O direto ({@code clinica}) e o do
+     * ADMIN_CLINICA, que RESPONDE pelo estabelecimento. O transitivo
+     * ({@code veterinario.clinica}) e o do profissional que ATENDE nela. O direto
+     * vem primeiro porque e o mais especifico: se um dia alguem for as duas coisas
+     * — o dono que tambem consulta —, o alcance que vale e o de quem responde pelo
+     * negocio.</p>
+     *
+     * <p>Mora na entidade, e nao em quem pergunta, porque hoje ha tres
+     * interessados: o escopo de seguranca, o painel da clinica e o {@code /auth/me}
+     * que o app le para saber onde esta. Enquanto cada um resolvia por conta
+     * propria, existiam tres nocoes de "a minha clinica" livres para divergir — e a
+     * que divergisse em silencio seria a do escopo.</p>
+     */
+    public Clinica getClinicaEfetiva() {
+        if (clinica != null) {
+            return clinica;
+        }
+        return veterinario != null ? veterinario.getClinica() : null;
+    }
+
     public boolean estaBloqueado() {
         return bloqueadoAte != null && bloqueadoAte.isAfter(LocalDateTime.now());
     }
