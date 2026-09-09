@@ -78,7 +78,7 @@ as quatro setas.
 Diga a frase que o avaliador precisa ouvir:
 
 > "O banco é provisionado **vazio**. Quem cria o schema é o Flyway desta API, no
-> primeiro boot — da V1 à V9."
+> primeiro boot — da V1 à V12."
 
 ---
 
@@ -182,7 +182,7 @@ Depois do `07`, mostre o Flyway trabalhando no log ao vivo:
 az webapp log tail -g rg-clyvovet-sprint3 -n app-clyvovet-java-rm562312
 ```
 
-> "Aqui está o Flyway aplicando V1 até V9 num banco que estava vazio há dois
+> "Aqui está o Flyway aplicando V1 até V12 num banco que estava vazio há dois
 > minutos. É isto que substitui rodar DDL à mão."
 
 ---
@@ -354,8 +354,8 @@ E onde ele vive versionado:
 ls src/main/resources/db/migration/mysql/
 ```
 
-> "O DDL não é um arquivo solto: são as migrations do Flyway, V1 a V9, versionadas
-> no repositório. Foi elas que criaram este banco."
+> "O DDL não é um arquivo solto: são as migrations do Flyway, V1 a V12, versionadas
+> no repositório. Foram elas que criaram este banco."
 
 Fechamento:
 

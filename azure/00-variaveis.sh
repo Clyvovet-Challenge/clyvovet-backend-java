@@ -9,10 +9,16 @@
 # senha e tokens) no codigo fonte". Senha e chave vem do ambiente e o script
 # recusa rodar sem elas, em vez de assumir um valor padrao que acabaria commitado.
 #
-#     export MYSQL_PASSWORD='...'      # senha do admin do MySQL
-#     export JWT_SECRET='...'          # base64, minimo 32 bytes
-#     export DOTNET_API_KEY='...'      # chave da API .NET
-#     export TELEGRAM_BOT_TOKEN='...'  # token do bot; formato valido basta
+# As SEIS. As duas primeiras sao exigidas aqui; as quatro seguintes, pelo 06 --
+# e descobrir isso no meio do 06, com os cinco recursos ja criados, e o tipo de
+# surpresa que custa uma gravacao.
+#
+#     export MYSQL_PASSWORD='...'      # senha do admin do MySQL          [aqui]
+#     export JWT_SECRET='...'          # base64, minimo 32 bytes          [aqui]
+#     export DOTNET_API_KEY='...'      # chave da API .NET                [06]
+#     export TELEGRAM_BOT_TOKEN='...'  # token do bot; formato valido basta [06]
+#     export ADMIN_EMAIL='...'         # primeiro ADMIN da plataforma     [06]
+#     export ADMIN_SENHA='...'         # anote: so aparece uma vez        [06]
 
 export SUBSCRIPTION="2tdspw-rm562312-pedrooliveira"
 

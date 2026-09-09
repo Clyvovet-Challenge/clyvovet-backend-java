@@ -659,8 +659,8 @@ bash azure/05-webapp-dotnet.sh       # Web App DOTNETCORE:8.0
 bash azure/06-configuracoes.sh       # app settings das duas APIs
 ```
 
-O banco nasce **vazio**: o Flyway cria as 19 tabelas no primeiro boot da API Java,
-da V1 à V9. Não rode DDL à mão — é assim que o banco e o
+O banco nasce **vazio**: o Flyway cria as 20 tabelas no primeiro boot da API Java,
+da V1 à V12. Não rode DDL à mão — é assim que o banco e o
 [`documentos/script_bd.sql`](documentos/script_bd.sql) deixam de divergir.
 
 ### 5. Publicar as aplicações

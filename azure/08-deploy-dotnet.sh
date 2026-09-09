@@ -19,6 +19,22 @@ if [ ! -f "$PROJETO" ]; then
     exit 1
 fi
 
+# O `zip` NAO vem no Git Bash.
+#
+# Na maquina em que isto foi ensaiado ele existe por acidente: o Oracle XE poe o
+# proprio zip no PATH. Em outra maquina do grupo -- a de quem for gravar, por
+# exemplo -- o script morreria aqui com "zip: command not found", depois do
+# publish, com os cinco recursos ja criados. Falhar antes, dizendo o que fazer,
+# custa tres linhas.
+if ! command -v zip >/dev/null 2>&1; then
+    echo "[ERRO] 'zip' nao encontrado no PATH." >&2
+    echo "       Instale (Git Bash nao traz) ou gere o pacote pelo PowerShell:" >&2
+    echo "         dotnet publish <csproj> -c Release -o publish" >&2
+    echo "         Compress-Archive -Path publish\* -DestinationPath api.zip" >&2
+    echo "         az webapp deploy -g \$RG -n \$APP_DOTNET --type zip --src-path api.zip" >&2
+    exit 1
+fi
+
 SAIDA="$(mktemp -d)"
 echo "==> dotnet publish -c Release..."
 dotnet publish "$PROJETO" -c Release -o "$SAIDA/publish" --nologo -v q
