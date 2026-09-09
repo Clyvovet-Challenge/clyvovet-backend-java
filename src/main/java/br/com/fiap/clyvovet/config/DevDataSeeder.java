@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.config;
 
 import br.com.fiap.clyvovet.model.Perfil;
 import br.com.fiap.clyvovet.model.Usuario;
+import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
 import br.com.fiap.clyvovet.repository.VeterinarioRepository;
@@ -42,10 +43,12 @@ public class DevDataSeeder {
     private static final UUID TUTOR_LUCAS = UUID.fromString("22222222-2222-2222-2222-000000000001");
     private static final UUID TUTOR_MARIA = UUID.fromString("22222222-2222-2222-2222-000000000002");
     private static final UUID VET_CAMILA  = UUID.fromString("33333333-3333-3333-3333-000000000001");
+    private static final UUID CLINICA_VETCARE = UUID.fromString("11111111-1111-1111-1111-000000000001");
 
     private final UsuarioRepository usuarioRepository;
     private final TutorRepository tutorRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final ClinicaRepository clinicaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -53,12 +56,18 @@ public class DevDataSeeder {
         return args -> {
             criarAdmin("admin@clyvovet.com", "admin12345");
             criarVeterinario("camila.ferreira@vetcare.com.br", "vet12345", VET_CAMILA);
+            // Sem ele, um dos quatro aplicativos do app fica inalcancavel em
+            // desenvolvimento: o perfil existe, mas nao ha por onde entrar nele sem
+            // criar o usuario a mao pelo ADMIN. Vive na VetCare, que e a clinica da
+            // Camila -- de proposito, para que os dois perfis se cruzem na mesma casa.
+            criarAdminDeClinica("gestor.vetcare@clyvovet.com", "gestor12345", CLINICA_VETCARE);
             // Dois tutores com pets distintos: e o que permite exercitar o
             // isolamento por dono sem precisar cadastrar nada a mao.
             criarTutor("lucas.santos@email.com", "tutor12345", TUTOR_LUCAS);
             criarTutor("maria.oliveira@email.com", "tutor12345", TUTOR_MARIA);
             log.info("Usuarios de desenvolvimento disponiveis: admin@clyvovet.com, "
-                    + "camila.ferreira@vetcare.com.br, lucas.santos@email.com, maria.oliveira@email.com");
+                    + "gestor.vetcare@clyvovet.com, camila.ferreira@vetcare.com.br, "
+                    + "lucas.santos@email.com, maria.oliveira@email.com");
         };
     }
 
@@ -69,6 +78,19 @@ public class DevDataSeeder {
     private void criarVeterinario(String email, String senha, UUID veterinarioId) {
         salvarSeAusente(email, senha, Perfil.VETERINARIO,
                 usuario -> veterinarioRepository.findById(veterinarioId).ifPresent(usuario::setVeterinario));
+    }
+
+    /**
+     * O administrador do estabelecimento.
+     *
+     * <p>E o unico perfil cujo vinculo o BANCO cobra: {@code chk_usuario_clinica}
+     * recusa ADMIN_CLINICA sem clinica. Se a V2 nao tiver rodado, o
+     * {@code ifPresent} deixa o usuario sem vinculo e o insert falha na constraint —
+     * ruidoso, e nao silencioso, que e o comportamento certo aqui.</p>
+     */
+    private void criarAdminDeClinica(String email, String senha, UUID clinicaId) {
+        salvarSeAusente(email, senha, Perfil.ADMIN_CLINICA,
+                usuario -> clinicaRepository.findById(clinicaId).ifPresent(usuario::setClinica));
     }
 
     private void criarTutor(String email, String senha, UUID tutorId) {

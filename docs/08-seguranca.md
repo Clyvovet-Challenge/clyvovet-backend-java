@@ -335,6 +335,7 @@ gerados em tempo de execução — hash de senha não é versionado em migration
 | E-mail | Senha | Perfil | Vínculo |
 |---|---|---|---|
 | `admin@clyvovet.com` | `admin12345` | ADMIN | — |
+| `gestor.vetcare@clyvovet.com` | `gestor12345` | ADMIN_CLINICA | Clínica VetCare Prime |
 | `camila.ferreira@vetcare.com.br` | `vet12345` | VETERINARIO | Clínica VetCare Prime |
 | `lucas.santos@email.com` | `tutor12345` | TUTOR | dono do Bolinha |
 | `maria.oliveira@email.com` | `tutor12345` | TUTOR | dona da Mimi e do Rex |
@@ -342,9 +343,12 @@ gerados em tempo de execução — hash de senha não é versionado em migration
 Os dois tutores têm pets distintos de propósito: é o que permite exercitar o
 isolamento sem cadastrar nada à mão.
 
-**Não há `ADMIN_CLINICA` no seed, e isso é deliberado:** o perfil exige um
-`clinicaId`, e qual clínica depende do que se quer exercitar. Ele é criado pelo ADMIN,
-e é o único perfil cujo cadastro o banco cobra — `chk_usuario_clinica` recusa
+O gestor e a veterinária vivem na **mesma clínica** de propósito: é o que permite
+ver os dois alcances se cruzarem na mesma casa — ela atende, ele responde pelo
+negócio, e nenhum dos dois alcança o que é do outro.
+
+Criar um `ADMIN_CLINICA` para outra clínica continua sendo trabalho do ADMIN. É o
+único perfil cujo cadastro o banco cobra — `chk_usuario_clinica` recusa
 `ADMIN_CLINICA` sem clínica, e a API responde 409 antes disso:
 
 ```bash
