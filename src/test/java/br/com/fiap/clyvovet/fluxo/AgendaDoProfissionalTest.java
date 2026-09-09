@@ -183,6 +183,36 @@ class AgendaDoProfissionalTest extends TesteDeApi {
     }
 
     /**
+     * O motivo do bloqueio não é de quem estiver autenticado.
+     *
+     * <p>Quando esta rota nasceu, ela caiu em {@code anyRequest().authenticated()} e
+     * ficou legível para qualquer conta — inclusive a de um tutor, que podia listar os
+     * veterinários da plataforma e ler o motivo da ausência de cada um. E {@code motivo}
+     * é texto livre da clínica: cabe "congresso" e cabe "licença médica".</p>
+     *
+     * <p>O tutor não perde nada com a restrição — ele nunca precisou da rota. A busca
+     * por vagas já desconta os bloqueios do lado do servidor.</p>
+     */
+    @Test
+    @DisplayName("o motivo do bloqueio e da casa, e nao de quem estiver autenticado")
+    void bloqueioNaoEDeQualquerUm() throws Exception {
+        String id = idDe(criar("/api/v1/bloqueios", admin, """
+                {"veterinarioId":"%s","dataInicio":"%s","dataFim":"%s","motivo":"Licenca medica"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now(), LocalDate.now().plusDays(3)))
+                .andExpect(status().isCreated()));
+        removerDepois("/api/v1/bloqueios/" + id);
+
+        String url = "/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/bloqueios";
+
+        // A casa lê: o próprio profissional e o ADMIN da plataforma.
+        buscar(url, tokenVeterinaria()).andExpect(status().isOk());
+        buscar(url, admin).andExpect(status().isOk());
+
+        // O tutor, não.
+        buscar(url, tokenTutor(LUCAS)).andExpect(status().isForbidden());
+    }
+
+    /**
      * A cobrança de UM atendimento.
      *
      * <p>Sem este filtro, a tela de cobrança teria de varrer a listagem inteira,

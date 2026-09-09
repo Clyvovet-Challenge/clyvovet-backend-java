@@ -372,6 +372,36 @@ public class SegurancaService {
         return clinicaId.equals(usuario.getClinicaId());
     }
 
+    /**
+     * Se quem chama pode ler a agenda de um profissional — inclusive os bloqueios.
+     *
+     * <p>Passam o proprio profissional, quem trabalha na mesma casa, quem administra
+     * a casa, e o ADMIN da plataforma. O TUTOR nao passa, e a razao e o campo
+     * {@code motivo}: ele e texto livre escrito pela clinica, e o que se escreve ali
+     * e "ferias", "congresso" — e tambem "licenca medica" e "luto". E informacao
+     * pessoal de um terceiro.</p>
+     *
+     * <p>Restringir nao custa funcionalidade nenhuma ao tutor: a busca por vagas
+     * ({@code /agendamentos/vagas}) ja desconta os bloqueios no servidor, em
+     * {@code AgendaService.colideComBloqueio}. Ele nunca precisou desta rota — e
+     * quando precisar saber que o profissional esta fora, isso e outro endpoint, com
+     * a data e sem o motivo.</p>
+     */
+    public boolean podeVerAgendaDe(UUID veterinarioId) {
+        if (ehAdministradorDaPlataforma()) {
+            return true;
+        }
+        UsuarioAutenticado usuario = autenticado();
+        if (usuario == null || veterinarioId == null) {
+            return false;
+        }
+        if (veterinarioId.equals(usuario.getVeterinarioId())) {
+            return true;
+        }
+        UUID daCasa = clinicaDoVeterinario(veterinarioId);
+        return daCasa != null && daCasa.equals(usuario.getClinicaId());
+    }
+
     /** A clinica de um veterinario, ou null se ele nao existe ou nao tem uma. */
     private UUID clinicaDoVeterinario(UUID veterinarioId) {
         if (veterinarioId == null) {

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -41,7 +42,13 @@ public class AgendaController {
     /**
      * A API sabia criar e apagar bloqueio, e nao sabia lista-lo: quem marcasse as
      * ferias nunca mais via aquilo, nem para conferir nem para desfazer.
+     *
+     * <p>A leitura e da CASA, e nao de quem estiver autenticado. O corpo do bloqueio
+     * traz {@code motivo}, texto livre da clinica, onde cabe "licenca medica" tanto
+     * quanto "congresso" — e o tutor nao precisa da rota para nada: a busca por vagas
+     * ja desconta os bloqueios do outro lado.</p>
      */
+    @PreAuthorize("@seguranca.podeVerAgendaDe(#veterinarioId)")
     @GetMapping("/veterinarios/{veterinarioId}/bloqueios")
     @Operation(summary = "Bloqueios de um veterinário — férias, folgas e almoço — de uma data em diante")
     public ResponseEntity<List<BloqueioResponse>> bloqueios(

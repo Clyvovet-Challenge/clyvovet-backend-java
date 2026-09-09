@@ -256,6 +256,25 @@ class AdminDaClinicaTest extends TesteDeApi {
     }
 
     /**
+     * Le a agenda de quem e da casa — grade e bloqueios.
+     *
+     * <p>E o caminho que a tela de equipe usa ao abrir a grade de um profissional. A
+     * leitura dos bloqueios foi fechada a quem nao e da casa (o {@code motivo} e texto
+     * livre da clinica), e este teste existe para que fechar nao tenha fechado demais.</p>
+     */
+    @Test
+    @DisplayName("le a grade e os bloqueios de um profissional da casa, e nao os da concorrente")
+    void leAAgendaDaCasa() throws Exception {
+        buscar("/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/disponibilidades", vetcare)
+                .andExpect(status().isOk());
+        buscar("/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/bloqueios", vetcare)
+                .andExpect(status().isOk());
+
+        buscar("/api/v1/veterinarios/" + SeedV2.VET_RAFAEL_DA_PETMED + "/bloqueios", vetcare)
+                .andExpect(status().isForbidden());
+    }
+
+    /**
      * O exploit que {@code podeGerenciarAgendaDe} ja documentava para o veterinario,
      * agora fechado tambem para o perfil novo: sem grade, a clinica inteira some da
      * busca por vagas.
