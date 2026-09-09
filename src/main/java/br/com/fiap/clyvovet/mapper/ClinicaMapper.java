@@ -27,6 +27,8 @@ public class ClinicaMapper {
         clinica.setTelefone(request.getTelefone());
         clinica.setEmail(request.getEmail());
         clinica.setEndereco(enderecoMapper.toEntity(request.getEndereco()));
+        clinica.setLatitude(request.getLatitude());
+        clinica.setLongitude(request.getLongitude());
     }
 
     /** Aplica so os campos presentes no corpo do PATCH. */
@@ -36,6 +38,8 @@ public class ClinicaMapper {
         aplicarSePresente(patch.getTelefone(), clinica::setTelefone);
         aplicarSePresente(patch.getEmail(), clinica::setEmail);
         aplicarSePresente(patch.getEndereco(), endereco -> clinica.setEndereco(enderecoMapper.toEntity(endereco)));
+        aplicarSePresente(patch.getLatitude(), clinica::setLatitude);
+        aplicarSePresente(patch.getLongitude(), clinica::setLongitude);
     }
 
     public ClinicaResponse toResponse(Clinica clinica) {
@@ -45,7 +49,9 @@ public class ClinicaMapper {
                 clinica.getCnpj(),
                 clinica.getTelefone(),
                 clinica.getEmail(),
-                enderecoMapper.toResponse(clinica.getEndereco())
+                enderecoMapper.toResponse(clinica.getEndereco()),
+                clinica.getLatitude(),
+                clinica.getLongitude()
         );
     }
 }

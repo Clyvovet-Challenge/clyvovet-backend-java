@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v12() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v13() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,37 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(12);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+        assertThat(resultado.migrationsExecuted).isEqualTo(13);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
+    }
+
+    /**
+     * A V13 promete duas coisas: as colunas existem, e as cinco clinicas do
+     * seed sairam com coordenada. A segunda parte e a que importa -- coluna
+     * criada e seed vazio deixaria o mapa em branco sem erro nenhum, que e
+     * exatamente o tipo de falha silenciosa que este projeto persegue.
+     */
+    @Test
+    void a_v13_da_coordenada_as_cinco_clinicas_do_seed() {
+        var ds = h2ModoMySql();
+        Flyway.configure()
+                .dataSource(ds)
+                .locations("classpath:db/migration/mysql")
+                .load()
+                .migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        assertThat(jdbc.queryForObject(
+                "select count(*) from t_clyvo_clinica where latitude is not null and longitude is not null",
+                Integer.class)).isEqualTo(5);
+
+        // Sao Paulo fica no terceiro quadrante: latitude negativa, longitude
+        // negativa. Se um par entrar trocado de lugar, a clinica vai para o
+        // Oriente Medio e este limite pega.
+        assertThat(jdbc.queryForObject(
+                "select count(*) from t_clyvo_clinica "
+                        + "where latitude between -24 and -23 and longitude between -47 and -46",
+                Integer.class)).isEqualTo(5);
     }
 
     @Test

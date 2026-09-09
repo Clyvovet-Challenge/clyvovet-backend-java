@@ -6,6 +6,7 @@ import br.com.fiap.clyvovet.model.Clinica;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,7 +17,8 @@ class ClinicaMapperTest {
 
     private static ClinicaRequest request(String nome) {
         return new ClinicaRequest(nome, "12345678000191", "1131000001",
-                "contato@clinica.com.br", EnderecoMapperTest.requestCompleto());
+                "contato@clinica.com.br", EnderecoMapperTest.requestCompleto(),
+                new BigDecimal("-23.567000"), new BigDecimal("-46.648300"));
     }
 
     @Test
@@ -29,6 +31,26 @@ class ClinicaMapperTest {
         assertThat(clinica.getTelefone()).isEqualTo("1131000001");
         assertThat(clinica.getEmail()).isEqualTo("contato@clinica.com.br");
         assertThat(clinica.getEndereco().getCidade()).isEqualTo("Sao Paulo");
+        assertThat(clinica.getLatitude()).isEqualByComparingTo("-23.567000");
+        assertThat(clinica.getLongitude()).isEqualByComparingTo("-46.648300");
+    }
+
+    /**
+     * Clinica sem coordenada e caso normal (ver V13), e a ausencia tem que
+     * chegar ao app como null. Se virasse zero em algum ponto do caminho, o
+     * pino iria para latitude 0, longitude 0 -- Golfo da Guine -- e a tela
+     * mostraria uma clinica no meio do Atlantico em vez de nao mostrar nada.
+     */
+    @Test
+    @DisplayName("sem coordenada, a resposta traz null e nao zero")
+    void semCoordenadaVemNulo() {
+        ClinicaRequest semCoordenada = new ClinicaRequest("PetMed Centro", "23456789000102",
+                "1131000002", "contato@petmed.com.br", EnderecoMapperTest.requestCompleto(), null, null);
+
+        ClinicaResponse response = mapper.toResponse(mapper.toEntity(semCoordenada));
+
+        assertThat(response.latitude()).isNull();
+        assertThat(response.longitude()).isNull();
     }
 
     @Test

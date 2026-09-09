@@ -7,7 +7,7 @@
 # nessa lista, e era o que o deploy.sh antigo provisionava.
 #
 # O BANCO NASCE VAZIO, DE PROPOSITO
-# O Flyway da aplicacao cria as 20 tabelas no primeiro boot, da V1 a V12. E o unico
+# O Flyway da aplicacao cria as 20 tabelas no primeiro boot, da V1 a V13. E o unico
 # caminho em que o DDL entregue (documentos/script_bd.sql) e o banco real nao podem
 # divergir. Provisionar por script avulso e depois ligar o Flyway exigiria baseline,
 # e o historico nasceria inconsistente.

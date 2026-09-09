@@ -363,7 +363,7 @@ E onde ele vive versionado:
 ls src/main/resources/db/migration/mysql/
 ```
 
-> "O DDL não é um arquivo solto: são as migrations do Flyway, V1 a V12, versionadas
+> "O DDL não é um arquivo solto: são as migrations do Flyway, V1 a V13, versionadas
 > no repositório. Foram elas que criaram este banco."
 
 Fechamento:

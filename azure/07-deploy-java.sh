@@ -28,7 +28,7 @@ az webapp deploy \
     --src-path "$JAR" \
     --async false -o table
 
-echo "==> Aguardando o Flyway aplicar V1 a V12 e o contexto subir..."
+echo "==> Aguardando o Flyway aplicar V1 a V13 e o contexto subir..."
 SUBIU=0
 for i in $(seq 1 40); do
     CODIGO="$(curl -s -o /dev/null -w '%{http_code}' -m 10 \
