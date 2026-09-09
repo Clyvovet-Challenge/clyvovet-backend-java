@@ -58,7 +58,7 @@ Cada entidade expõe o mesmo conjunto de operações sob `/api/v1`:
 | Remover | `DELETE /recurso/{id}` | **204** |
 
 São **36 rotas de domínio** nos seis recursos de CRUD — seis operações cada —
-mais os quatro fluxos de ação, que somam **74 rotas** no total. Contratos,
+mais os quatro fluxos de ação, que somam **84 rotas** no total. Contratos,
 payloads e códigos de erro em [03-api-rest.md](03-api-rest.md).
 
 ### 2. Busca, paginação e ordenação
@@ -294,7 +294,7 @@ produção se quebrassem:
 | | |
 |---|---|
 | Entidades de domínio | 13 (+ `Endereco` embutido) |
-| Rotas | 74, todas sob `/api/v1` |
+| Rotas | 84, todas sob `/api/v1` |
 | Perfis de acesso | 3 |
 | Migrations | V1 a V7, em dois conjuntos (Oracle e MySQL) |
 | Testes automatizados | 277 |

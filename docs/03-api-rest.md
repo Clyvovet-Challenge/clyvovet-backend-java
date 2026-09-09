@@ -18,10 +18,24 @@ autorização por perfil e as regras de ownership estão em
 
 ## Índice de endpoints
 
-Trinta e seis rotas, seis por entidade, todas no mesmo padrão CRUD. Todas ficam
-sob o prefixo **`/api/v1`** — ver [Versionamento](#versionamento) no fim deste
-documento. A numeração da coluna `#` segue a ordem original de cinco rotas; os
-PATCH entraram depois e por isso aparecem sem número.
+**Oitenta e quatro rotas**, todas sob o prefixo **`/api/v1`** — ver
+[Versionamento](#versionamento) no fim deste documento.
+
+Trinta e seis delas são o CRUD, seis por entidade, e é o que este documento detalha
+campo a campo: request, response e exemplo. As outras quarenta e oito são
+autenticação e os fluxos de negócio, indexadas na
+[segunda tabela](#endpoints-de-fluxo-e-autenticação) com o link para onde cada uma
+está descrita.
+
+> **A numeração da coluna `#` segue a ordem original de cinco rotas;** os PATCH
+> entraram depois e por isso aparecem sem número.
+
+> **Por que as duas listas são separadas.** O CRUD expõe a entidade; o fluxo expõe
+> uma AÇÃO. `POST /eventos-clinicos/{id}/concluir` não é "atualizar um evento" — é a
+> única porta de AGENDADO para REALIZADO, e é ela que faz as regras R1–R21 valerem.
+> Com o status editável por PATCH, um `{"statusEvento":"REALIZADO"}` contornaria
+> todas elas, inclusive a que impede concluir um atendimento marcado para depois de
+> hoje. A separação aqui é a mesma que existe no código.
 
 | # | Verbo | Rota | Descrição | Status de sucesso |
 |---|---|---|---|---|
@@ -61,6 +75,48 @@ PATCH entraram depois e por isso aparecem sem número.
 | 29 | PUT | `/api/v1/pagamentos/{id}` | Atualiza pagamento | 200 |
 | — | PATCH | `/api/v1/pagamentos/{id}` | Atualiza parcialmente pagamento | 200 |
 | 30 | DELETE | `/api/v1/pagamentos/{id}` | Remove pagamento | 204 |
+
+### Endpoints de fluxo e autenticação
+
+Detalhados no [README do repositório](../README.md#os-quatro-fluxos-de-negócio), que
+descreve cada fluxo com as regras que ele sustenta. A matriz de quem pode o quê está
+em [08-seguranca.md](08-seguranca.md#matriz-de-autorização).
+
+| Verbo | Rota | O que faz |
+|---|---|---|
+| POST | `/auth/login` · `/refresh` · `/logout` | sessão: emitir, renovar e revogar |
+| POST | `/auth/registrar` | auto-cadastro, sempre TUTOR |
+| POST | `/auth/usuarios` | ADMIN cria acesso com perfil e vínculo |
+| GET | `/auth/me` | quem sou eu, com tutorId / veterinarioId / clinicaId |
+| GET | `/agendamentos/vagas` | horários livres de um serviço num intervalo |
+| POST | `/agendamentos` | **A** — o tutor marca; o evento nasce AGENDADO |
+| GET | `/agendamentos/meus` | os atendimentos do tutor autenticado |
+| POST | `/agendamentos/{id}/cancelar` | desmarcar, com motivo obrigatório |
+| POST | `/eventos-clinicos/{id}/concluir` | **R** — AGENDADO → REALIZADO, com peso e desfecho |
+| POST | `/eventos-clinicos/{id}/retorno` | novo atendimento ligado a este |
+| GET | `/eventos-clinicos/retornos-vencidos` | quem devia ter voltado e não voltou |
+| POST | `/eventos-clinicos/marcar-faltas` | varre os vencidos da clínica e marca falta |
+| GET | `/animais/{id}/historico` | **C** — prontuário, no nível que o perfil concede |
+| GET | `/animais/resumo?microchip=` | o nível 1: alergia, condição crônica, medicação |
+| POST | `/animais/{id}/acesso-emergencial` | quebra de vidro, com motivo auditado |
+| GET | `/animais/{id}/acessos` | quem leu o prontuário — ferramenta do tutor |
+| POST | `/animais/{id}/alertas` · DELETE `/alertas/{id}` | alerta clínico |
+| GET | `/autorizacoes/minhas` · POST `/{id}/revogar` | consentimento concedido e retirado |
+| POST | `/pagamentos/{id}/confirmar` · `/estornar` | **P** — PENDENTE → PAGO → REEMBOLSADO |
+| GET | `/eventos-clinicos/{id}/saldo` | cobrado, recebido e em aberto |
+| GET | `/pagamentos/inadimplencia` | atendimentos com saldo em aberto, com contato |
+| GET | `/tutores/{id}/extrato` | o que o tutor pagou e o que deve, no período |
+| POST | `/animais/{id}/solicitacoes-alteracao` | o veterinário pede a correção do cadastro |
+| GET | `/solicitacoes-alteracao/minhas` · `/meus-pedidos` · `/historico` | as duas caixas da mesma fila |
+| POST | `/solicitacoes-alteracao/{id}/aprovar` · `/recusar` | o tutor decide; recusar exige motivo |
+| GET | `/clinicas/{id}/servicos` | catálogo; `incluirInativos` só para quem administra |
+| POST | `/servicos` · PUT `/{id}` · DELETE `/{id}` · POST `/{id}/reativar` | o catálogo da clínica |
+| GET | `/clinicas/{id}/painel` | movimento, faturamento, desfechos, raças e serviços |
+| GET | `/veterinarios/{id}/disponibilidades` · `/bloqueios` | a agenda do profissional — leitura da casa |
+| POST | `/disponibilidades` · `/bloqueios` + DELETE | manutenção da grade |
+| GET | `/auditoria/excessos` · `/quebras-de-vidro` | revisão de tetos — só o ADMIN |
+
+---
 
 ### Endpoints de infraestrutura
 

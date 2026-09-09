@@ -23,7 +23,7 @@ auditado.
 Esta API é o backend principal da plataforma. Ela cobre identidade e autenticação,
 o núcleo clínico (tutores, animais, clínicas, veterinários, prontuário), a agenda
 com verificação de disponibilidade e bloqueios, a cobrança, e o mecanismo de
-consentimento que é o diferencial do produto. São **74 endpoints** sob `/api/v1`.
+consentimento que é o diferencial do produto. São **84 endpoints** sob `/api/v1`.
 
 O acesso ao histórico tem três níveis:
 
@@ -167,9 +167,10 @@ cache, cuja chave inclui o `tutorId`.
 
 ## Funcionalidades
 
-São **74 endpoints** em 14 controllers. O que os separa não é o volume: **42 são
-CRUD** sobre seis recursos, e os outros **32 são regra de negócio** — fluxos que
-consultam o estado do domínio e recusam com um motivo.
+São **84 endpoints** em 16 controllers. O que os separa não é o volume: **36 são
+CRUD** — seis operações sobre cada um dos seis recursos —, e os outros **48 são
+autenticação e regra de negócio**: fluxos que consultam o estado do domínio e
+recusam com um motivo.
 
 A regra do Challenge é explícita sobre isso: *"a implementação apenas de operações
 de CRUD não será considerada suficiente"*. A Sprint 3 pede dois fluxos completos;
@@ -324,7 +325,7 @@ e o que o rate limit por IP não sabe fazer.
 
 ## Endpoints
 
-Todos ficam sob **`/api/v1`**. São **74 endpoints** em 14 controllers.
+Todos ficam sob **`/api/v1`**. São **84 endpoints** em 16 controllers.
 
 **Como ler a coluna "Quem pode chamar":**
 

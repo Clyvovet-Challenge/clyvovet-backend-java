@@ -46,7 +46,7 @@ Detalhe em [02-modelo-de-dados.md](02-modelo-de-dados.md).
 
 | | |
 |---|---|
-| Rotas | **74**, todas sob `/api/v1` — 36 de CRUD, 6 de autenticação e 32 dos fluxos |
+| Rotas | **84**, todas sob `/api/v1` — 36 de CRUD (seis por entidade), 6 de autenticação e 42 dos fluxos |
 | Operações por recurso | listar, buscar, criar, substituir (PUT), alterar parcialmente (PATCH), remover |
 | Consulta | paginação, ordenação e filtros próprios de cada recurso |
 | Contrato | versionado na URL; listagens com envelope estável (`content` + `page`) |
