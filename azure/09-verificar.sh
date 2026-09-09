@@ -142,14 +142,6 @@ checar "DELETE /lembretes/{id} (.NET)" "204" \
 checar "DELETE /animais/{id} (Java)" "204" \
   "$(curl -s -o /dev/null -w '%{http_code}' -m 30 -X DELETE "$JAVA/api/v1/animais/$ANIMAL" -H "Authorization: Bearer $TOKEN")"
 
-echo
-echo "=============================================================="
-if [ "$falhou" -eq 0 ]; then
-    echo " TUDO VERDE. O caminho do video esta provado."
-else
-    echo " $falhou VERIFICACAO(OES) FALHOU. NAO grave ainda."
-fi
-echo "=============================================================="
 
 echo
 echo "=============================================================="
@@ -160,11 +152,21 @@ echo "=============================================================="
 # O teto de um Standard_B1ms depende do tier, e a Azure ja mudou esses numeros --
 # entao o certo e ler o valor real. Se 25 nao couber com folga, o lugar de
 # descobrir e aqui, e nao durante a gravacao do video.
-if command -v mysql >/dev/null 2>&1 && [ -n "${MYSQL_PASSWORD:-}" ]; then
-    TETO="$(mysql -h "${MYSQL_SERVER}.mysql.database.azure.com" \
-                  -u "$MYSQL_ADMIN" -p"$MYSQL_PASSWORD" --ssl-mode=REQUIRED \
-                  -N -B -e "SHOW VARIABLES LIKE 'max_connections';" 2>/dev/null | awk '{print $2}')"
-    if [ -n "$TETO" ]; then
+# Antes: "command -v mysql" e, se faltasse, [pulado]. Na maquina do ensaio faltava,
+# e a medicao -- que existe justamente para nao presumir o teto de conexoes --
+# nunca rodou. Agora vai pelo mysql_do_azure, que cai para container quando nao
+# ha cliente instalado. Ver 00-variaveis.sh.
+if [ -z "${MYSQL_PASSWORD:-}" ]; then
+    echo "  [pulado] MYSQL_PASSWORD nao esta exportada"
+else
+    BRUTO="$(mysql_do_azure "SHOW VARIABLES LIKE 'max_connections';" 2>/dev/null)"
+    CODIGO=$?
+    TETO="$(echo "$BRUTO" | awk '{print $2}')"
+    if [ "$CODIGO" -eq 127 ]; then
+        echo "  [pulado] nao ha cliente mysql nem docker nesta maquina para medir."
+        echo "           Suba o Docker Desktop e rode de novo: e o mesmo caminho"
+        echo "           que o item 9.3 do video vai precisar."
+    elif [ -n "$TETO" ]; then
         printf '  max_connections do servidor: %s\n' "$TETO"
         printf '  orcamento das duas APIs:     25 (Java 10 + .NET 15)\n'
         if [ "$TETO" -gt 40 ] 2>/dev/null; then
@@ -176,11 +178,24 @@ if command -v mysql >/dev/null 2>&1 && [ -n "${MYSQL_PASSWORD:-}" ]; then
             falhou=$((falhou + 1))
         fi
     else
-        echo "  [pulado] nao consegui consultar o servidor"
+        echo "  [pulado] o cliente respondeu, mas sem valor -- veja o firewall do banco"
     fi
-else
-    echo "  [pulado] cliente mysql ausente ou MYSQL_PASSWORD nao exportada"
 fi
+
+# O VEREDITO MORA AQUI, E NAO ANTES DA SECAO 6.
+#
+# Ele vivia logo depois do DELETE, e a secao 6 (orcamento de conexoes) ainda
+# podia somar uma falha DEPOIS disso. Dava para ler "TUDO VERDE" na tela e o
+# script sair 1 -- a frase e o codigo de saida discordando, no unico script cuja
+# funcao e dizer se pode gravar ou nao.
+echo
+echo "=============================================================="
+if [ "$falhou" -eq 0 ]; then
+    echo " TUDO VERDE. O caminho do video esta provado."
+else
+    echo " $falhou VERIFICACAO(OES) FALHOU. NAO grave ainda."
+fi
+echo "=============================================================="
 
 cat <<SQL
 

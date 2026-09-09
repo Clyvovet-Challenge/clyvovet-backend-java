@@ -36,6 +36,10 @@ if ! command -v zip >/dev/null 2>&1; then
 fi
 
 SAIDA="$(mktemp -d)"
+# trap, e nao um rm no fim: o script tem varias saidas (publish falhando,
+# deploy falhando, health nunca respondendo) e todas precisam limpar. Um rm
+# na ultima linha so limpa o caminho feliz.
+trap 'rm -rf "$SAIDA"' EXIT
 echo "==> dotnet publish -c Release..."
 dotnet publish "$PROJETO" -c Release -o "$SAIDA/publish" --nologo -v q
 
@@ -52,16 +56,31 @@ az webapp deploy \
     --async false -o table
 
 echo "==> Aguardando o health check..."
+SUBIU=0
 for i in $(seq 1 30); do
     CODIGO="$(curl -s -o /dev/null -w '%{http_code}' -m 10 \
               "https://${APP_DOTNET}.azurewebsites.net/health/live" || true)"
     if [ "$CODIGO" = "200" ]; then
         echo "    live respondeu 200 apos ${i} tentativas"
+        SUBIU=1
         break
     fi
     sleep 10
 done
 
 curl -s "https://${APP_DOTNET}.azurewebsites.net/health"; echo
-rm -rf "$SAIDA"
+# Mesma armadilha do 07: sem esta guarda, esgotar as 30 tentativas caia direto
+# no "Proximo: 09" com exit 0. O 09 ate pegaria a falha depois, mas o 08 estaria
+# mentindo -- e o README manda seguir a ordem.
+if [ "$SUBIU" -ne 1 ]; then
+    echo >&2
+    echo "[ERRO] a API .NET nao respondeu 200 em /health/live depois de 30" >&2
+    echo "       tentativas (5 minutos)." >&2
+    echo >&2
+    echo "           az webapp log tail -g $RG -n $APP_DOTNET" >&2
+    echo >&2
+    echo "       Suspeito mais comum: a Java ainda nao subiu, entao o Flyway nao" >&2
+    echo "       criou as tabelas t_clyvo_* que a .NET consome. Rode o 07 antes." >&2
+    exit 1
+fi
 echo "==> Proximo: bash azure/09-verificar.sh"

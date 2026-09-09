@@ -18,6 +18,12 @@ source ./00-variaveis.sh
 
 az account set --subscription "$SUBSCRIPTION"
 
+# O namespace do App Service tambem vem desligado em assinatura nova. Sem ele o
+# create devolve "subscription is not registered to use namespace Microsoft.Web"
+# -- e aqui isso doeria mais do que no 02, porque a essa altura o banco ja
+# existe e ja esta consumindo credito.
+exigir_provider Microsoft.Web
+
 echo "==> Criando App Service Plan $PLAN_NAME ($PLAN_SKU, Linux)..."
 az appservice plan create \
     --resource-group "$RG" \

@@ -687,7 +687,23 @@ final o SQL pronto para a demonstração de CRUD no banco.
 ### Consultar o banco diretamente
 
 ```bash
-mysql -h mysql-clyvovet-rm562312.mysql.database.azure.com       -u clyvovetadmin -p clyvovet --ssl-mode=REQUIRED
+bash azure/10-sql-do-video.sh            # sessao interativa
+bash azure/10-sql-do-video.sh --rodar    # so roda os SELECTs e mostra o resultado
+```
+
+O comando acima **nao exige cliente MySQL instalado**. O Git Bash nao traz nenhum,
+e o item 9.3 do video pede SELECT direto no banco — sem isso, o deploy fica
+provado e a gravacao impossivel. O script usa o cliente local se existir e, se
+nao, roda o mesmo cliente dentro de um container que some depois.
+
+Antes de abrir a sessao ele faz um `SELECT 1` de teste, que prova credencial, TLS
+e firewall de uma vez: descobrir que o seu IP mudou depois de comecar a gravar
+custa a gravacao inteira.
+
+Se preferir o cliente na mao:
+
+```bash
+mysql -h mysql-clyvovet-rm562312.mysql.database.azure.com -u clyvovetadmin -p clyvovet --ssl-mode=REQUIRED
 ```
 
 ### Encerrar e parar de consumir crédito
@@ -853,6 +869,7 @@ clyvovet-backend-java/
 │   ├── 07-deploy-java.sh               # jar → App Service
 │   ├── 08-deploy-dotnet.sh             # zip → App Service
 │   ├── 09-verificar.sh                 # prova o caminho e imprime o SQL da demo
+│   ├── 10-sql-do-video.sh              # abre o banco para o item 9.3, sem instalar cliente
 │   └── 99-destruir.sh
 │
 ├── Dockerfile                          # desenvolvimento e CI; NÃO é o artefato publicado

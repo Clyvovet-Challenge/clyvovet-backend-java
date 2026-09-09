@@ -337,6 +337,15 @@ SELECT t.nome AS tutor, COUNT(a.id) AS qtd_animais
 > **Atalho:** o `09-verificar.sh` imprime esses `SELECT` prontos, com os nomes de
 > recurso já preenchidos. Rode antes e deixe a saída num arquivo para copiar
 > durante a gravação.
+>
+> **Para abrir o banco na hora:** `bash azure/10-sql-do-video.sh`. Ele imprime os
+> `SELECT` e já entra na sessão, e **não precisa de cliente MySQL instalado** — o
+> Git Bash não traz nenhum, e sem isso esta parte do vídeo não sai. Se o Docker
+> Desktop estiver de pé, o script usa o cliente em container.
+>
+> Antes de abrir, ele testa a conexão. Se acusar recusa, quase sempre é o seu IP
+> público ter mudado desde que o `02` liberou o firewall — o cabeçalho do script
+> traz o comando para liberar o novo.
 
 ---
 
