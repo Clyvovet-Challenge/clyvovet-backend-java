@@ -33,8 +33,22 @@ public class AgendaController {
 
     private final AgendaCadastroService agendaCadastroService;
 
+    /**
+     * A grade tambem e da casa.
+     *
+     * <p>Ela ficou aberta a qualquer autenticado por mais tempo que os bloqueios, e a
+     * revisao de seguranca a deixou como estava por nao ter campo de texto livre — so
+     * dia da semana e horario. Fechada agora pelo argumento que sobrou: <b>ninguem de
+     * fora precisa dela</b>. O tutor marca por {@code /agendamentos/vagas}, que ja
+     * devolve o horario livre com a grade e os bloqueios descontados; a unica leitura
+     * da grade crua e a tela de quem a edita.</p>
+     *
+     * <p>Sobrava, entao, o que ela conta a quem nao e da casa: a rotina de trabalho de
+     * um profissional identificado — em que dias e horarios ele esta no consultorio.</p>
+     */
+    @PreAuthorize("@seguranca.podeVerAgendaDe(#veterinarioId)")
     @GetMapping("/veterinarios/{veterinarioId}/disponibilidades")
-    @Operation(summary = "Grade de horários de um veterinário")
+    @Operation(summary = "Grade de horários de um veterinário. Leitura da própria clínica")
     public ResponseEntity<List<DisponibilidadeResponse>> grade(@PathVariable UUID veterinarioId) {
         return ResponseEntity.ok(agendaCadastroService.gradeDe(veterinarioId));
     }

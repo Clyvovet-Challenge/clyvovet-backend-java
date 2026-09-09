@@ -120,6 +120,7 @@ No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bea
 | `/api/v1/veterinarios` | POST, PUT, PATCH, DELETE | ✗ | ✗ | só os da casa | ✓ |
 | `/api/v1/servicos` | POST, PUT, DELETE | ✗ | ✗ | só o próprio catálogo | ✓ |
 | `/api/v1/disponibilidades`, `/bloqueios` | POST, DELETE | ✗ | só a própria grade | qualquer grade da casa | ✓ |
+| `/api/v1/veterinarios/{id}/disponibilidades`, `/bloqueios` | GET | ✗ | da própria clínica | da própria clínica | ✓ |
 | `/api/v1/eventos-clinicos` | GET | só dos próprios pets | da própria clínica | da própria clínica | ✓ |
 | `/api/v1/eventos-clinicos` | POST, PUT, PATCH, DELETE | ✗ | ✓ | ✗ | ✓ |
 | `/api/v1/eventos-clinicos/{id}/concluir`, `/retorno`, `/marcar-faltas` | POST | ✗ | ✓ | ✗ | ✓ |
@@ -137,6 +138,15 @@ A cadeia termina em `anyRequest().authenticated()`: rota nova nasce protegida.
 > `hasAnyRole(...)` deixa o perfil entrar, e um `@PreAuthorize("@seguranca....")` no
 > controller decide **de quem** é o registro. Sem a segunda metade, o `ADMIN_CLINICA`
 > seria um caminho para mexer no catálogo, na agenda e no cadastro da concorrente.
+
+> **A agenda de um profissional é da casa dele.** As duas leituras —
+> `/veterinarios/{id}/disponibilidades` e `/veterinarios/{id}/bloqueios` — caíam em
+> `anyRequest().authenticated()`, e `GET /veterinarios` é aberto a quem está
+> autenticado: um tutor listava os profissionais da plataforma e lia, de cada um, a
+> rotina de trabalho e o **motivo** de cada ausência — texto livre da clínica, onde
+> cabe "congresso" e cabe "licença médica". Fechadas por `podeVerAgendaDe`. O tutor
+> não perde nada: `/agendamentos/vagas` já devolve o horário com grade e bloqueios
+> descontados, então ele sempre viu o resultado, nunca a causa.
 
 > **A listagem também é uma porta.** `GET /api/v1/animais` filtra apenas por `tutorId`,
 > e `tutorId` nulo significa "sem recorte" — o que fazia o gestor da clínica **listar os

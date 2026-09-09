@@ -213,6 +213,26 @@ class AgendaDoProfissionalTest extends TesteDeApi {
     }
 
     /**
+     * A grade crua segue a mesma regra, e pelo argumento que sobrou depois da revisão:
+     * ninguém de fora precisa dela. O tutor marca por {@code /agendamentos/vagas}, que
+     * já devolve o horário com grade e bloqueios descontados — o que a grade
+     * acrescentaria a ele é a rotina de trabalho de um profissional identificado.
+     */
+    @Test
+    @DisplayName("a grade tambem e da casa")
+    void gradeTambemEDaCasa() throws Exception {
+        String url = "/api/v1/veterinarios/" + SeedV2.VET_CAMILA + "/disponibilidades";
+
+        buscar(url, tokenVeterinaria()).andExpect(status().isOk());
+        buscar(url, admin).andExpect(status().isOk());
+        buscar(url, tokenTutor(LUCAS)).andExpect(status().isForbidden());
+
+        // E o tutor continua marcando: a busca por vagas nao passa por aqui.
+        buscar("/api/v1/clinicas/" + SeedV2.CLINICA_VETCARE + "/servicos", tokenTutor(LUCAS))
+                .andExpect(status().isOk());
+    }
+
+    /**
      * A cobrança de UM atendimento.
      *
      * <p>Sem este filtro, a tela de cobrança teria de varrer a listagem inteira,
