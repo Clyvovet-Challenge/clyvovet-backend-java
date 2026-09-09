@@ -314,10 +314,17 @@ Content-Type: application/json
 | `telefone` | string | sim | 10–11 caracteres |
 | `email` | string | sim | formato de e-mail, 10–100 caracteres |
 | `endereco` | objeto | sim | validado em cascata |
+| `latitude` | number | não | −90 a 90 |
+| `longitude` | number | não | −180 a 180 |
 
 ### Response
 
-`id`, `nome`, `cnpj`, `telefone`, `email`, `endereco`
+`id`, `nome`, `cnpj`, `telefone`, `email`, `endereco`, `latitude`, `longitude`
+
+> `latitude` e `longitude` são **opcionais e podem vir `null`** — clínica sem
+> coordenada continua válida e agendável. Quem consome deve filtrar antes de
+> desenhar: tratar a ausência como zero levaria o pino para o Golfo da Guiné.
+> As cinco clínicas do seed têm coordenada desde a migração `V13`.
 
 ### Exemplo
 

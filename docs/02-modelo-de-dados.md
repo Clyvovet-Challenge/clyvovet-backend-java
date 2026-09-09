@@ -164,6 +164,20 @@ parceira. Também é raiz do cadastro.
 | `telefone` | `String` | `telefone` | |
 | `email` | `String` | `email` | |
 | `endereco` | `Endereco` | *(achatado)* | `@Embedded` |
+| `latitude` | `BigDecimal` | `latitude` | `DECIMAL(9,6)`, nulável — ver a nota |
+| `longitude` | `BigDecimal` | `longitude` | `DECIMAL(9,6)`, nulável — ver a nota |
+
+> **Por que a coordenada mora aqui, e não em `Endereco`.** `Endereco` é
+> `@Embeddable` e `Tutor` e `Veterinario` também o embutem — pô-la lá criaria a
+> expectativa da coluna nas **três** tabelas. Além disso, quem precisa ser achado
+> num mapa é o estabelecimento; expor a coordenada da **casa do tutor** numa
+> resposta de API é o oposto do que se quer.
+>
+> **`null` é estado válido.** Clínica sem coordenada não aparece no mapa, mas
+> continua na lista e continua agendável. `BigDecimal` e não `Double` porque
+> coordenada é decimal exato. Introduzidas pela migração `V13`, para a tela de
+> mapa de clínicas — 🚧 **ainda em construção** no app; ver o item 21 de
+> [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md).
 
 ### Veterinario
 

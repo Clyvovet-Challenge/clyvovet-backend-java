@@ -35,6 +35,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
 | 19 | Perfil `mysql` nunca executado contra um MySQL real | Média | Configuração | aberto |
 | 20 | CORS não permite PATCH → as seis rotas PATCH são inalcançáveis pelo navegador | **Alta** | Configuração | aberto |
+| 21 | Coordenada da clínica sem consumidor — a tela de mapa não existe | Baixa | Produto | 🚧 **ainda em construção**, por decisão |
 
 **Novo — introduzido e corrigido na Sprint 3.** A chave de cache das listagens passou
 a precisar do `tutorId`: sem ele, a listagem de um tutor seria servida a outro. Está
@@ -664,6 +665,56 @@ para de acompanhar as rotas e não avisa.
 (`options("/api/v1/animais/{id}")` com os headers de CORS, esperando 200 e o método
 na resposta) evita a reincidência — e vale cobrir os demais métodos na mesma volta,
 para que uma rota nova com verbo novo não repita a história.
+
+---
+
+## 21. Coordenada da clínica sem consumidor — 🚧 ainda em construção
+
+**Não é defeito: é uma decisão, registrada para que ninguém a leia como sobra.**
+
+A migração `V13` acrescentou `latitude` e `longitude` a `t_clyvo_clinica`, semeou as
+cinco clínicas e levou o par até `ClinicaResponse`. **Nada consome esses campos
+ainda** — a tela que os justifica, o mapa de clínicas do app mobile, é querida e
+está decidida, mas não foi escrita.
+
+Quem abrir o schema vai encontrar duas colunas que nenhum código lê. É proposital.
+
+### O que se quer
+
+O tutor vê onde fica cada clínica num mapa, escolhe pela que está perto dele e marca
+a consulta dali. O endereço postal já existia e nunca serviu para desenhar um pino:
+dá para imprimir uma carta, não dá para dizer qual clínica é a mais próxima.
+
+O mapa é **entrada alternativa** para o agendamento que já funciona — ele responde
+*qual clínica?* e entrega a resposta ao fluxo existente. Por isso o lado servidor é
+só isto: duas colunas num `GET` que já existia. **Nenhum endpoint novo está
+previsto.**
+
+### Por que a coluna veio antes da tela
+
+Ela **não custa nada a quem não a usa**: é nulável, não entra em índice, não entra em
+constraint e não muda consulta nenhuma. E vir agora significa vir **antes do deploy**:
+acrescentar coluna a um banco vazio é uma migração; acrescentar depois, com o
+Flyway já aplicado em produção, é uma migração **e** uma janela.
+
+### O que fica pendente aqui
+
+> ⚠️ **Os cinco pares de coordenada foram estimados a partir do endereço**, não
+> lidos de um serviço de geocodificação. Cada um cai no bairro e na via corretos,
+> mas devem ser conferidos **antes de a migração ser aplicada em qualquer lugar** —
+> depois disso, corrigir exige uma `V14`. O procedimento está escrito dentro do
+> próprio `V13__coordenadas_da_clinica.sql`, e a troca precisa ser feita **nos dois
+> dialetos**, MySQL e Oracle.
+
+### O que fica pendente no app
+
+`react-native-maps` seria a **única dependência nativa** de um app que hoje é JS puro
+rodando no Expo Go — risco a verificar com calma, e o motivo de a tela ficar para
+depois da entrega de 12/09. O detalhe está em `spec/13-mapa-de-clinicas.md`, no
+repositório do app.
+
+**Como fechar:** escrever a tela. Até lá, as colunas ficam onde estão — removê-las
+custaria uma migração para desfazer e outra para refazer.
 
 ---
 
