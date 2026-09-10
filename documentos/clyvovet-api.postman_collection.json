@@ -855,6 +855,40 @@
           }
         },
         {
+          "name": "Buscar clínica por nome ou região",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinicas?busca=Bela Vista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clinicas"
+              ],
+              "query": [
+                {
+                  "key": "busca",
+                  "value": "Bela Vista",
+                  "description": "Cruza nome, bairro, cidade e estado com OR."
+                }
+              ]
+            },
+            "description": "A busca da tela de atendimento do app: UM parâmetro cruzando nome, bairro, cidade e estado.\n\nO tutor digita \"VetCare\", \"Pinheiros\" ou \"São Paulo\" na mesma caixa, e descobrir em qual campo aquilo se encaixa é problema da consulta, não dele. Os filtros `nome` e `cidade` continuam existindo, separados, para quem integra por eles.\n\nVerificado contra o MySQL: `busca=Bela Vista` devolve só a VetCare Prime (bairro), `busca=Jardins` devolve duas — uma pelo bairro e outra pelo nome — e `busca=` devolve a lista inteira, porque em branco não é filtro.\n\nCuidado que custou um bug: a chave do cache é escrita à mão. Quando `busca` entrou, ela continuou sendo `nome-cidade-pageable`, e a segunda pesquisa recebia o resultado da primeira por dez minutos.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Buscar por id",
           "request": {
             "method": "GET",

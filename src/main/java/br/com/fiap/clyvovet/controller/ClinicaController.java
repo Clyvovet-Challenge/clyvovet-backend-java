@@ -26,13 +26,20 @@ public class ClinicaController {
 
     private final ClinicaService clinicaService;
 
+    /**
+     * @param busca busca livre do app: cruza nome, bairro, cidade e estado com
+     *              OR. O tutor digita "VetCare", "Pinheiros" ou "Sao Paulo" na
+     *              mesma caixa, e nao e ele que deve descobrir em qual campo
+     *              aquilo se encaixa.
+     */
     @GetMapping
-    @Operation(summary = "Listar clínicas com paginação e filtros por nome e cidade")
+    @Operation(summary = "Listar clínicas: busca livre (nome/bairro/cidade/estado) ou filtros separados")
     public ResponseEntity<Page<ClinicaResponse>> listarTodos(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String cidade,
+            @RequestParam(required = false) String busca,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
-        return ResponseEntity.ok(clinicaService.listarTodos(nome, cidade, pageable));
+        return ResponseEntity.ok(clinicaService.listarTodos(nome, cidade, busca, pageable));
     }
 
     @GetMapping("/{id}")

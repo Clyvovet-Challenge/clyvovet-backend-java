@@ -270,6 +270,12 @@ O acesso ao prontuário deixou de ser tudo-ou-nada.
 | **1** resumo de segurança | qualquer veterinário autenticado | alergias, condições crônicas, medicação contínua, vacinas, último peso, contato |
 | **2** histórico completo | só com consentimento do tutor | linha do tempo, laudos, desfechos, dados do tutor |
 
+**Busca de clínica.** `GET /clinicas?busca=` cruza **nome, bairro, cidade e
+estado** com OR — é a caixa única da tela de atendimento do app, onde o tutor
+digita "VetCare", "Pinheiros" ou "São Paulo" sem precisar saber qual dos três
+ele escreveu. Os filtros `nome` e `cidade` continuam separados, para quem
+integra por eles.
+
 ```
 GET  /api/v1/animais/resumo?microchip=          nível 1
 GET  /api/v1/animais/{id}/historico             nível conforme o solicitante

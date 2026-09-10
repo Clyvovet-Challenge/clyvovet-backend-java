@@ -100,6 +100,66 @@ class FiltrosDeBuscaTest extends TesteDeApi {
         assertThat(totalDe(buscar("/api/v1/clinicas?cidade=Sao", admin))).isPositive();
     }
 
+    /**
+     * A busca livre da tela de atendimento do app.
+     *
+     * <p>O tutor procura clinica numa caixa so, e ele nao sabe (nem deve saber)
+     * se "Bela Vista" e nome, bairro ou cidade. O OR da consulta e o que torna
+     * essa ignorancia irrelevante -- e o que este teste protege: no dia em que
+     * alguem trocar o OR por AND, a busca por bairro passa a devolver vazio sem
+     * erro nenhum.</p>
+     */
+    @Test
+    @DisplayName("clinicas: a busca livre acha por bairro, por nome e por estado")
+    void buscaLivreDeClinica() throws Exception {
+        String admin = tokenAdmin();
+
+        // Bairro: "Consolacao" nao aparece no nome de nenhuma clinica do seed.
+        //
+        // Termo de uma palavra de proposito: o MockMvc monta a URI sem decodificar,
+        // e um "%20" chegaria literal ao parametro. O caso com espaco ("Bela
+        // Vista") foi verificado por curl contra a API no ar, onde a
+        // decodificacao e a de verdade.
+        assertThat(nomesEm("/api/v1/clinicas?busca=Consolacao", admin))
+                .containsExactly("PetMed Centro");
+
+        // Nome, pelo mesmo parametro.
+        assertThat(nomesEm("/api/v1/clinicas?busca=VetCare", admin))
+                .containsExactly("VetCare Prime");
+
+        // Um termo que casa com o BAIRRO de uma clinica e com o NOME de outra
+        // devolve as duas: e o OR atravessando registros diferentes.
+        assertThat(nomesEm("/api/v1/clinicas?busca=Jardins", admin))
+                .containsExactlyInAnyOrder("AnimalSaude SP", "CliniPet Jardins");
+
+        // "Ipiranga" casa com o NOME e com o BAIRRO da mesma clinica. Um OR mal
+        // escrito com JOIN devolveria a linha duas vezes.
+        assertThat(nomesEm("/api/v1/clinicas?busca=Ipiranga", admin))
+                .containsExactly("Hospital Vet Ipiranga");
+
+        // Estado.
+        assertThat(totalDe(buscar("/api/v1/clinicas?busca=SP", admin))).isPositive();
+
+        assertThat(totalDe(buscar("/api/v1/clinicas?busca=ZZZinexistente", admin))).isZero();
+    }
+
+    /**
+     * Caixa vazia nao e filtro.
+     *
+     * <p>O app manda {@code busca=} a cada tecla apagada. Nulo desliga o filtro;
+     * string vazia casaria com tudo via {@code LIKE '%%'} -- hoje o mesmo
+     * resultado por acidente, e deixaria de ser no dia em que a consulta ganhar
+     * mais uma condicao.</p>
+     */
+    @Test
+    @DisplayName("clinicas: busca vazia devolve a lista inteira")
+    void buscaVaziaNaoFiltra() throws Exception {
+        String admin = tokenAdmin();
+
+        assertThat(totalDe(buscar("/api/v1/clinicas?busca=", admin)))
+                .isEqualTo(totalDe(buscar("/api/v1/clinicas", admin)));
+    }
+
     @Test
     @DisplayName("animais: filtro por nome e por especie")
     void filtraAnimalPorNomeEEspecie() throws Exception {

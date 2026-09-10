@@ -24,11 +24,34 @@ public class ClinicaService {
     private final ClinicaRepository clinicaRepository;
     private final ClinicaMapper clinicaMapper;
 
-    // Ver a nota sobre #pageable na chave em TutorService.
-    @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #pageable")
-    public Page<ClinicaResponse> listarTodos(String nome, String cidade, Pageable pageable) {
-        return clinicaRepository.buscarPorFiltros(nome, cidade, pageable)
+    /**
+     * Ver a nota sobre {@code #pageable} na chave em {@code TutorService}.
+     *
+     * <p><b>Todo parametro de filtro precisa entrar na chave.</b> A chave e
+     * escrita a mao, entao ela nao acompanha a assinatura do metodo: quando
+     * {@code busca} foi acrescentado, a chave continuou sendo
+     * {@code nome-cidade-pageable} e duas pesquisas diferentes passaram a
+     * colidir. Efeito verificado em teste: {@code ?busca=VetCare} devolveu
+     * "PetMed Centro" -- o resultado da pesquisa ANTERIOR, servido por dez
+     * minutos, sem erro nenhum na resposta.</p>
+     */
+    @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #busca + '-' + #pageable")
+    public Page<ClinicaResponse> listarTodos(String nome, String cidade, String busca, Pageable pageable) {
+        return clinicaRepository.buscarPorFiltros(nome, cidade, vazioComoNulo(busca), pageable)
                 .map(clinicaMapper::toResponse);
+    }
+
+    /**
+     * Texto em branco vira nulo, porque a consulta trata os dois de formas
+     * opostas: nulo DESLIGA o filtro, e string vazia casa com tudo via
+     * {@code LIKE '%%'}.
+     *
+     * <p>Hoje os dois dao o mesmo resultado, por acidente. Deixariam de dar no
+     * dia em que a busca ganhasse mais uma condicao -- e o app manda
+     * {@code busca=} de verdade, a cada tecla apagada na caixa de pesquisa.</p>
+     */
+    private static String vazioComoNulo(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     public ClinicaResponse buscarPorId(UUID id) {
