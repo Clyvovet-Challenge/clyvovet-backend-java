@@ -1,7 +1,10 @@
 package br.com.fiap.clyvovet.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.data.web.config.PageableHandlerMethodArgumentResolverCustomizer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -34,6 +37,17 @@ import org.springframework.web.method.HandlerTypePredicate;
  * Com {@code VIA_DTO} o contrato passa a ser {@code content} mais um objeto
  * {@code page} com {@code size}, {@code number}, {@code totalElements} e
  * {@code totalPages}.
+ *
+ * <h2>Teto de itens por pagina</h2>
+ * Declarar {@code @EnableSpringDataWebSupport} faz a auto-configuracao do Boot
+ * recuar, e com ela some o efeito de toda a familia
+ * {@code spring.data.web.pageable.*}. A propriedade continua no
+ * {@code comum.properties}, mas ninguem a leria: por isso o customizer abaixo,
+ * que e o mesmo bean que o Boot registraria sozinho.
+ *
+ * O teto e o mesmo 100 que a API .NET impoe no {@code pageSize} -- as duas
+ * respondem a mesma pergunta do mesmo jeito. Sem ele, {@code ?size=100000}
+ * carrega a tabela inteira em memoria e serializa tudo.
  */
 @Configuration
 @EnableSpringDataWebSupport(
@@ -42,6 +56,25 @@ public class WebConfig implements WebMvcConfigurer {
 
     /** Prefixo de todos os endpoints da aplicacao. */
     public static final String PREFIXO_API = "/api/v1";
+
+    @Value("${spring.data.web.pageable.max-page-size:100}")
+    private int maximoPorPagina;
+
+    @Value("${spring.data.web.pageable.default-page-size:10}")
+    private int padraoPorPagina;
+
+    /**
+     * O Spring TRUNCA no maximo em vez de recusar com 400, que e o que a .NET
+     * faz. As duas recusam o abuso; nenhuma devolve mais de 100 itens.
+     */
+    @Bean
+    public PageableHandlerMethodArgumentResolverCustomizer tetoDePaginacao() {
+        return resolver -> {
+            resolver.setMaxPageSize(maximoPorPagina);
+            resolver.setFallbackPageable(
+                    org.springframework.data.domain.PageRequest.of(0, padraoPorPagina));
+        };
+    }
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {

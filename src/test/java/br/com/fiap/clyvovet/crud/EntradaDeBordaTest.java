@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Entradas de borda que a API precisa recusar sem quebrar.
@@ -104,5 +105,45 @@ class EntradaDeBordaTest extends TesteDeApi {
         atualizarParcialmente("/api/v1/tutores/" + SeedV2.TUTOR_LUCAS, tokenTutor(LUCAS), """
                 {"dataNascimento":"2999-01-01"}""")
                 .andExpect(status().isBadRequest());
+    }
+    // ================================================================
+    // Teto de itens por pagina
+    // ================================================================
+
+    /**
+     * O {@code size} da requisicao nao pode carregar a tabela inteira.
+     *
+     * <p>Este teste existe porque a correcao FALHOU em silencio na primeira
+     * tentativa. A propriedade {@code spring.data.web.pageable.max-page-size}
+     * entrou no {@code comum.properties}, a imagem foi reconstruida, e
+     * {@code ?size=500} continuou devolvendo 500: declarar
+     * {@code @EnableSpringDataWebSupport} a mao (necessario para o
+     * {@code VIA_DTO}) faz a auto-configuracao do Boot recuar, e com ela some o
+     * efeito de toda a familia {@code spring.data.web.pageable.*}.</p>
+     *
+     * <p>O teto voltou por um {@code PageableHandlerMethodArgumentResolverCustomizer}
+     * explicito. Sem este teste, a proxima pessoa que mexer no {@code WebConfig}
+     * remove o customizer achando que a propriedade cobre, e o teto some de novo
+     * sem nada acusar.</p>
+     *
+     * <p>100 e o mesmo teto que a API .NET impoe. Ela responde 400; o Spring
+     * TRUNCA. Sao respostas diferentes ao mesmo abuso, mas nenhuma das duas
+     * devolve mais de 100 itens.</p>
+     */
+    @ParameterizedTest(name = "?size={0} nao passa de 100 itens por pagina")
+    @ValueSource(ints = {101, 500, 100000})
+    @DisplayName("size acima do teto e truncado em 100")
+    void tamanhoDePaginaTemTeto(int size) throws Exception {
+        buscar("/api/v1/animais?size=" + size, tokenAdmin())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.size").value(100));
+    }
+
+    @Test
+    @DisplayName("size dentro do teto e respeitado")
+    void tamanhoDePaginaAbaixoDoTetoERespeitado() throws Exception {
+        buscar("/api/v1/animais?size=50", tokenAdmin())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.size").value(50));
     }
 }
