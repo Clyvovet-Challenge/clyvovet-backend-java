@@ -62,9 +62,9 @@ INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, d
 INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, doenca, recomendacao, fonte_referencia, criado_em) VALUES
 ('ade50000-0000-0000-0000-000000000016', 'GATO', 'Persa', 0, 'Sindrome respiratoria braquicefalica', 'Monitorar respiracao ruidosa; evitar calor excessivo.', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
 INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, doenca, recomendacao, fonte_referencia, criado_em) VALUES
-('ade50000-0000-0000-0000-000000000017', 'GATO', 'Siames', 2, 'Cardiomiopatia hipertrofica', 'Agendar avaliacao cardiologica preventiva.', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
+('ade50000-0000-0000-0000-000000000017', 'GATO', 'Siames', 2, 'Cardiomiopatia hipertrófica', 'Agendar avaliacao cardiologica preventiva.', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
 INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, doenca, recomendacao, fonte_referencia, criado_em) VALUES
-('ade50000-0000-0000-0000-000000000018', 'GATO', 'Maine Coon', 2, 'Cardiomiopatia hipertrofica', 'Agendar avaliacao cardiologica preventiva (raca com predisposicao genetica conhecida).', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
+('ade50000-0000-0000-0000-000000000018', 'GATO', 'Maine Coon', 2, 'Cardiomiopatia hipertrófica', 'Agendar avaliacao cardiologica preventiva (raca com predisposicao genetica conhecida).', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
 INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, doenca, recomendacao, fonte_referencia, criado_em) VALUES
 ('ade50000-0000-0000-0000-000000000019', 'GATO', 'SRD', 7, 'Obesidade e diabetes mellitus', 'Reavaliar dieta e agendar exame de glicemia preventivo.', 'Conhecimento veterinario consolidado', SYSTIMESTAMP);
 INSERT INTO t_clyvo_predisposicao_saude (id, especie, raca, idade_minima_anos, doenca, recomendacao, fonte_referencia, criado_em) VALUES
@@ -138,29 +138,29 @@ CREATE TABLE t_clyvo_base_doencas (
 CREATE INDEX ix_base_doencas_busca ON t_clyvo_base_doencas (especie, raca_chave);
 
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000001','AVE','Certhidea fusca',NULL,'PoxT','Variola aviaria (avian pox)','INFECCIOSA',2,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000001','AVE','Certhidea fusca',NULL,'PoxT','Varíola aviária','INFECCIOSA',2,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000002','AVE','Geospiza fortis',NULL,'PoxT','Variola aviaria (avian pox)','INFECCIOSA',13,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000002','AVE','Geospiza fortis',NULL,'PoxT','Varíola aviária','INFECCIOSA',13,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000003','AVE','Geospiza fuliginosa',NULL,'PoxT','Variola aviaria (avian pox)','INFECCIOSA',49,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000003','AVE','Geospiza fuliginosa',NULL,'PoxT','Varíola aviária','INFECCIOSA',49,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000004','AVE','Myiarchus magnirostris',NULL,'PoxT','Variola aviaria (avian pox)','INFECCIOSA',3,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000004','AVE','Myiarchus magnirostris',NULL,'PoxT','Varíola aviária','INFECCIOSA',3,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000005','AVE','Setophaga petechia aureola',NULL,'PoxT','Variola aviaria (avian pox)','INFECCIOSA',3,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000005','AVE','Setophaga petechia aureola',NULL,'PoxT','Varíola aviária','INFECCIOSA',3,0,'Avian disease surveillance on the island of San Cristobal, Galapagos','10.5061/dryad.kwh70rz4z',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000006','CAO','airedale_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000006','CAO','airedale_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000008','CAO','airedale_terrier',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000009','CAO','airedale_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',5,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000011','CAO','alaskan_malamute',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000011','CAO','alaskan_malamute',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000013','CAO','american_eskimo_dog',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000014','CAO','american_eskimo_dog',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000015','CAO','american_pit_bull_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000015','CAO','american_pit_bull_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000016','CAO','american_pit_bull_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -174,7 +174,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000025','CAO','australian_shepherd',NULL,'lymphoma','Linfoma','ONCOLOGICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000026','CAO','basset_hound',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000026','CAO','basset_hound',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000027','CAO','basset_hound',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -192,7 +192,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000039','CAO','belgian_sheepdog',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000042','CAO','bernese_mountain_dog',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',3,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000042','CAO','bernese_mountain_dog',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',3,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000043','CAO','bernese_mountain_dog',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',2,5,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -200,7 +200,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000045','CAO','bernese_mountain_dog',NULL,'lymphoma','Linfoma','ONCOLOGICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000046','CAO','bichon_frise',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000046','CAO','bichon_frise',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000048','CAO','bichon_frise',NULL,'MVD','Displasia da valva mitral','CARDIACA',5,4,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -208,9 +208,9 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000052','CAO','bloodhound',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000053','CAO','boerboel',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000053','CAO','boerboel',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000055','CAO','border_collie','border-collie','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,16,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000055','CAO','border_collie','border-collie','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,16,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000056','CAO','border_collie','border-collie','ED','Displasia de cotovelo','ORTOPEDICA',1,17,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -224,11 +224,11 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000065','CAO','boston_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000066','CAO','bouvier_des_flandres',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000066','CAO','bouvier_des_flandres',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000068','CAO','bouvier_des_flandres',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000069','CAO','boxer','boxer','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000069','CAO','boxer','boxer','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000071','CAO','boxer','boxer','GC','Colite granulomatosa','GASTROINTESTINAL',40,74,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -242,7 +242,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000077','CAO','bull_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000078','CAO','bulldog_english',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000078','CAO','bulldog_english',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000080','CAO','bulldog_english',NULL,'GC','Colite granulomatosa','GASTROINTESTINAL',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -252,7 +252,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000084','CAO','bulldog_french','bulldog-frances','GC','Colite granulomatosa','GASTROINTESTINAL',5,17,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000085','CAO','bullmastiff',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000085','CAO','bullmastiff',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000086','CAO','bullmastiff',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',3,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -260,11 +260,11 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000088','CAO','cairn_terrier',NULL,'MVD','Displasia da valva mitral','CARDIACA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000089','CAO','cairn_terrier',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',21,23,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000089','CAO','cairn_terrier',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',21,23,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000090','CAO','cairn_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000091','CAO','cane_corso',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000091','CAO','cane_corso',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000092','CAO','cane_corso',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',2,4,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -272,7 +272,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000095','CAO','cavalier_king_charles_spaniel',NULL,'MVD','Displasia da valva mitral','CARDIACA',36,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000096','CAO','chesapeake_bay_retriever',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',3,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000096','CAO','chesapeake_bay_retriever',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',3,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000098','CAO','chesapeake_bay_retriever',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -280,13 +280,13 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000100','CAO','chihuahua','chihuahua','MVD','Displasia da valva mitral','CARDIACA',4,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000101','CAO','chinese_shar-pei',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000101','CAO','chinese_shar-pei',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000102','CAO','chinese_shar-pei',NULL,'MCT','Mastocitoma','ONCOLOGICA',7,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000104','CAO','chow_chow',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000105','CAO','cocker_spaniel','cocker-spaniel','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000105','CAO','cocker_spaniel','cocker-spaniel','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000107','CAO','cocker_spaniel','cocker-spaniel','MCT','Mastocitoma','ONCOLOGICA',4,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -304,17 +304,17 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000116','CAO','dachshund_miniature','dachshund','MVD','Displasia da valva mitral','CARDIACA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000117','CAO','dalmatian',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000117','CAO','dalmatian',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000119','CAO','dandie_dinmont_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000120','CAO','doberman_pinscher',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',4,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000120','CAO','doberman_pinscher',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',4,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000121','CAO','doberman_pinscher',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,4,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000122','CAO','doberman_pinscher',NULL,'lymphoma','Linfoma','ONCOLOGICA',5,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000123','CAO','dogue_de_bordeaux',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000123','CAO','dogue_de_bordeaux',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000124','CAO','dogue_de_bordeaux',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -326,7 +326,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000130','CAO','english_setter',NULL,'MCT','Mastocitoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000131','CAO','english_springer_spaniel',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000131','CAO','english_springer_spaniel',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000133','CAO','english_springer_spaniel',NULL,'lymphoma','Linfoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -336,7 +336,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000138','CAO','fox_terrier_wire',NULL,'MVD','Displasia da valva mitral','CARDIACA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000139','CAO','german_shepherd_dog','pastor-alemao','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',24,24,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000139','CAO','german_shepherd_dog','pastor-alemao','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',24,24,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000140','CAO','german_shepherd_dog','pastor-alemao','ED','Displasia de cotovelo','ORTOPEDICA',10,45,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -344,11 +344,11 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000142','CAO','german_shepherd_dog','pastor-alemao','lymphoma','Linfoma','ONCOLOGICA',5,7,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000143','CAO','german_shorthaired_pointer',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000143','CAO','german_shorthaired_pointer',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000145','CAO','german_shorthaired_pointer',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000148','CAO','golden_retriever','golden-retriever','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',28,32,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000148','CAO','golden_retriever','golden-retriever','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',28,32,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000149','CAO','golden_retriever','golden-retriever','ED','Displasia de cotovelo','ORTOPEDICA',8,49,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -356,11 +356,11 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000151','CAO','golden_retriever','golden-retriever','lymphoma','Linfoma','ONCOLOGICA',43,48,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000153','CAO','great_dane',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',4,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000153','CAO','great_dane',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',4,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000154','CAO','great_dane',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,5,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000155','CAO','great_pyrenees',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000155','CAO','great_pyrenees',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000157','CAO','great_pyrenees',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -368,9 +368,9 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000163','CAO','havanese',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000164','CAO','havanese',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',17,15,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000164','CAO','havanese',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',17,15,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000167','CAO','irish_setter',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000167','CAO','irish_setter',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000168','CAO','irish_setter',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,5,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -384,7 +384,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000173','CAO','italian_greyhound',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000174','CAO','jack_russell_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000174','CAO','jack_russell_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000176','CAO','jack_russell_terrier',NULL,'MCT','Mastocitoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -392,9 +392,9 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000178','CAO','jack_russell_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000179','CAO','keeshond',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000179','CAO','keeshond',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000182','CAO','labrador_retriever','labrador-retriever','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',114,173,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000182','CAO','labrador_retriever','labrador-retriever','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',114,173,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000183','CAO','labrador_retriever','labrador-retriever','ED','Displasia de cotovelo','ORTOPEDICA',30,180,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -404,7 +404,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000190','CAO','maltese','maltes','MVD','Displasia da valva mitral','CARDIACA',12,7,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000191','CAO','maltese','maltes','PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',26,24,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000191','CAO','maltese','maltes','PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',26,24,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000192','CAO','maltese','maltes','lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -412,21 +412,21 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000194','CAO','manchester_terrier_toy',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000195','CAO','mastiff',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000195','CAO','mastiff',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000197','CAO','miniature_pinscher','pinscher','MVD','Displasia da valva mitral','CARDIACA',5,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000198','CAO','miniature_schnauzer',NULL,'MVD','Displasia da valva mitral','CARDIACA',9,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000199','CAO','miniature_schnauzer',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',21,17,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000199','CAO','miniature_schnauzer',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',21,17,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000200','CAO','miniature_schnauzer',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000203','CAO','mix','srd-cao','PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',7,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000203','CAO','mix','srd-cao','PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',7,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000204','CAO','mix','srd-cao','lymphoma','Linfoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000205','CAO','newfoundland',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',7,15,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000205','CAO','newfoundland',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',7,15,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000206','CAO','newfoundland',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',8,22,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -434,17 +434,17 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000208','CAO','norfolk_terrier',NULL,'MVD','Displasia da valva mitral','CARDIACA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000209','CAO','norfolk_terrier',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',10,10,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000209','CAO','norfolk_terrier',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',10,10,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000212','CAO','nova_scotia_duck_tolling_retriever',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000215','CAO','old_english_sheepdog',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000217','CAO','papillon',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',2,9,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000217','CAO','papillon',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',2,9,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000218','CAO','pekingese',NULL,'MVD','Displasia da valva mitral','CARDIACA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000219','CAO','pembroke_welsh_corgi',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000219','CAO','pembroke_welsh_corgi',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000221','CAO','pembroke_welsh_corgi',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -452,7 +452,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000226','CAO','pomeranian',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000227','CAO','poodle','poodle','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000227','CAO','poodle','poodle','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000229','CAO','poodle','poodle','MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -460,7 +460,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000231','CAO','poodle_miniature','poodle','MVD','Displasia da valva mitral','CARDIACA',1,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000232','CAO','poodle_toy','poodle','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000232','CAO','poodle_toy','poodle','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000233','CAO','poodle_toy','poodle','MCT','Mastocitoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -472,7 +472,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000243','CAO','rhodesian_ridgeback',NULL,'MCT','Mastocitoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000244','CAO','rottweiler','rottweiler','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',26,11,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000244','CAO','rottweiler','rottweiler','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',26,11,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000245','CAO','rottweiler','rottweiler','ED','Displasia de cotovelo','ORTOPEDICA',11,30,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -480,7 +480,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000247','CAO','rottweiler','rottweiler','lymphoma','Linfoma','ONCOLOGICA',11,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000248','CAO','saint_bernard',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',3,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000248','CAO','saint_bernard',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',3,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000249','CAO','saint_bernard',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',2,5,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -488,7 +488,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000252','CAO','saluki',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000253','CAO','samoyed',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000253','CAO','samoyed',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000255','CAO','scottish_terrier',NULL,'MVD','Displasia da valva mitral','CARDIACA',2,2,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -506,19 +506,19 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000264','CAO','shiloh_shepherd',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000265','CAO','siberian_husky','husky-siberiano','CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000265','CAO','siberian_husky','husky-siberiano','CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000267','CAO','siberian_husky','husky-siberiano','MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000268','CAO','siberian_husky','husky-siberiano','lymphoma','Linfoma','ONCOLOGICA',2,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000269','CAO','soft_coated_wheaten_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000269','CAO','soft_coated_wheaten_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000271','CAO','soft_coated_wheaten_terrier',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000272','CAO','spinone_italiano',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000272','CAO','spinone_italiano',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000276','CAO','staffordshire_bull_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000276','CAO','staffordshire_bull_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',5,1,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000277','CAO','staffordshire_bull_terrier',NULL,'ED','Displasia de cotovelo','ORTOPEDICA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -526,7 +526,7 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000281','CAO','standard_schnauzer',NULL,'lymphoma','Linfoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000283','CAO','tibetan_spaniel',NULL,'PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',10,13,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000283','CAO','tibetan_spaniel',NULL,'PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',10,13,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000284','CAO','tibetan_terrier',NULL,'MCT','Mastocitoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -534,11 +534,11 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000288','CAO','vizsla',NULL,'lymphoma','Linfoma','ONCOLOGICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000289','CAO','weimaraner',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000289','CAO','weimaraner',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',1,3,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000291','CAO','weimaraner',NULL,'MCT','Mastocitoma','ONCOLOGICA',1,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000292','CAO','west_highland_white_terrier',NULL,'CLLD','Doenca do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000292','CAO','west_highland_white_terrier',NULL,'CLLD','Doença do ligamento cruzado cranial','ORTOPEDICA',2,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000293','CAO','west_highland_white_terrier',NULL,'MCT','Mastocitoma','ONCOLOGICA',3,0,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
@@ -550,113 +550,113 @@ INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_co
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000301','CAO','yorkshire_terrier','yorkshire-terrier','MVD','Displasia da valva mitral','CARDIACA',2,7,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000302','CAO','yorkshire_terrier','yorkshire-terrier','PSVA','Anomalia vascular portossistemica','HEPATICA/VASCULAR',57,105,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000302','CAO','yorkshire_terrier','yorkshire-terrier','PSVA','Anomalia vascular portossistêmica','HEPATICA/VASCULAR',57,105,'Dryad - Complex disease and phenotype mapping in the domestic dog','10.5061/dryad.266k4',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000303','GATO','Abyssinian',NULL,'all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000303','GATO','Abyssinian',NULL,'all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000304','GATO','DLH','srd-gato','DM','Diabetes mellitus','ENDOCRINA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000305','GATO','DLH','srd-gato','FEK','Ceratoconjuntivite eosinofilica felina','OFTALMOLOGICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000305','GATO','DLH','srd-gato','FEK','Ceratoconjuntivite eosinofílica felina','OFTALMOLOGICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000306','GATO','DLH','srd-gato','IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000306','GATO','DLH','srd-gato','IBD','Doença inflamatória intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000307','GATO','DLH','srd-gato','chronic_enteropathy','Enteropatia cronica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000307','GATO','DLH','srd-gato','chronic_enteropathy','Enteropatia crônica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000308','GATO','DLH','srd-gato','hypercalcemia','Hipercalcemia','METABOLICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000309','GATO','DMH','srd-gato','FEK','Ceratoconjuntivite eosinofilica felina','OFTALMOLOGICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000309','GATO','DMH','srd-gato','FEK','Ceratoconjuntivite eosinofílica felina','OFTALMOLOGICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000310','GATO','DSH','srd-gato','DM','Diabetes mellitus','ENDOCRINA',5,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000311','GATO','DSH','srd-gato','FEK','Ceratoconjuntivite eosinofilica felina','OFTALMOLOGICA',3,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000311','GATO','DSH','srd-gato','FEK','Ceratoconjuntivite eosinofílica felina','OFTALMOLOGICA',3,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000312','GATO','DSH','srd-gato','HCM','Cardiomiopatia hipertrofica','CARDIACA',3,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000312','GATO','DSH','srd-gato','HCM','Cardiomiopatia hipertrófica','CARDIACA',3,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000313','GATO','DSH','srd-gato','IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000313','GATO','DSH','srd-gato','IBD','Doença inflamatória intestinal','GASTROINTESTINAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000314','GATO','DSH','srd-gato','SCAL','Linfoma alimentar de pequenas celulas','ONCOLOGICA/GASTROINTESTINAL',5,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000314','GATO','DSH','srd-gato','SCAL','Linfoma alimentar de pequenas células','ONCOLOGICA/GASTROINTESTINAL',5,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000315','GATO','DSH','srd-gato','all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000315','GATO','DSH','srd-gato','all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000316','GATO','DSH','srd-gato','chronic_enteropathy','Enteropatia cronica','GASTROINTESTINAL',4,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000316','GATO','DSH','srd-gato','chronic_enteropathy','Enteropatia crônica','GASTROINTESTINAL',4,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000317','GATO','DSH','srd-gato','hypercalcemia','Hipercalcemia','METABOLICA',3,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000318','GATO','DSH','srd-gato','hyperthyroidism','Hipertireoidismo','ENDOCRINA',4,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000319','GATO','Himalayan',NULL,'CKD','Doenca renal cronica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000319','GATO','Himalayan',NULL,'CKD','Doença renal crônica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000320','GATO','Himalayan',NULL,'IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000320','GATO','Himalayan',NULL,'IBD','Doença inflamatória intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000321','GATO','Himalayan',NULL,'all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000321','GATO','Himalayan',NULL,'all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000322','GATO','Himalayan',NULL,'chronic_enteropathy','Enteropatia cronica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000322','GATO','Himalayan',NULL,'chronic_enteropathy','Enteropatia crônica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000323','GATO','Maine_coon','maine-coon','CKD','Doenca renal cronica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000323','GATO','Maine_coon','maine-coon','CKD','Doença renal crônica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000324','GATO','Maine_coon','maine-coon','FEK','Ceratoconjuntivite eosinofilica felina','OFTALMOLOGICA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000324','GATO','Maine_coon','maine-coon','FEK','Ceratoconjuntivite eosinofílica felina','OFTALMOLOGICA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000325','GATO','Maine_coon','maine-coon','HCM','Cardiomiopatia hipertrofica','CARDIACA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000325','GATO','Maine_coon','maine-coon','HCM','Cardiomiopatia hipertrófica','CARDIACA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000326','GATO','Maine_coon','maine-coon','IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000326','GATO','Maine_coon','maine-coon','IBD','Doença inflamatória intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000327','GATO','Maine_coon','maine-coon','SCAL','Linfoma alimentar de pequenas celulas','ONCOLOGICA/GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000327','GATO','Maine_coon','maine-coon','SCAL','Linfoma alimentar de pequenas células','ONCOLOGICA/GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000328','GATO','Maine_coon','maine-coon','all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000328','GATO','Maine_coon','maine-coon','all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000329','GATO','Manx',NULL,'CKD','Doenca renal cronica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000329','GATO','Manx',NULL,'CKD','Doença renal crônica','RENAL',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000330','GATO','Manx',NULL,'SCAL','Linfoma alimentar de pequenas celulas','ONCOLOGICA/GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000330','GATO','Manx',NULL,'SCAL','Linfoma alimentar de pequenas células','ONCOLOGICA/GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000331','GATO','Manx',NULL,'all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000331','GATO','Manx',NULL,'all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000332','GATO','Manx',NULL,'hypercalcemia','Hipercalcemia','METABOLICA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000333','GATO','Manx',NULL,'hyperthyroidism','Hipertireoidismo','ENDOCRINA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000334','GATO','Persian','persa','CKD','Doenca renal cronica','RENAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000334','GATO','Persian','persa','CKD','Doença renal crônica','RENAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000335','GATO','Persian','persa','IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000335','GATO','Persian','persa','IBD','Doença inflamatória intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000336','GATO','Persian','persa','all_GI','Doenca gastrointestinal - grupo combinado','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000336','GATO','Persian','persa','all_GI','Doença gastrointestinal (grupo combinado)','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000337','GATO','Persian','persa','hypercalcemia','Hipercalcemia','METABOLICA',2,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000338','GATO','Ragdoll','ragdoll','HCM','Cardiomiopatia hipertrofica','CARDIACA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000338','GATO','Ragdoll','ragdoll','HCM','Cardiomiopatia hipertrófica','CARDIACA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000339','GATO','Ragdoll','ragdoll','chronic_enteropathy','Enteropatia cronica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000339','GATO','Ragdoll','ragdoll','chronic_enteropathy','Enteropatia crônica','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000340','GATO','Siamese','siames','DM','Diabetes mellitus','ENDOCRINA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000341','GATO','Siamese','siames','HCM','Cardiomiopatia hipertrofica','CARDIACA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000341','GATO','Siamese','siames','HCM','Cardiomiopatia hipertrófica','CARDIACA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000342','GATO','Siamese','siames','IBD','Doenca inflamatoria intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000342','GATO','Siamese','siames','IBD','Doença inflamatória intestinal','GASTROINTESTINAL',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
 ('ab5e0000-0000-0000-0000-000000000343','GATO','Siamese','siames','hyperthyroidism','Hipertireoidismo','ENDOCRINA',1,0,'Complex Feline Disease Mapping Using a Dense Genotyping Array','10.5061/dryad.f1vhhmgwp',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000344','REPTIL','Blotched Blue-tongue',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',2,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000344','REPTIL','Blotched Blue-tongue',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',2,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000345','REPTIL','Carpet Python',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',8,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000345','REPTIL','Carpet Python',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',8,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000346','REPTIL','Eastern Bearded Dragon',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',5,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000346','REPTIL','Eastern Bearded Dragon',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',5,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000347','REPTIL','Eastern Blue-tongue',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',39,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000347','REPTIL','Eastern Blue-tongue',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',39,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000348','REPTIL','Green Tree Snake',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000348','REPTIL','Green Tree Snake',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000349','REPTIL','Highland Copperhead',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000349','REPTIL','Highland Copperhead',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000350','REPTIL','Lace Monitor',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',3,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000350','REPTIL','Lace Monitor',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',3,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000351','REPTIL','Land Mullet',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',4,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000351','REPTIL','Land Mullet',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',4,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000352','REPTIL','Pink-tongued Skink',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000352','REPTIL','Pink-tongued Skink',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000353','REPTIL','Shingleback',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000353','REPTIL','Shingleback',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000354','REPTIL','Tiger Snake',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000354','REPTIL','Tiger Snake',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',1,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 INSERT INTO t_clyvo_base_doencas (id, especie, raca_texto, raca_chave, doenca_codigo, doenca_nome, categoria, casos, controles, fonte, doi, criado_em) VALUES
-('ab5e0000-0000-0000-0000-000000000355','REPTIL','Water Dragon',NULL,'RESCUE_DISEASE','Doenca/condicao clinica nao especificada','CLINICA_NAO_ESPECIFICADA',4,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
+('ab5e0000-0000-0000-0000-000000000355','REPTIL','Water Dragon',NULL,'RESCUE_DISEASE','Doença ou condição clínica não especificada','CLINICA_NAO_ESPECIFICADA',4,0,'Interactions between reptiles and people: A perspective from wildlife rehabilitation records','10.5061/dryad.jh9w0vtmc',SYSTIMESTAMP);
 
 -- ------------------------------------------------------------
 -- 3) O cache do parecer da IA
