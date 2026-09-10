@@ -55,6 +55,28 @@ source ./00-variaveis.sh
 exigir DOTNET_API_KEY     || exit 1
 exigir TELEGRAM_BOT_TOKEN || exit 1
 
+# A OCI GENERATIVE AI E OPCIONAL DE PROPOSITO -- por isso NAO tem `exigir`.
+# Sem estas seis variaveis a API .NET sobe igual e a saude preditiva responde
+# pelo fallback deterministico (origem REGRAS). Com elas, o parecer passa a
+# ser redigido pelo modelo. Sao as credenciais de API key da console da OCI
+# (Identity -> My profile -> API keys); a chave privada vai INTEIRA no valor:
+#
+#   export OCI_PRIVATE_KEY_PEM="$(cat ~/.oci/clyvovet_api_key.pem)"
+#
+# Nunca no codigo, nunca em arquivo versionado -- mesma regra de sempre.
+OCI_TENANCY_OCID="${OCI_TENANCY_OCID:-}"
+OCI_USER_OCID="${OCI_USER_OCID:-}"
+OCI_FINGERPRINT="${OCI_FINGERPRINT:-}"
+OCI_PRIVATE_KEY_PEM="${OCI_PRIVATE_KEY_PEM:-}"
+OCI_REGION="${OCI_REGION:-}"
+OCI_COMPARTMENT_OCID="${OCI_COMPARTMENT_OCID:-}"
+
+if [ -n "$OCI_TENANCY_OCID" ]; then
+    echo "==> Credenciais OCI presentes: saude preditiva com IA ligada."
+else
+    echo "==> Sem credenciais OCI no ambiente: saude preditiva ficara no fallback deterministico."
+fi
+
 # O PRIMEIRO ADMIN DA PLATAFORMA
 #
 # O banco e provisionado vazio e as migrations criam clinicas, veterinarios e
@@ -107,6 +129,12 @@ az webapp config appsettings set \
       Database__MaxPoolSize="15" \
       Jwt__Secret="$JWT_SECRET" \
       Api__EscopoPorTutor="false" \
+      Oci__TenancyOcid="$OCI_TENANCY_OCID" \
+      Oci__UserOcid="$OCI_USER_OCID" \
+      Oci__Fingerprint="$OCI_FINGERPRINT" \
+      Oci__PrivateKeyPem="$OCI_PRIVATE_KEY_PEM" \
+      Oci__Region="$OCI_REGION" \
+      Oci__GenAi__CompartmentOcid="$OCI_COMPARTMENT_OCID" \
     -o none
 echo "    ok"
 

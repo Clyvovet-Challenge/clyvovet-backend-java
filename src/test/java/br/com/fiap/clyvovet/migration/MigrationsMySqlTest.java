@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v14() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v15() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(14);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
+        assertThat(resultado.migrationsExecuted).isEqualTo(15);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
     }
 
     /**
@@ -110,6 +110,64 @@ class MigrationsMySqlTest {
         Integer especies = jdbc.queryForObject(
                 "SELECT COUNT(DISTINCT especie) FROM t_clyvo_animal", Integer.class);
         assertThat(especies).isLessThanOrEqualTo(5);
+    }
+
+    /**
+     * A V15 promete tres coisas, e as tres precisam de prova de CONTEUDO, nao
+     * so de schema: o widget quebrado da .NET foi consertado (a coluna que a V8
+     * esqueceu existe E a tabela deixou de estar vazia), a base agregada de
+     * doencas entrou com linhas ligadas ao catalogo da V14, e o cache de
+     * parecer aceita exatamente um parecer por animal.
+     */
+    @Test
+    void a_v15_conserta_o_widget_e_semeia_a_base_de_doencas() {
+        var ds = h2ModoMySql();
+        Flyway.configure()
+                .dataSource(ds)
+                .locations("classpath:db/migration/mysql")
+                .load()
+                .migrate();
+        var jdbc = new JdbcTemplate(ds);
+
+        // o conserto: criado_em existe (a consulta nao explode) e o seed de 42
+        // predisposicoes do arquivo original da .NET finalmente foi portado
+        Integer predisposicoes = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_predisposicao_saude WHERE criado_em IS NOT NULL",
+                Integer.class);
+        assertThat(predisposicoes).isEqualTo(42);
+
+        // a base agregada tem as quatro especies dos datasets...
+        Integer especiesNaBase = jdbc.queryForObject(
+                "SELECT COUNT(DISTINCT especie) FROM t_clyvo_base_doencas", Integer.class);
+        assertThat(especiesNaBase).isEqualTo(4);
+
+        // ...e toda raca_chave preenchida aponta para uma chave REAL do
+        // catalogo da V14 -- e o que permite a .NET casar por igualdade
+        Integer chavesOrfas = jdbc.queryForObject(
+                """
+                SELECT COUNT(*) FROM t_clyvo_base_doencas b
+                 WHERE b.raca_chave IS NOT NULL
+                   AND NOT EXISTS (SELECT 1 FROM t_clyvo_raca r WHERE r.chave = b.raca_chave)
+                """, Integer.class);
+        assertThat(chavesOrfas).isZero();
+
+        // linha sem caso nenhum nao afirma predisposicao -- nao pode existir
+        Integer soControles = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_base_doencas WHERE casos = 0", Integer.class);
+        assertThat(soControles).isZero();
+
+        // o cache: um parecer por animal, o segundo INSERT do mesmo animal morre
+        jdbc.update("""
+                INSERT INTO t_clyvo_parecer_ia (id, animal_id, origem, conteudo, gerado_em, valido_ate)
+                VALUES ('aaaa0000-0000-0000-0000-000000000001', ?, 'REGRAS', '{}',
+                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """, ANIMAL_BOLINHA);
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO t_clyvo_parecer_ia (id, animal_id, origem, conteudo, gerado_em, valido_ate)
+                VALUES ('aaaa0000-0000-0000-0000-000000000002', ?, 'IA', '{}',
+                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """, ANIMAL_BOLINHA))
+                .isInstanceOf(DataAccessException.class);
     }
 
     /**

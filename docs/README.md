@@ -30,6 +30,7 @@ silenciosamente corrigido no texto.
 | [13-arquitetura-na-azure.md](13-arquitetura-na-azure.md) | O desenho da arquitetura e seu par escrito: os cinco recursos com SKU e script, os quatro fluxos, o orçamento de conexões e o que ficou deliberadamente fora |
 | [14-roteiro-do-video.md](14-roteiro-do-video.md) | O roteiro da gravação de DevOps, onde estão 80 dos 100 pontos da disciplina |
 | [15-catalogo-de-racas.md](15-catalogo-de-racas.md) | Por que `raca` deixou de ser texto livre: o catálogo, a coluna `chave` que liga API, app e arte, e as três armadilhas que só apareceram rodando |
+| [16-ia-saude-preditiva.md](16-ia-saude-preditiva.md) | A base de doenças da IA de saúde preditiva (V15): agregação dos datasets, conserto do widget e cache de parecer |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta
