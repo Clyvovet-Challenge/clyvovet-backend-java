@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v15() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v16() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(15);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+        assertThat(resultado.migrationsExecuted).isEqualTo(16);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
     }
 
     /**
@@ -472,5 +472,50 @@ class MigrationsMySqlTest {
                 values (?, ?, 'ALERGIA', 'Origem inventada', 'RECEPCIONISTA')
                 """, UUID.randomUUID().toString(), ANIMAL_BOLINHA))
                 .isInstanceOf(DataAccessException.class);
+    }
+    /**
+     * A V16 tem um risco que coluna nova costuma ter: quebrar o que ja existia.
+     *
+     * Ela entra NOT NULL numa tabela com linhas dentro. Sem o DEFAULT 'TODOS' o
+     * ALTER falharia; com um default errado, todo produto do seed sairia da
+     * tela do tutor de uma vez -- e o sintoma seria "a loja esta vazia", que nao
+     * aponta para migration nenhuma.
+     *
+     * Por isso o teste verifica as duas pontas: nenhuma linha ficou sem porte, e
+     * o produto que E de porte recebeu o valor certo em vez do default.
+     */
+    @Test
+    void a_v16_da_porte_aos_produtos_sem_apagar_os_que_ja_existiam() {
+        var ds = h2ModoMySql();
+        Flyway.configure()
+                .dataSource(ds)
+                .locations("classpath:db/migration/mysql")
+                .load()
+                .migrate();
+
+        var jdbc = new JdbcTemplate(ds);
+
+        // ninguem ficou sem porte, e ninguem ficou com valor fora do dominio
+        Integer semPorte = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_produto WHERE porte_indicado IS NULL", Integer.class);
+        assertThat(semPorte).isZero();
+
+        Integer foraDoDominio = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_produto "
+                        + "WHERE porte_indicado NOT IN ('PEQUENO','MEDIO','GRANDE','TODOS')",
+                Integer.class);
+        assertThat(foraDoDominio).isZero();
+
+        // o default preservou o comportamento anterior: quem nao declara porte
+        // continua servindo a todos, e continua aparecendo na tela
+        Integer universais = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_produto WHERE porte_indicado = 'TODOS'", Integer.class);
+        assertThat(universais).isGreaterThan(0);
+
+        // e o produto que E de porte nao ficou no default
+        String porteDaRacao = jdbc.queryForObject(
+                "SELECT porte_indicado FROM t_clyvo_produto "
+                        + "WHERE nome LIKE 'Racao Golden Formula Adulto%'", String.class);
+        assertThat(porteDaRacao).isEqualTo("GRANDE");
     }
 }
