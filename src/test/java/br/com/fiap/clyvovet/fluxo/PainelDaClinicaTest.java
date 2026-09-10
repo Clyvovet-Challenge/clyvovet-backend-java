@@ -132,7 +132,13 @@ class PainelDaClinicaTest extends TesteDeApi {
         JsonNode racas = painel(vetcare).get("racas");
 
         assertThat(quantidadeDe(racas, "Golden Retriever")).isEqualTo(2);
-        assertThat(quantidadeDe(racas, "Siames")).isEqualTo(1);
+        // "Siames" com acento -- e nao como o seed digitou.
+        //
+        // A V14 reconcilia o texto legado contra o catalogo de racas e reescreve
+        // `animal.raca` com o nome canonico. Este assert e o que prova, de fora,
+        // que aquela uniformizacao aconteceu: antes da V14 o painel agrupava por
+        // "Siames" e "Siames" acentuado como se fossem duas racas.
+        assertThat(quantidadeDe(racas, "Siamês")).isEqualTo(1);
         assertThat(racas.get(0).get("rotulo").asText()).isEqualTo("Golden Retriever");
         assertThat(somaDe(racas)).isEqualTo(3);
     }

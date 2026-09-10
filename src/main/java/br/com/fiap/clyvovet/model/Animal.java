@@ -15,10 +15,34 @@ public class Animal {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String nome;
+    /**
+     * O que o tutor ve. Com `racaDoCatalogo` preenchido, e copia do catalogo;
+     * sem ele, e o texto que o tutor digitou.
+     *
+     * Continua String -- e nao virou so a FK -- porque e o que o widget de saude
+     * preditiva da API .NET le, e o que o AnimalResponse ja entrega ao app.
+     * Trocar o tipo quebraria os dois sem ganho nenhum.
+     */
     private String raca;
     private String especie;
     private String porte;
     private String cor;
+
+    /**
+     * A raca no catalogo, quando ela esta la.
+     *
+     * ANULAVEL DE PROPOSITO: sao 200 e poucas racas de cachorro e o catalogo
+     * lista as comuns, entao "outra raca" precisa continuar existindo. Nulo aqui
+     * significa "o tutor digitou algo que o catalogo nao cobre", e nesse caso o
+     * texto em `raca` e a unica informacao que resta -- "Labrador misto" diz algo
+     * que "Labrador" nao diz.
+     *
+     * E daqui que sai a `chave` que o app usa para escolher a arte em pixel do
+     * animal, e que a .NET vai usar para casar predisposicao sem adivinhar.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "raca_id")
+    private Raca racaDoCatalogo;
     @Enumerated(EnumType.STRING)
     @Column(name = "genero")
     private SexoAnimal sexo;

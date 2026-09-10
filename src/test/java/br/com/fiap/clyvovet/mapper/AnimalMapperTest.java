@@ -18,7 +18,11 @@ class AnimalMapperTest {
     private final AnimalMapper mapper = new AnimalMapper();
 
     private static AnimalRequest request(String nome, UUID tutorId) {
-        return new AnimalRequest(nome, "Vira-lata", "CAO", "MEDIO", "Caramelo",
+        return new AnimalRequest(nome, "Vira-lata",
+                // racaId nulo: o caminho de quem NAO escolheu do catalogo, que
+                // continua valendo e e o que estes testes exercitam.
+                null,
+                "CAO", "MEDIO", "Caramelo",
                 SexoAnimal.MACHO, LocalDate.of(2020, 1, 15), "sem observacoes", tutorId,
                 // microchip e castrado entraram na V6: o chip identifica o
                 // animal no balcao, e a castracao compoe o resumo de seguranca.
@@ -37,7 +41,7 @@ class AnimalMapperTest {
     void toEntityCopiaCampos() {
         Tutor lucas = tutor("Lucas");
 
-        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas);
+        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas, null);
 
         assertThat(animal.getNome()).isEqualTo("Bolinha");
         assertThat(animal.getRaca()).isEqualTo("Vira-lata");
@@ -58,12 +62,12 @@ class AnimalMapperTest {
     @DisplayName("atualizar altera os campos e preserva o id da entidade")
     void atualizarPreservaId() {
         Tutor lucas = tutor("Lucas");
-        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas);
+        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas, null);
         animal.setId(UUID.randomUUID());
         UUID idOriginal = animal.getId();
 
         Tutor maria = tutor("Maria");
-        mapper.atualizar(animal, request("Bolinha Editado", maria.getId()), maria);
+        mapper.atualizar(animal, request("Bolinha Editado", maria.getId()), maria, null);
 
         assertThat(animal.getId()).isEqualTo(idOriginal);
         assertThat(animal.getNome()).isEqualTo("Bolinha Editado");
@@ -74,7 +78,7 @@ class AnimalMapperTest {
     @DisplayName("resposta traz id e nome do tutor")
     void respostaTrazDadosDoTutor() {
         Tutor lucas = tutor("Lucas");
-        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas);
+        Animal animal = mapper.toEntity(request("Bolinha", lucas.getId()), lucas, null);
 
         AnimalResponse response = mapper.toResponse(animal);
 
@@ -86,7 +90,7 @@ class AnimalMapperTest {
     @Test
     @DisplayName("animal sem tutor responde com os campos do tutor nulos")
     void animalSemTutor() {
-        Animal animal = mapper.toEntity(request("Sem dono", null), null);
+        Animal animal = mapper.toEntity(request("Sem dono", null), null, null);
 
         AnimalResponse response = mapper.toResponse(animal);
 

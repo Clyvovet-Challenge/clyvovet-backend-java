@@ -25,7 +25,10 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
-                "tutores", "animais", "clinicas", "veterinarios", "eventos", "pagamentos");
+                "tutores", "animais", "clinicas", "veterinarios", "eventos", "pagamentos",
+                // Catalogo de racas: muda por migracao, entao entre dois deploys a
+                // resposta e sempre a mesma -- e a tela de cadastro pede toda vez que abre.
+                "racas");
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(10))
                 .maximumSize(1_000));

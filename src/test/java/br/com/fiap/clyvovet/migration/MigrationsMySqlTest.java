@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v13() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v14() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,53 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(13);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
+        assertThat(resultado.migrationsExecuted).isEqualTo(14);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
+    }
+
+    /**
+     * A V14 promete o que nenhuma coluna nova prova sozinha: que o texto que ja
+     * estava gravado FOI RECONCILIADO com o catalogo.
+     *
+     * Criar a tabela e facil; o risco esta na reconciliacao, que casa grafias
+     * diferentes ("Siames" sem acento contra "Siames" com) e sinonimos ("Vira",
+     * "Vira-lata" e "SRD" para a mesma ausencia de raca). Se ela falhasse em
+     * silencio, o catalogo existiria vazio de ligacoes e ninguem notaria -- os
+     * animais continuariam com o texto antigo e o app cairia no caso "sem arte"
+     * para todo mundo.
+     */
+    @Test
+    void a_v14_liga_os_animais_do_seed_ao_catalogo() {
+        var ds = h2ModoMySql();
+        Flyway.configure()
+                .dataSource(ds)
+                .locations("classpath:db/migration/mysql")
+                .load()
+                .migrate();
+
+        var jdbc = new JdbcTemplate(ds);
+
+        // o catalogo entrou inteiro, e cada chave e unica
+        Integer racas = jdbc.queryForObject("SELECT COUNT(*) FROM t_clyvo_raca", Integer.class);
+        Integer chaves = jdbc.queryForObject("SELECT COUNT(DISTINCT chave) FROM t_clyvo_raca", Integer.class);
+        assertThat(racas).isGreaterThan(40);
+        assertThat(chaves).isEqualTo(racas);
+
+        // todo animal do seed encontrou a sua raca -- nenhum sobrou sem ligacao
+        Integer semLigacao = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_animal WHERE raca_id IS NULL", Integer.class);
+        assertThat(semLigacao).isZero();
+
+        // e o acento foi reescrito: o seed gravou "Siames", o catalogo diz "Siames"
+        // com acento, e depois da V14 o que esta na tabela e o do catalogo
+        Integer semAcento = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM t_clyvo_animal WHERE raca = 'Siames'", Integer.class);
+        assertThat(semAcento).isZero();
+
+        // a especie parou de ter tres grafias para a mesma coisa
+        Integer especies = jdbc.queryForObject(
+                "SELECT COUNT(DISTINCT especie) FROM t_clyvo_animal", Integer.class);
+        assertThat(especies).isLessThanOrEqualTo(5);
     }
 
     /**

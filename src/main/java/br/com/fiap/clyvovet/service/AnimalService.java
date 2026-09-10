@@ -5,6 +5,7 @@ import br.com.fiap.clyvovet.dto.animal.AnimalRequest;
 import br.com.fiap.clyvovet.dto.animal.AnimalResponse;
 import br.com.fiap.clyvovet.mapper.AnimalMapper;
 import br.com.fiap.clyvovet.model.Animal;
+import br.com.fiap.clyvovet.model.Raca;
 import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.TutorRepository;
@@ -34,6 +35,7 @@ public class AnimalService {
     private final TutorRepository tutorRepository;
     private final AnimalMapper animalMapper;
     private final SegurancaService seguranca;
+    private final RacaService racaService;
 
     /**
      * A chave do cache inclui o tutor do usuario logado. Sem isso, a primeira
@@ -61,7 +63,7 @@ public class AnimalService {
     @Transactional
     @CacheEvict(value = {"animais", "eventos", "pagamentos"}, allEntries = true)
     public AnimalResponse criar(AnimalRequest request) {
-        Animal animal = animalMapper.toEntity(request, tutorRepository.obterPorId(request.getTutorId()));
+        Animal animal = animalMapper.toEntity(request, tutorRepository.obterPorId(request.getTutorId()), doCatalogo(request.getRacaId()));
         return animalMapper.toResponse(animalRepository.save(animal));
     }
 
@@ -69,7 +71,7 @@ public class AnimalService {
     @CacheEvict(value = {"animais", "eventos", "pagamentos"}, allEntries = true)
     public AnimalResponse atualizar(UUID id, AnimalRequest request) {
         Animal animal = animalRepository.obterPorId(id);
-        animalMapper.atualizar(animal, request, tutorRepository.obterPorId(request.getTutorId()));
+        animalMapper.atualizar(animal, request, tutorRepository.obterPorId(request.getTutorId()), doCatalogo(request.getRacaId()));
         return animalMapper.toResponse(animalRepository.save(animal));
     }
 
@@ -81,7 +83,7 @@ public class AnimalService {
         // O tutor so e buscado quando o patch pede troca de dono; null diz ao
         // mapper para deixar o vinculo como esta.
         Tutor tutor = patch.getTutorId() == null ? null : tutorRepository.obterPorId(patch.getTutorId());
-        animalMapper.aplicarPatch(animal, patch, tutor);
+        animalMapper.aplicarPatch(animal, patch, tutor, doCatalogo(patch.getRacaId()));
         return animalMapper.toResponse(animalRepository.save(animal));
     }
 
@@ -109,5 +111,16 @@ public class AnimalService {
     public void deletar(UUID id) {
         animalRepository.garantirQueExiste(id);
         animalRepository.deleteById(id);
+    }
+
+    /**
+     * Resolve o id do catalogo, ou null quando o pedido nao trouxe raca.
+     *
+     * Id que nao existe estoura 404 em vez de virar null silencioso: um cliente
+     * que manda raca errada precisa saber, senao o animal seria salvo com o texto
+     * livre e ninguem perceberia que o catalogo nao foi aplicado.
+     */
+    private Raca doCatalogo(UUID racaId) {
+        return racaId == null ? null : racaService.buscarEntidade(racaId);
     }
 }

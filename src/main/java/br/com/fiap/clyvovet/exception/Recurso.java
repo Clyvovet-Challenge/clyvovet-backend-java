@@ -20,6 +20,7 @@ public enum Recurso {
     CLINICA("Clínica não encontrada"),
     EVENTO_CLINICO("Evento clínico não encontrado"),
     PAGAMENTO("Pagamento não encontrado"),
+    RACA("Raça não encontrada"),
     DISPONIBILIDADE("Disponibilidade não encontrada"),
     SERVICO("Serviço não encontrado"),
     SOLICITACAO_ALTERACAO("Solicitação de alteração não encontrada"),
