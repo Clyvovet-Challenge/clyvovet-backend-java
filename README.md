@@ -91,15 +91,31 @@ A aplicação sobe em `http://localhost:8080` e o Swagger fica em
 
 ### A API exige autenticação
 
-Todos os endpoints de domínio pedem um token JWT. O perfil `dev` semeia estes
-usuários — as senhas valem apenas em desenvolvimento:
+Todos os endpoints de domínio pedem um token JWT. O
+[`DevDataSeeder`](src/main/java/br/com/fiap/clyvovet/config/DevDataSeeder.java)
+semeia estes usuários — as senhas valem apenas em desenvolvimento:
 
-| E-mail | Senha | Perfil |
-|---|---|---|
-| `admin@clyvovet.com` | `admin12345` | ADMIN |
-| `camila.ferreira@vetcare.com.br` | `vet12345` | VETERINARIO |
-| `lucas.santos@email.com` | `tutor12345` | TUTOR |
-| `maria.oliveira@email.com` | `tutor12345` | TUTOR |
+| E-mail | Senha | Perfil | Alcance |
+|---|---|---|---|
+| `admin@clyvovet.com` | `admin12345` | `ADMIN` | a plataforma inteira: clínicas, acessos, auditoria |
+| `gestor.vetcare@clyvovet.com` | `gestor12345` | `ADMIN_CLINICA` | só a VetCare — agenda, equipe, catálogo, a receber |
+| `camila.ferreira@vetcare.com.br` | `vet12345` | `VETERINARIO` | só os próprios atendimentos, na VetCare |
+| `lucas.santos@email.com` | `tutor12345` | `TUTOR` | só os próprios pets |
+| `maria.oliveira@email.com` | `tutor12345` | `TUTOR` | só os próprios pets (outro dono, para testar o isolamento) |
+
+O gestor e a veterinária são da **mesma clínica** de propósito: é o par que
+demonstra o escopo transitivo `usuario -> veterinario -> clinica`, e que um não
+alcança o que é do outro.
+
+**Em quais perfis a semeadura roda:** `dev`, `h2`, `oracle` e `local`. O perfil
+`mysql` — o de produção — está fora da lista de propósito, para que o banco de
+entrega não receba credencial de desenvolvimento. Quem sobe o stack do Docker
+precisa então de `SPRING_PROFILES_ACTIVE=mysql,local`: `mysql` traz a conexão,
+`local` traz os usuários. Só `mysql` faz a API subir certinho e todo login
+responder **401**, porque não há usuário nenhum no banco.
+
+O registro público (`POST /api/v1/auth/registrar`) cria apenas `TUTOR`. Os outros
+três perfis existem por esta semeadura ou pela criação manual via `ADMIN`.
 
 Obtenha um token e use-o no cabeçalho `Authorization`:
 

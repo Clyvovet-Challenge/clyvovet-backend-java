@@ -24,7 +24,19 @@ import java.util.function.Consumer;
  * numa migration: hash de credencial nao deve ser versionado, e uma migration
  * com senha fixa acabaria aplicada tambem no banco de entrega.
  *
- * Ativo nos perfis dev, h2 e oracle. Idempotente — nada e recriado se ja existe.
+ * Ativo nos perfis dev, h2, oracle e local. Idempotente — nada e recriado se
+ * ja existe.
+ *
+ * O perfil local entrou em 10/09/2026. O stack do Docker de desenvolvimento sobe
+ * a API com SPRING_PROFILES_ACTIVE=mysql, para falar com o MySQL 8 do compose --
+ * e mysql NAO esta nesta lista, de proposito. O efeito colateral era que o banco
+ * local subia sem usuario nenhum: as credenciais que os READMEs documentam
+ * devolviam 401, e a unica saida era registrar um tutor a mao pelo endpoint
+ * publico -- que nao cria veterinario nem admin.
+ *
+ * A correcao mantem a separacao: o compose passou a ativar "mysql,local", onde
+ * mysql traz a conexao e local traz a semeadura. Producao continua ativando
+ * apenas mysql, e continua sem receber usuario de desenvolvimento.
  *
  * O perfil oracle entrou na lista em 30/08/2026, quando o Oracle da FIAP virou
  * o banco de teste do projeto: sem estes usuarios a suite nao consegue fazer
@@ -35,7 +47,7 @@ import java.util.function.Consumer;
  */
 @Slf4j
 @Configuration
-@Profile({"dev", "h2", "oracle"})
+@Profile({"dev", "h2", "oracle", "local"})
 @RequiredArgsConstructor
 public class DevDataSeeder {
 

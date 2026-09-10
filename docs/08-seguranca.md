@@ -329,8 +329,15 @@ nunca executa. Métodos sem corpo (`GET`, `DELETE`) devolvem 403 direto.
 
 ## Usuários de desenvolvimento
 
-Criados por `DevDataSeeder`, ativo apenas nos perfis `dev` e `h2`. Os hashes são
-gerados em tempo de execução — hash de senha não é versionado em migration.
+Criados por `DevDataSeeder`, ativo nos perfis `dev`, `h2`, `oracle` e `local` — e
+fora do `mysql`, que é o de produção. Os hashes são gerados em tempo de execução
+— hash de senha não é versionado em migration.
+
+O perfil `local` existe para o stack do Docker de desenvolvimento, que precisa do
+MySQL do compose **e** dos usuários: `SPRING_PROFILES_ACTIVE=mysql,local`. Com
+`mysql` sozinho a aplicação sobe e conecta, mas o banco fica sem usuário nenhum e
+todo login responde 401 — e como o registro público só cria `TUTOR`, não haveria
+por onde entrar nos outros três perfis.
 
 | E-mail | Senha | Perfil | Vínculo |
 |---|---|---|---|
