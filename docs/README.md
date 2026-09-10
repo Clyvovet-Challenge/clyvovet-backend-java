@@ -28,6 +28,8 @@ silenciosamente corrigido no texto.
 | [11-auditoria-de-arquitetura.md](11-auditoria-de-arquitetura.md) | Auditoria de 06/09/2026: decisão de banco compartilhado, o que esta API é dona e o que ela precisa corrigir |
 | [12-plano-de-entrega-sprint3.md](12-plano-de-entrega-sprint3.md) | **O plano da entrega de 12/09.** A régua de avaliação de DevOps e Java Advanced, a infraestrutura decidida, a ordem de execução e o cronograma |
 | [13-arquitetura-na-azure.md](13-arquitetura-na-azure.md) | O desenho da arquitetura e seu par escrito: os cinco recursos com SKU e script, os quatro fluxos, o orçamento de conexões e o que ficou deliberadamente fora |
+| [14-roteiro-do-video.md](14-roteiro-do-video.md) | O roteiro da gravação de DevOps, onde estão 80 dos 100 pontos da disciplina |
+| [15-catalogo-de-racas.md](15-catalogo-de-racas.md) | Por que `raca` deixou de ser texto livre: o catálogo, a coluna `chave` que liga API, app e arte, e as três armadilhas que só apareceram rodando |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta

@@ -147,9 +147,23 @@ Raiz do cadastro: não depende de nenhuma outra entidade.
 | `dataNascimento` | `LocalDate` | `data_nascimento` | |
 | `observacao` | `String` | `observacoes` | singular no Java, plural na coluna |
 | `tutor` | `Tutor` | `tutor_id` | `@ManyToOne` EAGER |
+| `racaDoCatalogo` | `Raca` | `raca_id` | `@ManyToOne` EAGER, **nulável** |
 
 `porte` aceita qualquer string na aplicação, mas o Oracle restringe a
 `PEQUENO`/`MEDIO`/`GRANDE` via check constraint.
+
+> **`raca` (texto) e `racaDoCatalogo` convivem, e a regra é uma só:** com
+> `raca_id` preenchido, `raca` é cópia do catálogo; com ele nulo, `raca` é o que
+> o tutor digitou.
+>
+> A FK é **nulável** porque são 200 e poucas raças de cachorro e o catálogo lista
+> 45 — "outra raça" precisa continuar existindo. E manter a coluna de texto é o
+> que fez a `V14` não quebrar nada: todo `SELECT`, o widget de saúde preditiva da
+> API .NET e o `AnimalResponse` continuam lendo `raca` como sempre leram.
+>
+> `especie` e `porte` também são derivados do catálogo quando a raça vem dele.
+> Ver o item 12 de [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md).
+
 
 ### Clinica
 
@@ -178,6 +192,33 @@ parceira. Também é raiz do cadastro.
 > coordenada é decimal exato. Introduzidas pela migração `V13`, para a tela de
 > mapa de clínicas — 🚧 **ainda em construção** no app; ver o item 21 de
 > [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md).
+
+### Raca
+
+[`Raca.java`](../src/main/java/br/com/fiap/clyvovet/model/Raca.java) — o catálogo
+de raças. Introduzido pela `V14`.
+
+| Campo Java | Tipo | Coluna | Observação |
+|---|---|---|---|
+| `id` | `UUID` | `id` | PK |
+| `especie` | `EspecieAnimal` | `especie` | enum: `CAO`, `GATO`, `ROEDOR`, `AVE`, `REPTIL` |
+| `nome` | `String` | `nome` | o que o tutor lê: "Golden Retriever" |
+| `chave` | `String` | `chave` | **UNIQUE** — o que o código usa: `golden-retriever` |
+| `porteTipico` | `String` | `porte_tipico` | pré-preenche o cadastro; nulável |
+| `ativo` | `boolean` | `ativo` | `INT` no MySQL, `NUMBER(1)` no Oracle |
+
+> **`chave` é a razão desta tabela existir.** É o mesmo identificador em três
+> lugares: a arte em pixel do animal no app, a predisposição de saúde na API
+> .NET, e a busca no cliente. Ninguém normaliza nada porque não há o que
+> normalizar — quem escolhe do catálogo já recebe a chave pronta.
+>
+> **Só leitura pela API.** O catálogo muda por migração, não por chamada: deixar
+> qualquer cliente inserir linha ali traria de volta o problema que a tabela veio
+> resolver.
+>
+> **`ativo` é `INT`, não `TINYINT`.** O `NumericBooleanConverter` do Hibernate
+> mapeia boolean para `INTEGER`, e o perfil `mysql` roda com `ddl-auto=validate`
+> — com `TINYINT` a aplicação não sobe.
 
 ### Veterinario
 

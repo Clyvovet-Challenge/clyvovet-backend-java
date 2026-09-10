@@ -26,7 +26,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 9 | Cache não invalida entre entidades relacionadas | Média | Cache | aberto |
 | 10 | NPE em `endereco` ou `sexo` nulos | Média | Mapper | ✅ null-guard no `EnderecoMapper`; `sexo` virou enum |
 | 11 | Ausência de `@Transactional` nos services | Baixa | Consistência | ✅ escritas e leituras anotadas |
-| 12 | `especie` e `porte` como texto livre | Baixa | Modelo | aberto |
+| 12 | `especie`, `porte` e `raca` como texto livre | Média | Modelo | ✅ catálogo `t_clyvo_raca` na `V14`; falta a .NET usar a `chave` |
 | 13 | Único teste, que depende do Oracle | Baixa | Testes | ✅ 98 testes, perfil fixo em `dev` |
 | 14 | README desatualizado na seção de estrutura | Baixa | Documentação | ✅ corrigido |
 | 15 | Inconsistências internas de padrão | Baixa | Código | ✅ parcial — resta `PagamentoResponse` com `@Data` |
@@ -382,23 +382,71 @@ classe e o item de bloqueio de conta em [08-seguranca](08-seguranca.md).
 
 ---
 
-## 12. `especie` e `porte` como texto livre
+## 12. `especie` e `porte` como texto livre ✅
 
-**Severidade: baixa**
+**Severidade: baixa na origem, alta no efeito** — ver abaixo por que subiu.
 
-Ambos são `String` na entidade [`Animal`](../src/main/java/br/com/fiap/clyvovet/model/Animal.java),
-validados apenas por tamanho (3–100).
+Ambos eram `String` na entidade [`Animal`](../src/main/java/br/com/fiap/clyvovet/model/Animal.java),
+validados só por tamanho (3–100). E `raca`, que este item não citava, era o pior
+dos três: nem constraint no banco tinha.
 
-O banco restringe `porte` a `PEQUENO`/`MEDIO`/`GRANDE` por check constraint — mas a
-aplicação aceita `"grande"` minúsculo, que o Oracle rejeita.
+Medido no MySQL antes da correção, com 28 animais:
 
-Para `especie` não há constraint nenhuma, e as fontes divergem: o seed grava
-`'CAO'`/`'GATO'`, o README exemplifica `"CACHORRO"`. Ambos convivem no banco, o que
-quebra o filtro `?especie=CAO`, que não encontra os registros gravados como
-`CACHORRO`.
+| O que foi digitado | Grafias |
+|---|---|
+| espécie "cachorro" | `Cachorro` · `CAO` · `CANINO` |
+| espécie "gato" | `Gato` · `GATO` · `FELINO` |
+| sem raça definida | `SRD` · `Vira` · `Vira-lata` — **9 animais** |
+| sem acento | `Pastor Alemao`, `Bulldog Frances` |
 
-**Correção:** transformar os dois em enums, à semelhança de `TipoEvento`. Isso alinha
-API, banco e documentação de uma vez e faz o filtro passar a ser confiável.
+### Por que a severidade era maior do que este item supunha
+
+O widget de saúde preditiva da **API .NET** casa raça para sugerir risco de
+doença. Sem padronização, ele compara por substring:
+
+```csharp
+// a raça do Animal vem de texto livre da API Java, sem padronização.
+return a.Contains(b) || b.Contains(a);
+```
+
+Isso erra dos dois lados: `Siames` não casa com `Siamês`, e uma predisposição
+cadastrada como `Terrier` casa com Yorkshire, Bull e Fox Terrier — raças com
+predisposições diferentes. Num recurso que fala de doença.
+
+### O que foi feito, e por que não foi enum
+
+Este item propunha "transformar os dois em enums". **Enum serve para espécie e
+não serve para raça:** são 200 e poucas de cachorro, e acrescentar uma viraria
+mudança de código e redeploy.
+
+A `V14` criou **`t_clyvo_raca`** — catálogo com 45 raças em cinco espécies — e
+`t_clyvo_animal.raca_id` apontando para ele. A coluna que resolve o problema é
+**`chave`** (`golden-retriever`): o mesmo identificador na arte do animal no
+app, na predisposição da .NET e na busca do cliente. Quem escolhe do catálogo
+recebe a chave pronta, então não sobra o que normalizar.
+
+**Espécie continua `String`, e de propósito** — mas agora é *derivada*: escolher
+a raça grava `especie` a partir do catálogo. Uniformiza sem quebrar o widget da
+.NET nem o `AnimalResponse`, que leem espécie como texto.
+
+**Porte** ganhou `@Pattern` case-insensitive e normalização para maiúscula no
+mapper. Isso fechou duas coisas: porte inválido era **500** (erro de integridade
+vazando como "a API quebrou") e virou **400** com mensagem; e o formulário do app
+manda `Pequeno`, que a colação do MySQL (`utf8mb4_0900_ai_ci`) aceita contra
+`PEQUENO` mas a do **Oracle não** — o mesmo cadastro que funcionava aqui seria
+recusado lá.
+
+### Verificado
+
+Contra o MySQL real, do zero: 14 migrations, **6 de 6 animais do seed** casados
+com o catálogo, espécie de 5 grafias para 2. E `MigrationsMySqlTest` cobre a
+reconciliação contra H2.
+
+### O que ficou pendente
+
+A **API .NET** trocar o texto `Raca` da predisposição por `raca_chave`, e o
+`Contains` por igualdade. Enquanto isso não acontece ela continua funcionando —
+e melhor do que antes, porque o texto que ela lê agora é uniforme.
 
 ---
 

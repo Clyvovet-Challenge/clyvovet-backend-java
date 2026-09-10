@@ -255,6 +255,53 @@ Content-Type: application/json
 
 ---
 
+## Raças — `/api/v1/racas`
+
+[`RacaController.java`](../src/main/java/br/com/fiap/clyvovet/controller/RacaController.java)
+
+O catálogo que alimenta o seletor de raça do cadastro de animal. Introduzido pela
+migração `V14`.
+
+### `GET /racas`
+
+| Parâmetro | Tipo | Obrigatório | Valores |
+|---|---|---|---|
+| `especie` | enum | não | `CAO` `GATO` `ROEDOR` `AVE` `REPTIL` |
+
+Devolve um **array puro, sem paginação** — são 45 linhas e o cliente precisa de
+todas de uma vez para montar o seletor. Paginar obrigaria a tela a juntar páginas
+para exibir uma lista.
+
+```json
+[
+  {
+    "id": "22222222-0000-0000-0000-000000000001",
+    "especie": "CAO",
+    "especieRotulo": "Cachorro",
+    "nome": "Golden Retriever",
+    "chave": "golden-retriever",
+    "porteTipico": "GRANDE"
+  }
+]
+```
+
+> **`chave` é o campo que justifica este endpoint.** É o mesmo identificador na
+> arte em pixel do animal no app, na predisposição de saúde da API .NET e na
+> busca do cliente. Quem escolhe do catálogo recebe a chave pronta — não sobra o
+> que normalizar.
+>
+> `especieRotulo` vem junto de propósito: é o texto que vai para
+> `Animal.especie` (`"Cachorro"`), e derivá-lo no cliente espalharia a regra por
+> dois lugares.
+
+**Não há POST, PUT nem DELETE.** O catálogo muda por migração: deixar qualquer
+cliente inserir linha traria de volta o problema que ele veio resolver.
+
+Cacheado no servidor (`racas`), porque entre dois deploys a resposta é sempre a
+mesma e a tela de cadastro pede toda vez que abre.
+
+---
+
 ## Animais — `/api/v1/animais`
 
 [`AnimalController.java`](../src/main/java/br/com/fiap/clyvovet/controller/AnimalController.java)
@@ -265,18 +312,46 @@ Content-Type: application/json
 |---|---|---|---|
 | `nome` | string | sim | 3–100 caracteres |
 | `raca` | string | sim | 3–100 caracteres |
+| `racaId` | UUID | **não** | do catálogo — ver a nota abaixo |
 | `especie` | string | sim | 3–100 caracteres, texto livre |
-| `porte` | string | sim | 3–100 caracteres |
+| `porte` | string | sim | `PEQUENO` `MEDIO` `GRANDE` (case-insensitive) |
 | `cor` | string | sim | 3–100 caracteres |
 | `sexo` | enum | sim | `MACHO` `FEMEA` `DESCONHECIDO` |
 | `dataNascimento` | date | sim | `yyyy-MM-dd` |
 | `observacao` | string | não | sem limite declarado |
 | `tutorId` | UUID | sim | deve existir → senão 404 |
 
+> **`racaId` é opcional e o catálogo ganha do texto.**
+>
+> Quem não manda continua funcionando como antes, com a raça em texto livre.
+> Quem manda tem três campos **sobrescritos** a partir do catálogo: `raca` recebe
+> o nome canônico, `especie` recebe o rótulo da espécie, e `porte` só é
+> preenchido **se veio vazio** — porte é sugestão, não verdade, e existe Poodle
+> grande.
+>
+> Isso significa que um par incoerente não corrompe nada: mandar
+> `racaId` de Dachshund com `raca: "vira lata qualquer"` e `especie: "CANINO"`
+> grava `Dachshund` / `Cachorro`. Verificado.
+>
+> `racaId` inexistente devolve **404**, não `null` silencioso — um cliente que
+> manda raça errada precisa saber, senão o animal seria salvo com o texto livre e
+> ninguém perceberia que o catálogo não foi aplicado.
+
+> **`porte` inválido devolve 400, e não mais 500.** O `chk_animal_porte` existe
+> desde a `V1`, mas nada validava antes de chegar ao banco: o erro de integridade
+> voltava como 500, que o cliente lê como "a API quebrou". A comparação é
+> case-insensitive e o valor é normalizado para maiúscula — o formulário do app
+> manda `Pequeno`, que a colação do MySQL aceita mas a do Oracle não.
+
 ### Response
 
 `id`, `nome`, `raca`, `especie`, `porte`, `cor`, `sexo`, `dataNascimento`,
-`observacao`, `tutorId`, `tutorNome`
+`observacao`, `tutorId`, `tutorNome`, `microchip`, `castrado`,
+`resumoDeSegurancaAtivo`, `racaId`, `racaChave`
+
+> `racaId` e `racaChave` são **nulos** quando o animal tem raça que o catálogo
+> não cobre — e aí `raca` (texto) é a única informação que existe. É o caminho de
+> "Labrador misto", que diz algo que "Labrador" não diz.
 
 O `tutorNome` vem desnormalizado para poupar uma segunda chamada.
 
