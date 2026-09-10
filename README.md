@@ -278,7 +278,25 @@ GET  /api/v1/animais/{id}/acessos               quem leu, e quando
 GET  /api/v1/autorizacoes/minhas
 POST /api/v1/autorizacoes/{id}/revogar
 POST /api/v1/animais/{id}/alertas
+
+GET    /api/v1/animais/{id}/documentos                    anexos (sem o arquivo)
+POST   /api/v1/animais/{id}/documentos                    multipart: arquivo + titulo
+GET    /api/v1/animais/{id}/documentos/{docId}/arquivo    os bytes
+DELETE /api/v1/animais/{id}/documentos/{docId}
 ```
+
+**Os anexos seguem a autorização do histórico, não uma própria.** Ler um laudo
+exige **nível 2** — o nível 1 é curto de propósito e um PDF não tem versão
+curta. O veterinário sem consentimento usa a quebra de vidro, que passa a
+liberar o arquivo pelo resto do dia: a liberação **é** o registro dela.
+
+Baixar um arquivo aparece em `GET /animais/{id}/acessos`, como aparece a leitura
+do histórico. Não há porta por onde ler o prontuário sem deixar rastro.
+
+O arquivo vive em `LONGBLOB` na própria tabela (V17), com teto de 8 MB e lista
+fechada de tipos (PDF, JPG, PNG) verificada **pelos bytes do arquivo**, não pelo
+`Content-Type` que o cliente declara. `clyvovet.documentos.habilitado=false`
+apaga as quatro rotas do contexto sem tocar no resto da API.
 
 **O microchip identifica; nunca autoriza.** Ele está impresso na carteira de
 vacinação e qualquer leitor de pet shop o lê — quem credencia o nível 1 é a
@@ -426,6 +444,9 @@ proteção da vida do animal, consentimento do tutor.
 | `GET /animais/{id}/acessos` | Quem leu o prontuário deste animal, e quando | **Tutor dono ou administrador** |
 | `POST /animais/{id}/alertas` · `DELETE /alertas/{id}` | Alergia, condição crônica, medicação contínua | Tutor dono, veterinário ou administrador |
 | `GET /autorizacoes/minhas` · `POST /autorizacoes/{id}/revogar` | O tutor vê e retira o acesso das clínicas | Tutor dono |
+| `GET /animais/{id}/documentos` · `/{docId}/arquivo` | Os anexos e os bytes do laudo | **Nível 2**: tutor dono, admin, ou clínica com consentimento (ou quebra de vidro no dia) |
+| `POST /animais/{id}/documentos` | Anexa PDF/JPG/PNG ao prontuário | **Nível 2 sempre** — a emergência justifica ler, não gravar |
+| `DELETE /animais/{id}/documentos/{docId}` | Remove um anexo | **Só quem enviou**, ou o admin da plataforma |
 | `GET /auditoria/excessos` · `/quebras-de-vidro` | Quem anda lendo prontuários demais | Administrador |
 
 O microchip **identifica, nunca autoriza**. Tetos de leitura: 30 animais distintos por dia alertam, 150 bloqueiam.

@@ -137,8 +137,15 @@ public class HistoricoService {
     // Resolucao de nivel
     // ------------------------------------------------------------------
 
-    /** Quanto este usuario alcanca sobre este animal. */
-    private NivelAcesso nivelSobre(Animal animal) {
+    /**
+     * Quanto este usuario alcanca sobre este animal.
+     *
+     * <p>Visivel ao pacote, e nao privada, porque {@code DocumentoClinicoService}
+     * decide sobre o ARQUIVO do prontuario com a mesma regra que decide sobre o
+     * texto dele. Duplicar esta resolucao la seria criar uma segunda politica de
+     * acesso ao mesmo dado clinico — e a segunda envelheceria sozinha.</p>
+     */
+    NivelAcesso nivelSobre(Animal animal) {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
         if (usuario == null) {
             return NivelAcesso.OPERACIONAL;
@@ -367,8 +374,15 @@ public class HistoricoService {
         }
     }
 
-    /** Uma linha por (usuario, animal, dia); a segunda leitura incrementa. */
-    private void registrarAcesso(Animal animal, NivelAcesso nivel, boolean emergencial, String motivo) {
+    /**
+     * Uma linha por (usuario, animal, dia); a segunda leitura incrementa.
+     *
+     * <p>Visivel ao pacote pelo mesmo motivo que {@code nivelSobre}: baixar o
+     * laudo E ler o prontuario, e precisa aparecer na mesma auditoria que o
+     * tutor consulta. Um download que nao registrasse acesso seria a unica porta
+     * do sistema por onde se le o historico sem deixar rastro.</p>
+     */
+    void registrarAcesso(Animal animal, NivelAcesso nivel, boolean emergencial, String motivo) {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
         if (usuario == null) {
             return;

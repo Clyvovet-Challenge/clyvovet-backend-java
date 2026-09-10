@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -187,6 +188,22 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(new ErroValidacao(
                 "sort", "Não é possível ordenar por " + propriedade + "."));
+    }
+
+    /**
+     * O upload passou do limite do parser de multipart.
+     *
+     * <p>Sem este handler a excecao escapa do {@code @ControllerAdvice} e o
+     * cliente le <b>500</b> — "erro no servidor" para algo que o servidor
+     * recusou de proposito, e que a pessoa resolve escolhendo outro arquivo. O
+     * teto do parser fica acima do teto da feature (ver comum.properties), de
+     * modo que este caminho e a rede de fora: o arquivo absurdo, nao o arquivo
+     * grande.</p>
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErroValidacao> handleUploadGrande(MaxUploadSizeExceededException ex) {
+        return respostaDe(HttpStatus.PAYLOAD_TOO_LARGE, "arquivo",
+                "O arquivo é grande demais para ser enviado.");
     }
 
     @ExceptionHandler(BadCredentialsException.class)

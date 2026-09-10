@@ -22,6 +22,7 @@ public enum Recurso {
     PAGAMENTO("Pagamento não encontrado"),
     RACA("Raça não encontrada"),
     DISPONIBILIDADE("Disponibilidade não encontrada"),
+    DOCUMENTO("Documento não encontrado"),
     SERVICO("Serviço não encontrado"),
     SOLICITACAO_ALTERACAO("Solicitação de alteração não encontrada"),
     TUTOR("Tutor não encontrado"),
