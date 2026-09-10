@@ -28,7 +28,7 @@ public class AnimalMapper {
         animal.setNome(request.getNome());
         animal.setRaca(request.getRaca());
         animal.setEspecie(request.getEspecie());
-        animal.setPorte(emMaiuscula(request.getPorte()));
+        animal.setPorte(request.getPorte());
         animal.setCor(request.getCor());
         animal.setSexo(request.getSexo());
         animal.setDataNascimento(request.getDataNascimento());
@@ -52,15 +52,6 @@ public class AnimalMapper {
      * O porte so e preenchido se veio vazio porque ele e uma sugestao, nao uma
      * verdade: existe Poodle grande, e quem conhece o animal e o tutor.
      */
-    /**
-     * O CHECK do banco compara com 'PEQUENO'/'MEDIO'/'GRANDE' em maiuscula, e a
-     * do Oracle e sensivel a caixa. O formulario do app manda "Pequeno".
-     * Normalizar aqui e o que faz o mesmo cadastro passar nos dois bancos.
-     */
-    private static String emMaiuscula(String texto) {
-        return texto == null ? null : texto.trim().toUpperCase();
-    }
-
     private void aplicarCatalogo(Animal animal, Raca raca) {
         animal.setRacaDoCatalogo(raca);
         if (raca == null) return;
@@ -77,7 +68,7 @@ public class AnimalMapper {
         aplicarSePresente(patch.getNome(), animal::setNome);
         aplicarSePresente(patch.getRaca(), animal::setRaca);
         aplicarSePresente(patch.getEspecie(), animal::setEspecie);
-        aplicarSePresente(emMaiuscula(patch.getPorte()), animal::setPorte);
+        aplicarSePresente(patch.getPorte(), animal::setPorte);
         aplicarSePresente(patch.getCor(), animal::setCor);
         aplicarSePresente(patch.getSexo(), animal::setSexo);
         aplicarSePresente(patch.getDataNascimento(), animal::setDataNascimento);

@@ -178,6 +178,74 @@ class SolicitacaoAlteracaoFluxoTest extends TesteDeApi {
                 .andExpect(status().isConflict());
     }
 
+    /**
+     * O porte em outra caixa NAO e uma alteracao.
+     *
+     * <p>Era, e o tutor via {@code porte: PEQUENO -> Pequeno} no pedido para
+     * aprovar — o mesmo porte apresentado como mudanca. Verificado contra o MySQL
+     * do docker-compose antes da correcao.</p>
+     */
+    @Test
+    @DisplayName("porte na mesma caixa que o atual nao vira alteracao")
+    void porteEmOutraCaixaNaoEUmaAlteracao() throws Exception {
+        String lucas = tokenTutor(LUCAS);
+        String atual = corpoDe(buscar("/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS, lucas))
+                .get("porte").asText();
+
+        // "PEQUENO" -> "Pequeno": e o que o formulario do app manda.
+        String comoOAppManda = atual.charAt(0) + atual.substring(1).toLowerCase();
+
+        criar(urlPedir(), tokenVeterinaria(),
+                "{\"justificativa\":\"Reavaliacao de porte na consulta.\",\"porte\":\""
+                        + comoOAppManda + "\"}")
+                .andExpect(status().isConflict());
+    }
+
+    /**
+     * O porte aprovado entra em CAIXA ALTA no cadastro.
+     *
+     * <p>A normalizacao vivia no {@code AnimalMapper} e cobria o POST e o PATCH.
+     * Este caminho — solicitacao aprovada — chama {@code aplicarEm}, que escreve
+     * direto na entidade, e escapava: um pedido com {@code "porte":"grande"}
+     * gravava {@code 'grande'}.</p>
+     *
+     * <p>No MySQL o dano fica escondido, porque a colacao padrao e
+     * {@code _ai_ci} e o CHECK aceita. <b>No Oracle a aprovacao falharia</b> com
+     * violacao de {@code chk_animal_porte} — um erro de banco na cara do tutor,
+     * so no banco que a suite nao usa.</p>
+     */
+    @Test
+    @DisplayName("porte de pedido aprovado e gravado em caixa alta")
+    void porteAprovadoEGravadoEmCaixaAlta() throws Exception {
+        String lucas = tokenTutor(LUCAS);
+        String vet = tokenVeterinaria();
+        String url = "/api/v1/animais/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS;
+        String original = corpoDe(buscar(url, lucas)).get("porte").asText();
+
+        // Um porte DIFERENTE do atual, para o pedido nao cair no "nada muda", e
+        // em minuscula, que e o formato que escapava.
+        String proposto = original.equalsIgnoreCase("GRANDE") ? "medio" : "grande";
+
+        String pedidoId = corpoDe(criar(urlPedir(), vet,
+                "{\"justificativa\":\"Reavaliacao de porte na consulta.\",\"porte\":\""
+                        + proposto + "\"}")
+                .andExpect(status().isCreated())).get("id").asText();
+
+        criar("/api/v1/solicitacoes-alteracao/" + pedidoId + "/aprovar", lucas, "")
+                .andExpect(status().isOk());
+
+        try {
+            assertThat(corpoDe(buscar(url, lucas)).get("porte").asText())
+                    .as("o CHECK do Oracle e sensivel a caixa; gravar 'grande' quebraria a aprovacao la")
+                    .isEqualTo(proposto.toUpperCase());
+        } finally {
+            // A suite compartilha o banco: devolver o porte evita que este teste
+            // decida o resultado do proximo.
+            atualizarParcialmente(url, lucas, "{\"porte\":\"" + original + "\"}")
+                    .andExpect(status().isOk());
+        }
+    }
+
     @Test
     @DisplayName("o mesmo veterinario nao empilha dois pedidos no mesmo animal")
     void naoEmpilhaPedidosDuplicados() throws Exception {

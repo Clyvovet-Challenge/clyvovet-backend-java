@@ -130,6 +130,19 @@ public class SolicitacaoAlteracao {
      * <p>Só os campos preenchidos são tocados — o mesmo contrato do PATCH: o que
      * não veio no pedido continua como está, e nunca é apagado.</p>
      */
+    /**
+     * O porte proposto, normalizado como o do animal.
+     *
+     * <p>Sem isto o diff apresentado ao tutor diria
+     * {@code porte: PEQUENO -> Pequeno} — e ele aprovaria uma alteracao que nao
+     * altera nada. Com a normalizacao, o {@code nadaMudaria} do service reconhece
+     * o pedido vazio e o recusa com a frase certa: "os valores enviados sao
+     * iguais aos que o animal ja tem".</p>
+     */
+    public void setPorte(String porte) {
+        this.porte = Animal.porteNormalizado(porte);
+    }
+
     public void aplicarEm(Animal alvo) {
         if (nome != null) alvo.setNome(nome);
         if (raca != null) alvo.setRaca(raca);

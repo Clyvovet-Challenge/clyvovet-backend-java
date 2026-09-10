@@ -24,6 +24,10 @@
     {
       "key": "refreshToken",
       "value": ""
+    },
+    {
+      "key": "idDocumento",
+      "value": ""
     }
   ],
   "item": [
@@ -2679,6 +2683,155 @@
                 {
                   "key": "token",
                   "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Documentos do prontuário",
+      "description": "Os anexos clínicos: o PDF do laudo, a foto do raio-X (V17).\n\nA AUTORIZAÇÃO É A DO HISTÓRICO, e não uma própria. Ler exige NÍVEL 2 — o nível 1 é curto de propósito e um PDF não tem versão curta. Quem não tem consentimento usa a quebra de vidro (pasta 10), que libera o arquivo pelo resto do dia.\n\nBaixar aparece em GET /animais/{id}/acessos, como aparece a leitura do histórico: não há porta por onde ler o prontuário sem deixar rastro.\n\nDesligável por inteiro com clyvovet.documentos.habilitado=false — as quatro rotas passam a responder 404 e o resto da API não muda.",
+      "item": [
+        {
+          "name": "Anexar um PDF ao prontuário",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/documentos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "documentos"
+              ]
+            },
+            "description": "multipart/form-data. Escolha um PDF no campo `arquivo` antes de enviar (o Postman não versiona o arquivo).\n\nO TIPO VEM DOS PRIMEIROS BYTES DO ARQUIVO, não do Content-Type: o cabeçalho é uma afirmação de quem envia, e um .exe renomeado chega dizendo application/pdf. Aceita PDF, JPG e PNG, até 8 MB.\n\n409 em: formato não aceito, arquivo grande, duplicata (comparada por SHA-256, não por nome) e teto de 30 documentos por animal.\n\n`eventoId` é opcional e liga o anexo a um atendimento. Sem ele, o documento é um laudo trazido de fora — o caso do tutor que anexa o exame de uma clínica que não usa o ClyvoVet.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "arquivo",
+                  "type": "file",
+                  "src": [],
+                  "description": "O PDF, JPG ou PNG. Obrigatório."
+                },
+                {
+                  "key": "titulo",
+                  "value": "Hemograma completo",
+                  "type": "text",
+                  "description": "O que o tutor lê na lista. Até 150 caracteres."
+                },
+                {
+                  "key": "eventoId",
+                  "value": "",
+                  "type": "text",
+                  "disabled": true,
+                  "description": "Opcional: o atendimento que gerou o documento."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar os documentos do animal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/documentos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "documentos"
+              ]
+            },
+            "description": "Os metadados, SEM o arquivo — a consulta projeta só as colunas de texto. Trazer o BLOB aqui custaria 240 MB no pior caso para desenhar uma lista de nomes.\n\n`origem` distingue \"CLINICA\" de \"TUTOR\": um laudo que a clínica anexou é registro clínico, e o que o tutor trouxe de fora é documento de procedência diferente. O próximo veterinário precisa da diferença.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Baixar o arquivo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/documentos/{{idDocumento}}/arquivo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "documentos",
+                "{{idDocumento}}",
+                "arquivo"
+              ]
+            },
+            "description": "Os bytes, com Content-Disposition: attachment e Cache-Control: no-store — um laudo não deve ficar em cache de proxy.\n\nO documento precisa pertencer AO ANIMAL do caminho. Sem essa conferência, o id do arquivo bastaria para tirar o laudo de qualquer paciente cujo dono se conhece.\n\nCada download registra acesso: confira em \"Quem leu o histórico\" (pasta 10).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover um documento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/animais/44444444-4444-4444-4444-000000000001/documentos/{{idDocumento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "animais",
+                "44444444-4444-4444-4444-000000000001",
+                "documentos",
+                "{{idDocumento}}"
+              ]
+            },
+            "description": "SOMENTE QUEM ENVIOU, ou o ADMIN da plataforma.\n\nNão é o dono do prontuário e não é a clínica, e a escolha evita as duas assimetrias ruins: o tutor apagando o laudo que a clínica anexou faria a clínica perder o próprio registro; a clínica apagando o que o tutor trouxe tiraria dele o único ponto em que alimenta o prontuário.\n\nO ADMIN passa porque a LGPD não aceita \"quem enviou não trabalha mais aqui\".",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTutor}}",
                   "type": "string"
                 }
               ]

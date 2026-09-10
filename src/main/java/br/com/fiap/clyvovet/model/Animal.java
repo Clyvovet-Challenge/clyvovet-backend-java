@@ -25,6 +25,10 @@ public class Animal {
      */
     private String raca;
     private String especie;
+    /**
+     * 'PEQUENO', 'MEDIO' ou 'GRANDE'. Ver {@link #setPorte(String)}: a caixa
+     * alta nao e convencao, e o que o CHECK do banco exige.
+     */
     private String porte;
     private String cor;
 
@@ -80,4 +84,45 @@ public class Animal {
     @Convert(converter = NumericBooleanConverter.class)
     @Column(name = "resumo_seguranca_ativo")
     private Boolean resumoDeSegurancaAtivo = Boolean.TRUE;
+
+    /**
+     * O porte, sempre em caixa alta.
+     *
+     * <h2>Por que a normalizacao mora AQUI, e nao no mapper</h2>
+     *
+     * <p>O {@code chk_animal_porte} da V1 compara com 'PEQUENO', 'MEDIO' e
+     * 'GRANDE', e o CHECK do <b>Oracle e sensivel a caixa</b>. O formulario do
+     * app manda "Pequeno". Normalizar e o que faz o mesmo cadastro passar nos
+     * dois bancos.</p>
+     *
+     * <p>Isto ficava no {@code AnimalMapper}, e cobria apenas os caminhos que
+     * passam por ele — o POST e o PATCH. <b>O terceiro caminho escapava:</b> a
+     * solicitacao de alteracao aprovada chama {@code aplicarEm}, que escreve
+     * direto na entidade. Verificado contra o MySQL do docker-compose: um pedido
+     * com {@code "porte":"Pequeno"} aprovado pelo tutor gravava {@code 'Pequeno'}
+     * num animal que era {@code 'PEQUENO'}.</p>
+     *
+     * <p>No MySQL o dano fica escondido — a colacao padrao e {@code _ai_ci}, e o
+     * CHECK aceita. <b>No Oracle a aprovacao falharia</b> com violacao de
+     * constraint, e o tutor leria um erro de banco ao aceitar uma alteracao que o
+     * veterinario pediu. Um bug que so aparece no banco que a suite nao usa.</p>
+     *
+     * <p>No setter, nenhum caminho de escrita pode esquecer: quem grava porte
+     * grava normalizado, hoje e no proximo campo que alguem ligar a ele.</p>
+     */
+    public void setPorte(String porte) {
+        this.porte = porteNormalizado(porte);
+    }
+
+    /**
+     * A normalizacao, exposta para quem PROPOE um porte sem ser o animal.
+     *
+     * <p>Existe por causa da {@code SolicitacaoAlteracao}: se o pedido guardasse
+     * "Pequeno" cru, o diff que o tutor aprova mostraria
+     * {@code porte: PEQUENO -> Pequeno} — o mesmo porte apresentado como
+     * mudanca.</p>
+     */
+    public static String porteNormalizado(String porte) {
+        return porte == null ? null : porte.trim().toUpperCase();
+    }
 }
