@@ -4,6 +4,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import br.com.fiap.clyvovet.config.CorrelacaoFilter;
 import br.com.fiap.clyvovet.dto.exception.ErroValidacao;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,11 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
@@ -209,6 +215,84 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErroValidacao> handleCredenciais(BadCredentialsException ex) {
         return respostaDe(HttpStatus.UNAUTHORIZED, "credenciais", ex.getMessage());
+    }
+
+    /**
+     * A rede de seguranca: o que nenhum handler acima reconheceu.
+     *
+     * <p>Sem ela, a excecao inesperada nao sai por este arquivo — sai pelo
+     * tratamento padrao do Spring, que responde outro formato
+     * ({@code timestamp}, {@code status}, {@code error}, {@code path}) e em
+     * ingles. O aplicativo, que procura {@code mensagem}, cai no ultimo recurso
+     * do parser e mostra "Internal Server Error" ao tutor. Ou seja: justamente
+     * no pior momento, o contrato unico desta classe deixava de valer.</p>
+     *
+     * <p>Duas decisoes deliberadas:</p>
+     *
+     * <ul>
+     *   <li>A mensagem e generica. A de {@code ex} cita classe, tabela e as
+     *       vezes o SQL — nada disso ajuda quem le a tela, e entrega o desenho
+     *       interno para quem estiver sondando.</li>
+     *   <li>A referencia vai no corpo. E o unico erro em que o usuario nao tem o
+     *       que corrigir sozinho, entao o que resta e ele poder dizer <em>qual</em>
+     *       falha aconteceu. O mesmo id esta no log, junto da pilha.</li>
+     * </ul>
+     *
+     * <p><b>O que ela NAO pode capturar.</b> Um catch-all colocado aqui roda
+     * ANTES da traducao que o Spring e o Spring Security fazem sozinhos — o
+     * {@code ExceptionHandlerExceptionResolver} tem precedencia sobre os demais
+     * resolvers, e o {@code ExceptionTranslationFilter} da seguranca so ve o que
+     * escapa do DispatcherServlet. Na primeira versao deste metodo, 38 testes de
+     * autorizacao passaram a receber 500 no lugar de 403, e uma rota inexistente
+     * virou 500 no lugar de 404: o catch-all estava engolindo justamente as
+     * excecoes que ja sabiam o proprio status.</p>
+     *
+     * <p>Daí o {@link #jaSabeOProprioStatus}: se a excecao carrega a propria
+     * semantica HTTP, ela nao e inesperada — e devolvida a cadeia, que a traduz
+     * como sempre traduziu.</p>
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErroValidacao> handleInesperado(Exception ex) throws Exception {
+        if (jaSabeOProprioStatus(ex)) {
+            throw ex;
+        }
+
+        String referencia = CorrelacaoFilter.atual();
+        // A excecao inteira no log: a pilha e a unica coisa que sobra para
+        // investigar, ja que o corpo da resposta nao pode conta-la.
+        log.error("Falha nao tratada (referencia {})", referencia, ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErroValidacao(
+                        "servidor",
+                        "Erro inesperado no servidor. Tente novamente em instantes.",
+                        referencia));
+    }
+
+    /**
+     * A excecao ja diz qual resposta HTTP merece?
+     *
+     * <p>Tres familias dizem:</p>
+     *
+     * <ul>
+     *   <li>{@code AccessDeniedException} e {@code AuthenticationException} — a
+     *       cadeia do Spring Security responde 403 e 401 no formato do
+     *       {@code RespostaErroSeguranca}. Traduzi-las aqui daria 500 numa
+     *       negativa de acesso, que e o oposto do que aconteceu: o sistema
+     *       funcionou exatamente como devia.</li>
+     *   <li>{@code ErrorResponse} — a interface que as excecoes de MVC do Spring
+     *       implementam justamente para carregar o proprio status
+     *       ({@code NoResourceFoundException} 404,
+     *       {@code HttpRequestMethodNotSupportedException} 405, e as demais).</li>
+     *   <li>Qualquer excecao anotada com {@code @ResponseStatus}, que e a forma
+     *       declarativa de dizer a mesma coisa.</li>
+     * </ul>
+     */
+    private static boolean jaSabeOProprioStatus(Exception ex) {
+        return ex instanceof AccessDeniedException
+                || ex instanceof AuthenticationException
+                || ex instanceof ErrorResponse
+                || AnnotatedElementUtils.hasAnnotation(ex.getClass(), ResponseStatus.class);
     }
 
     private ResponseEntity<ErroValidacao> respostaDe(HttpStatus status, String campo, String mensagem) {
