@@ -2413,3 +2413,50 @@ ALTER TABLE t_clyvo_lembrete
 -- (status, agendado_em) e o que mantem essa consulta barata quando a tabela
 -- cresce.
 CREATE INDEX idx_lembrete_varredura ON t_clyvo_lembrete (status, agendado_em);
+
+
+-- ========================================================================
+-- V19__pinscher_fora_do_mvp
+-- ========================================================================
+
+-- ============================================================================
+-- V19 — o pinscher sai do seletor enquanto nao houver desenho dele
+-- ============================================================================
+--
+-- POR QUE
+--
+-- O catalogo de racas existe para dar ao animal uma `chave` estavel, e essa
+-- chave escolhe a arte em pixel que o aplicativo mostra no lugar da foto. O
+-- comentario da V14 ja dizia: "cada linha daqui vai ganhar uma arte em pixel --
+-- o catalogo nao pode crescer mais rapido do que alguem consegue desenhar".
+--
+-- O pinscher e a unica linha que ficou do lado errado dessa regra. As outras 39
+-- racas do catalogo tem sprite; ele nao, porque as tentativas de gerar a arte
+-- nao sairam utilizaveis.
+--
+-- Sem desenho, ele cai no icone generico da especie. Isso funciona, mas produz
+-- uma incoerencia visivel: numa grade em que os outros 17 caes aparecem
+-- desenhados, o pinscher e o unico quadrado com uma patinha. Quem esta
+-- cadastrando conclui que o aplicativo nao conhece a raca -- e conclui certo.
+--
+-- POR QUE DESATIVAR, E NAO APAGAR
+--
+-- `ativo` existe desde a V14 e o `RacaRepository` ja filtra por ele
+-- (`findByEspecieAndAtivoTrueOrderByNomeAsc`), entao um UPDATE tira a raca do
+-- seletor sem tocar em uma linha de codigo.
+--
+-- Apagar seria irreversivel e arriscado por dois motivos:
+--
+--   1. `t_clyvo_animal.raca_id` aponta para ca. Neste banco nenhum animal usa o
+--      pinscher -- conferido antes de escrever esta migration --, mas outro
+--      ambiente pode ter um, e o DELETE quebraria a chave estrangeira.
+--   2. Quem ja tem um pinscher cadastrado nao pode perder a raca do proprio
+--      cachorro porque falta desenho. Desativado, o cadastro antigo continua
+--      valido e integro; so nao se oferece a raca em cadastro novo.
+--
+-- QUANDO A ARTE EXISTIR
+--
+-- Uma linha desfaz isto:  UPDATE t_clyvo_raca SET ativo = 1 WHERE chave = 'pinscher';
+-- ============================================================================
+
+UPDATE t_clyvo_raca SET ativo = 0 WHERE chave = 'pinscher';
