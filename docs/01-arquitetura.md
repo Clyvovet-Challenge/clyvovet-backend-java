@@ -46,7 +46,7 @@ Raiz: `br.com.fiap.clyvovet`
 
 | Pacote | Papel | Arquivos |
 |---|---|---|
-| *(raiz)* | Bootstrap da aplicação | `ClyvovetApplication` |
+| *(raiz)* | Bootstrap da aplicação | `PetTrackApplication` |
 | `controller` | Expõe rotas REST, traduz HTTP ↔ DTO | 6 classes |
 | `service` | Orquestra regra de negócio e cache | 6 classes |
 | `repository` | Acesso a dados via Spring Data JPA | 6 interfaces |
@@ -59,7 +59,7 @@ Raiz: `br.com.fiap.clyvovet`
 
 ```
 src/main/java/br/com/fiap/clyvovet/
-├── ClyvovetApplication.java
+├── PetTrackApplication.java
 ├── controller/    AnimalController · ClinicaController · EventoClinicoController
 │                  PagamentoController · TutorController · VeterinarioController
 ├── service/       (mesmos 6 nomes, sufixo Service) · AuthService · UsuarioService
@@ -88,13 +88,13 @@ src/main/java/br/com/fiap/clyvovet/
 
 ## Bootstrap
 
-[`ClyvovetApplication`](../src/main/java/br/com/fiap/clyvovet/ClyvovetApplication.java)
+[`PetTrackApplication`](../src/main/java/br/com/fiap/clyvovet/PetTrackApplication.java)
 carrega apenas duas anotações:
 
 ```java
 @SpringBootApplication
 @EnableCaching
-public class ClyvovetApplication { ... }
+public class PetTrackApplication { ... }
 ```
 
 `@EnableCaching` é o que ativa o processamento de `@Cacheable`/`@CacheEvict` nos

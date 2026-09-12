@@ -25,7 +25,7 @@ passando.
 
 | Comando | O que faz |
 |---|---|
-| `./mvnw clean package` | Compila e gera `target/clyvovet-0.0.1-SNAPSHOT.jar` |
+| `./mvnw clean package` | Compila e gera `target/PetTrack-0.0.1-SNAPSHOT.jar` |
 | `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` | Sobe com H2 em memória |
 | `./mvnw test` | Roda os testes |
 | `./mvnw clean package -DskipTests` | Build sem testes |
@@ -332,7 +332,7 @@ target/
 ├── classes/                       # .class compilados + resources
 ├── generated-sources/annotations/ # saída do Lombok
 ├── test-classes/
-└── clyvovet-0.0.1-SNAPSHOT.jar    # JAR executável (após package)
+└── PetTrack-0.0.1-SNAPSHOT.jar    # JAR executável (após package)
 ```
 
 `target/` está no `.gitignore`, assim como `.idea/`, `.vscode/`, `.settings/` e

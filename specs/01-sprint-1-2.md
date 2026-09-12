@@ -29,7 +29,7 @@ nas duas, é necessário entregar nas duas.
 | 5 | Respeitar os conceitos fundamentais de APIs REST (RESTful) | ✅ Recursos no plural, verbos corretos, status adequados |
 | 6 | Utilizar Design Patterns com prudência | ✅ Sem over-engineering |
 | 7 | Pode utilizar JPQL e/ou Spring JPA Query Methods | ✅ JPQL com filtros opcionais nos 6 repositories |
-| 8 | Artefatos no GitHub público, professores com acesso | ✅ `Clyvovet-Challenge/clyvovet-backend-java` |
+| 8 | Artefatos no GitHub público, professores com acesso | ✅ `PetTrack-Challenge/clyvovet-backend-java` |
 
 ---
 
@@ -55,7 +55,7 @@ Detalhamento técnico de cada item em [`../docs/`](../docs/).
 
 | Pontos | Critério | Status |
 |---|---|---|
-| até 5 | Cronograma de desenvolvimento, respeitando prazos. Documento dizendo **quem fará o quê e quando** | ✅ `documentos/Cronograma_CLYVOVET.pdf` |
+| até 5 | Cronograma de desenvolvimento, respeitando prazos. Documento dizendo **quem fará o quê e quando** | ✅ `documentos/Cronograma_PETTRACK.pdf` |
 | até 10 | Imagens explicativas da arquitetura, definição das classes de domínio e **Diagrama de Classes de Entidade**. DER e Diagrama de Classes devem ser **coerentes entre si**. Explicar relacionamentos e constraints | ⚠️ Diagrama existe; coerência com o DER da disciplina de Database precisa ser verificada |
 | até 40 | Implementação das classes de Entidade necessárias para a solução | ✅ 6 entidades + `Endereco` + 5 enums |
 | até 15 | Aplicação respeita REST/RESTful e está de acordo com o **modelo de maturidade** | ⚠️ Nível 2 de Richardson (recursos + verbos + status). Nível 3 exigiria HATEOAS |

@@ -1,6 +1,6 @@
-# CLYVO VET — Backend Java
+# PetTrack — Backend Java
 
-API REST em Spring Boot para o CLYVO VET, plataforma de saúde contínua para pets.
+API REST em Spring Boot para o PetTrack, plataforma de saúde contínua para pets.
 Challenge FIAP 2026 — 2º ano ADS.
 
 **Stack:** Java 17 · Spring Boot 3.5 · Spring Security (JWT) · JPA/Hibernate 6.6 ·
@@ -15,7 +15,7 @@ atenderam. Quando o tutor troca de veterinário, ou chega numa emergência, quem
 atender não sabe de alergia, condição crônica ou medicação em uso — e o tutor nem
 sempre lembra.
 
-O **CLYVO VET** resolve isso invertendo a posse do prontuário: o histórico pertence
+O **PetTrack** resolve isso invertendo a posse do prontuário: o histórico pertence
 ao **tutor**, não à clínica. Todo atendimento de qualquer clínica vai para o mesmo
 prontuário do animal, o tutor decide quem pode ver o quê, e todo acesso fica
 auditado.
@@ -77,7 +77,7 @@ Para rodar localmente **não é preciso configurar nada** — o perfil `dev` sob
 em memória, aplica as migrations e cria usuários de teste:
 
 ```bash
-git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
+git clone https://github.com/PetTrack-Challenge/clyvovet-backend-java.git
 cd clyvovet-backend-java
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
@@ -136,7 +136,7 @@ Sem o cabeçalho, a resposta é **401**. Com um token de perfil insuficiente, **
 | Perfil | Banco | Quando usar |
 |---|---|---|
 | `dev` | H2 em memória | desenvolvimento local — **recomendado** |
-| `h2` | H2 em modo servidor | dentro do docker-compose (o host `clyvovet-db` só existe lá) |
+| `h2` | H2 em modo servidor | dentro do docker-compose (o host `PetTrack-db` só existe lá) |
 | `oracle` | Oracle 19c FIAP | entrega e banco de testes |
 | `mysql` | Azure Database for MySQL | alvo do deploy — [ainda não validado](docs/07-pendencias-e-divergencias.md) |
 
@@ -608,8 +608,8 @@ Os requisitos do Challenge que originaram o projeto estão em
 
 > 📋 **Este capítulo é o roteiro do vídeo de DevOps** — a régua exige o deploy
 > *"seguindo exatamente os passos descritos no README.md"*. O roteiro de
-> gravação, com os tempos e o CRUD provado por `SELECT`, está em
-> [`docs/roteiro-do-video.md`](docs/roteiro-do-video.md).
+> gravação, bloco a bloco, com o CRUD provado por `SELECT`, está em
+> [`docs/14-roteiro-do-video.md`](docs/14-roteiro-do-video.md).
 
 
 ### Os recursos, antes dos comandos
@@ -652,14 +652,14 @@ Server. Todos os recursos são criados por **Azure CLI**, um script por recurso,
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
+git clone https://github.com/PetTrack-Challenge/clyvovet-backend-java.git
 cd clyvovet-backend-java
 ```
 
 Para publicar também a API .NET, clone-a ao lado:
 
 ```bash
-git clone https://github.com/Clyvovet-Challenge/ClyvoVet-api.git ../ClyvoVet-api
+git clone https://github.com/PetTrack-Challenge/ClyvoVet-api.git ../ClyvoVet-api
 ```
 
 ### 2. Definir os segredos no ambiente
@@ -752,7 +752,7 @@ custa a gravacao inteira.
 Se preferir o cliente na mao:
 
 ```bash
-mysql -h mysql-clyvovet-rm562312.mysql.database.azure.com -u clyvovetadmin -p clyvovet --ssl-mode=REQUIRED
+mysql -h mysql-PetTrack-rm562312.mysql.database.azure.com -u PetTrackadmin -p PetTrack --ssl-mode=REQUIRED
 ```
 
 ### Encerrar e parar de consumir crédito
@@ -794,7 +794,7 @@ histórico em três níveis e as migrations do MySQL.
 
 ## Coleção da API
 
-[`documentos/clyvovet-api.postman_collection.json`](documentos/clyvovet-api.postman_collection.json)
+[`documentos/PetTrack-api.postman_collection.json`](documentos/PetTrack-api.postman_collection.json)
 — **71 requisições em 12 pastas**, cobrindo todos os endpoints.
 
 Formato Postman v2.1. O Insomnia importa esse formato sem perda, e o contrário
@@ -820,7 +820,7 @@ acesso ao histórico. É onde está a regra, e não o CRUD.
 |---|---|
 | Bean Validation nos Requests | ✅ todas as 6 entidades |
 | HATEOAS — nível 3 de Richardson | ✅ links condicionais ao estado em animal e evento clínico |
-| Coleção da API para import | ✅ `documentos/clyvovet-api.postman_collection.json` |
+| Coleção da API para import | ✅ `documentos/PetTrack-api.postman_collection.json` |
 | Paginação de resultados | ✅ todas as 6 entidades |
 | Ordenação de resultados | ✅ todas as 6 entidades |
 | Busca com parâmetros | ✅ todas as 6 entidades |
@@ -868,9 +868,9 @@ clyvovet-backend-java/
 │
 │  ── Artefatos de entrega. O nome da pasta é exigido pela rubrica da FIAP.
 ├── documentos/
-│   ├── clyvovet-api.postman_collection.json   # 71 requisições, todos os endpoints
+│   ├── PetTrack-api.postman_collection.json   # 71 requisições, todos os endpoints
 │   ├── script_bd.sql                   # DDL completo, gerado das migrations
-│   ├── Cronograma_CLYVOVET.pdf
+│   ├── Cronograma_PETTRACK.pdf
 │   ├── Diagrama_De_Classes.pdf
 │   └── Post_*.png                      # Capturas dos POSTs testados
 │
@@ -886,7 +886,7 @@ clyvovet-backend-java/
 │   │   │   ├── repository/             # JPA Repositories
 │   │   │   ├── security/               # JWT, filtros, ownership
 │   │   │   ├── service/                # Regras de negócio + cache
-│   │   │   └── ClyvovetApplication.java
+│   │   │   └── PetTrackApplication.java
 │   │   └── resources/
 │   │       ├── db/
 │   │       │   ├── db-oracle.sql       # DDL original, hoje só referência histórica

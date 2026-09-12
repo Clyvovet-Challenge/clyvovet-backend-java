@@ -70,7 +70,7 @@ Consolidado para não se repetir adiante. Tudo verificado no código em 25/08/20
 | Duplicidade de CPF/CNPJ/CRMV | 500 | ✅ 409 no handler |
 | `@Transactional` | ausente | ✅ nos 7 services |
 | Colaboração no histórico | **1 autor** em 29 commits | ⚠️ **2 autores** em 58 commits (pedrinzz10 29 · leojp04 29) — melhor, ainda **2 de 4** |
-| Repositório | `leojp04/clyvovet-backend-java` | ✅ organização `Clyvovet-Challenge/clyvovet-backend-java` |
+| Repositório | `leojp04/clyvovet-backend-java` | ✅ organização `PetTrack-Challenge/clyvovet-backend-java` |
 
 ---
 
@@ -82,7 +82,7 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 
 | # | Item | Vale | Evidência de que está aberto |
 |---|---|---|---|
-| ~~A1~~ | **Coleção Insomnia/Postman em `documentos/`** | até 10 pts | ✅ **fechado em 31/08/2026** — `documentos/clyvovet-api.postman_collection.json`, 71 requisições em 12 pastas. Formato Postman v2.1, que o Insomnia importa sem perda |
+| ~~A1~~ | **Coleção Insomnia/Postman em `documentos/`** | até 10 pts | ✅ **fechado em 31/08/2026** — `documentos/PetTrack-api.postman_collection.json`, 71 requisições em 12 pastas. Formato Postman v2.1, que o Insomnia importa sem perda |
 | ~~A2~~ | **HATEOAS** — nível 3 de maturidade de Richardson | parte de 15 pts | ✅ **fechado em 31/08/2026** — links **condicionais ao estado** em animal e evento clínico. Um evento `AGENDADO` traz `cancelar` e `concluir`; `CANCELADO` não traz nenhum dos dois |
 | A3 | Coerência entre Diagrama de Classes e o DER da disciplina de Database | até 10 pts | não verificável neste repositório — depende do artefato entregue em Database |
 
@@ -223,7 +223,7 @@ aplicação").
 | I3 | Validação de medicação, **camada 1 determinística** sobre `restricao_medicamento` | I1 + `peso_kg` (P1) |
 | I4 | **Migration V8** — `sugestao_ia` e `sugestao_ia_decisao` (rastreabilidade) | I1 |
 | I5 | `AnonimizadorClinico` — nenhum dado pessoal de tutor, pet, vet ou clínica sai da aplicação | — |
-| I6 | `ClienteIa` no pacote novo `integration/` — timeout, retry, interruptor `clyvovet.ia.habilitada`, faixa própria no `RateLimitFilter` | I4, I5 |
+| I6 | `ClienteIa` no pacote novo `integration/` — timeout, retry, interruptor `PetTrack.ia.habilitada`, faixa própria no `RateLimitFilter` | I4, I5 |
 | I7 | Casos semelhantes — recuperação SQL determinística + LLM só para redigir | I1, I6 |
 | I8 | Validação de medicação, **camada 2 (LLM)** — aditiva, nunca remove alerta da camada 1 | I3, I6 |
 

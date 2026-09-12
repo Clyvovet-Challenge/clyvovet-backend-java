@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Clyvovet API — Challenge FIAP 2026",
-    "description": "Colecao completa da API do Clyvovet.\n\nCOMO USAR\n1. Suba a aplicacao: `./mvnw spring-boot:run` (perfil `dev`, H2 em memoria).\n2. Rode as tres requisicoes da pasta `0. Autenticacao` — elas guardam os tokens de admin, veterinaria e tutor nas variaveis da colecao.\n3. As demais pastas ja usam o token certo para cada perfil.\n\nOs ids sao os do seed da migration V2, entao tudo funciona num banco recem-criado, sem cadastrar nada antes.\n\nAS PASTAS 7 A 9 sao os fluxos nao-CRUD — e onde esta a regra de negocio.",
+    "name": "PetTrack API — Challenge FIAP 2026",
+    "description": "Colecao completa da API do PetTrack.\n\nCOMO USAR\n1. Suba a aplicacao: `./mvnw spring-boot:run` (perfil `dev`, H2 em memoria).\n2. Rode as tres requisicoes da pasta `0. Autenticacao` — elas guardam os tokens de admin, veterinaria e tutor nas variaveis da colecao.\n3. As demais pastas ja usam o token certo para cada perfil.\n\nOs ids sao os do seed da migration V2, entao tudo funciona num banco recem-criado, sem cadastrar nada antes.\n\nAS PASTAS 7 A 9 sao os fluxos nao-CRUD — e onde esta a regra de negocio.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -2745,7 +2745,7 @@
                 "documentos"
               ]
             },
-            "description": "multipart/form-data. Escolha um PDF no campo `arquivo` antes de enviar (o Postman não versiona o arquivo).\n\nO TIPO VEM DOS PRIMEIROS BYTES DO ARQUIVO, não do Content-Type: o cabeçalho é uma afirmação de quem envia, e um .exe renomeado chega dizendo application/pdf. Aceita PDF, JPG e PNG, até 8 MB.\n\n409 em: formato não aceito, arquivo grande, duplicata (comparada por SHA-256, não por nome) e teto de 30 documentos por animal.\n\n`eventoId` é opcional e liga o anexo a um atendimento. Sem ele, o documento é um laudo trazido de fora — o caso do tutor que anexa o exame de uma clínica que não usa o ClyvoVet.",
+            "description": "multipart/form-data. Escolha um PDF no campo `arquivo` antes de enviar (o Postman não versiona o arquivo).\n\nO TIPO VEM DOS PRIMEIROS BYTES DO ARQUIVO, não do Content-Type: o cabeçalho é uma afirmação de quem envia, e um .exe renomeado chega dizendo application/pdf. Aceita PDF, JPG e PNG, até 8 MB.\n\n409 em: formato não aceito, arquivo grande, duplicata (comparada por SHA-256, não por nome) e teto de 30 documentos por animal.\n\n`eventoId` é opcional e liga o anexo a um atendimento. Sem ele, o documento é um laudo trazido de fora — o caso do tutor que anexa o exame de uma clínica que não usa o PetTrack.",
             "auth": {
               "type": "bearer",
               "bearer": [

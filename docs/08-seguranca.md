@@ -271,7 +271,7 @@ Excedido: **429** com `Retry-After`. Swagger e console H2 ficam fora do limite.
 Os buckets vivem num cache Caffeine com expiração — num `Map` comum, cada IP visto
 criaria uma entrada permanente e o próprio rate limiter viraria vetor de DoS.
 
-Desligável com `clyvovet.rate-limit.enabled=false` (usado nos testes).
+Desligável com `PetTrack.rate-limit.enabled=false` (usado nos testes).
 
 **Limitação conhecida:** o estado é local ao processo. Com mais de uma réplica, cada
 uma teria sua própria contagem; o correto nesse cenário seria Bucket4j sobre Redis.
@@ -298,7 +298,7 @@ o header não tem significado fora de uma conexão segura.
 
 ### CORS
 
-Allowlist explícita em `clyvovet.cors.origens`. Nunca `*` combinado com credenciais.
+Allowlist explícita em `PetTrack.cors.origens`. Nunca `*` combinado com credenciais.
 
 ### Erros que não vazam
 

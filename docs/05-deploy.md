@@ -69,19 +69,19 @@ desperdício estava no envio, não no resultado.
 
 | Serviço | Imagem | Portas | Função |
 |---|---|---|---|
-| `clyvovet-db` | `oscarfonts/h2` | `1521:1521`, `81:81` | H2 em modo servidor TCP + console web |
-| `clyvovet-api` | build local | `8080:8080` | a aplicação |
+| `PetTrack-db` | `oscarfonts/h2` | `1521:1521`, `81:81` | H2 em modo servidor TCP + console web |
+| `PetTrack-api` | build local | `8080:8080` | a aplicação |
 
 ```yaml
 services:
-  clyvovet-db:
+  PetTrack-db:
     image: oscarfonts/h2
-    container_name: clyvovet-db
+    container_name: PetTrack-db
     ports: ["1521:1521", "81:81"]
     environment:
       - H2_OPTIONS=-ifNotExists
     volumes:
-      - clyvovet-h2-data:/opt/h2-data
+      - PetTrack-h2-data:/opt/h2-data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:81"]
@@ -90,31 +90,31 @@ services:
       retries: 10
       start_period: 20s
 
-  clyvovet-api:
+  PetTrack-api:
     build: .
-    container_name: clyvovet-api
+    container_name: PetTrack-api
     ports: ["8080:8080"]
     environment:
       - SPRING_PROFILES_ACTIVE=h2
     depends_on:
-      clyvovet-db:
+      PetTrack-db:
         condition: service_healthy
     restart: unless-stopped
 
 volumes:
-  clyvovet-h2-data:
-    name: clyvovet-h2-data
+  PetTrack-h2-data:
+    name: PetTrack-h2-data
 ```
 
 Pontos-chave:
 
-- **`H2_OPTIONS=-ifNotExists`** — permite que o H2 crie o banco `clyvovet` na primeira
+- **`H2_OPTIONS=-ifNotExists`** — permite que o H2 crie o banco `PetTrack` na primeira
   conexão. Sem isso, a API falharia ao conectar num banco inexistente.
 - **`depends_on` com `condition: service_healthy`** — a API só sobe depois que o
   healthcheck do H2 passa. Evita a corrida clássica de "app sobe antes do banco".
 - **Volume nomeado** — os dados sobrevivem a `docker compose down`. Para zerar de
   fato: `docker compose down -v`.
-- A API resolve o banco pelo nome do serviço (`clyvovet-db`), que a rede default do
+- A API resolve o banco pelo nome do serviço (`PetTrack-db`), que a rede default do
   compose expõe como hostname.
 
 ### Comandos
@@ -122,7 +122,7 @@ Pontos-chave:
 ```bash
 docker compose up --build          # build + sobe tudo
 docker compose up -d --build       # em background
-docker compose logs -f clyvovet-api  # acompanha logs da API
+docker compose logs -f PetTrack-api  # acompanha logs da API
 docker compose down                # para, mantendo os dados
 docker compose down -v             # para e apaga o volume
 ```
@@ -133,10 +133,10 @@ Depois de subir:
 |---|---|
 | API | http://localhost:8080/api/v1 |
 | Swagger | http://localhost:8080/swagger-ui.html |
-| Console H2 do container `clyvovet-db` | http://localhost:81 |
+| Console H2 do container `PetTrack-db` | http://localhost:81 |
 | Console H2 embarcado na API | http://localhost:8080/h2-console |
 
-Para conectar no console H2, use a JDBC URL `jdbc:h2:tcp://clyvovet-db:1521/clyvovet`,
+Para conectar no console H2, use a JDBC URL `jdbc:h2:tcp://PetTrack-db:1521/PetTrack`,
 usuário `sa`, senha vazia.
 
 ---

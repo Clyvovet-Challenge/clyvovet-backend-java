@@ -1,6 +1,6 @@
-# Documentação — CLYVO VET Backend
+# Documentação — PetTrack Backend
 
-Documentação técnica da API REST do CLYVO VET, plataforma de saúde contínua para pets
+Documentação técnica da API REST do PetTrack, plataforma de saúde contínua para pets
 desenvolvida como Challenge FIAP 2026 — 1º Semestre.
 
 Esta pasta descreve **o que o código faz hoje**. Onde a implementação diverge da
@@ -45,7 +45,7 @@ silenciosamente corrigido no texto.
 
 ## Visão geral em 30 segundos
 
-O CLYVO VET conecta **tutores de pets**, **veterinários** e **clínicas parceiras**,
+O PetTrack conecta **tutores de pets**, **veterinários** e **clínicas parceiras**,
 centralizando o histórico clínico do animal e o controle financeiro dos atendimentos.
 
 O backend é uma API REST em Spring Boot que expõe CRUD completo sobre seis entidades:
@@ -117,6 +117,6 @@ Fora desta pasta, o repositório traz:
 |---|---|
 | [../README.md](../README.md) | Apresentação do projeto, integrantes do grupo, quick start |
 | `../documentos/Diagrama_De_Classes.pdf` | Diagrama de classes UML das entidades |
-| `../documentos/Cronograma_CLYVOVET.pdf` | Cronograma de desenvolvimento |
+| `../documentos/Cronograma_PETTRACK.pdf` | Cronograma de desenvolvimento |
 | `../documentos/Post_*.png` | Capturas de tela dos POSTs testados |
 | [../src/main/resources/db/db-oracle.sql](../src/main/resources/db/db-oracle.sql) | DDL + seed para o Oracle da FIAP |

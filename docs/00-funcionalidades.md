@@ -1,6 +1,6 @@
 # Funcionalidades
 
-O que o backend do CLYVO VET faz hoje, em termos de capacidade — não de
+O que o backend do PetTrack faz hoje, em termos de capacidade — não de
 implementação. Para *como* cada coisa é construída, siga os links para os
 documentos técnicos.
 
@@ -125,7 +125,7 @@ Dois tokens, com propósitos diferentes:
 
 O access é curto de propósito: se vazar, a janela de uso é pequena. O refresh é longo
 para não obrigar o usuário a digitar a senha a cada 15 minutos. Ambos configuráveis
-por `clyvovet.jwt.access-token-minutos` e `clyvovet.jwt.refresh-token-dias`.
+por `PetTrack.jwt.access-token-minutos` e `PetTrack.jwt.refresh-token-dias`.
 
 **O logout revoga de verdade.** O refresh token entra numa lista de revogados que vive
 enquanto ele viveria, então reusá-lo depois do logout responde 401 — não basta o
@@ -173,7 +173,7 @@ O bloqueio protege a conta de quem está sendo atacado; o rate limit protege o
 servidor de quem tenta muitas contas. Uma camada não substitui a outra.
 
 Estourar o limite responde **429**. Os dois são configuráveis
-(`clyvovet.seguranca.max-tentativas-login`, `clyvovet.seguranca.bloqueio-minutos`).
+(`PetTrack.seguranca.max-tentativas-login`, `PetTrack.seguranca.bloqueio-minutos`).
 
 > Estado local ao processo. Com mais de uma réplica, cada uma teria a própria
 > contagem — o caminho seria Bucket4j sobre Redis.
@@ -217,7 +217,7 @@ CSP `default-src 'self'; frame-ancestors 'none'` e `X-Frame-Options: SAMEORIGIN`
 
 CORS liberado por padrão para `http://localhost:3000` e `http://localhost:8081` — o
 frontend web e o app mobile em desenvolvimento. Configurável por
-`clyvovet.cors.origens`.
+`PetTrack.cors.origens`.
 
 ---
 

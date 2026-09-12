@@ -109,14 +109,14 @@ Em ordem de execução. O que está acima destrava o que está abaixo.
 3. **Deploy das duas APIs e verificação** de que o fluxo cruzado responde.
 4. ✅ **Varredura de segredo exposto no código-fonte** — feita nos dois repositórios
    da API, e achou uma coisa. O `application-dev.properties` trazia
-   `clyvovet.jwt.secret=${JWT_SECRET:rkYIlJliub5QNZcqETol75AapUui0JedF0xcPztVgbo=}`:
+   `PetTrack.jwt.secret=${JWT_SECRET:rkYIlJliub5QNZcqETol75AapUui0JedF0xcPztVgbo=}`:
    **32 bytes aleatórios de verdade**, commitados como valor padrão. Funcionava, e
    o perfil `dev` é H2 em memória — mas o critério da régua não é se a chave vale
    algo, e sim se quem varre o código consegue saber que não vale. Aquele valor era
    indistinguível de uma chave de produção. Trocado por um base64 que decodifica
-   para a própria frase `clyvovet-dev-chave-publica-nao-secreta`, com o motivo
+   para a própria frase `PetTrack-dev-chave-publica-nao-secreta`, com o motivo
    escrito ao lado. A chave dos testes já era autoexplicativa ao decodificar
-   (`teste-clyvovet-chave-hmac-sha256-para-testes`) e ganhou o decode no comentário,
+   (`teste-PetTrack-chave-hmac-sha256-para-testes`) e ganhou o decode no comentário,
    para não depender de alguém decodificar base64 na hora da correção.
 
    O resto veio limpo: nenhum `.env` rastreado, nenhum token do Telegram em formato
