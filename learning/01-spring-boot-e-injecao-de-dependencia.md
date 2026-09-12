@@ -52,11 +52,11 @@ peças certas separadas. Os outros são caixas temáticas que se encaixam no mes
 ## O programa inteiro cabe em cinco linhas
 
 ```java
-// src/main/java/br/com/fiap/clyvovet/PetTrackApplication.java
+// src/main/java/br/com/fiap/clyvovet/ClyvovetApplication.java
 @SpringBootApplication
-public class PetTrackApplication {
+public class ClyvovetApplication {
     public static void main(String[] args) {
-        SpringApplication.run(PetTrackApplication.class, args);
+        SpringApplication.run(ClyvovetApplication.class, args);
     }
 }
 ```
@@ -89,7 +89,7 @@ Ela é três em uma:
 | `@EnableAutoConfiguration` | configura automaticamente o que achar no classpath |
 | `@ComponentScan` | **varre o pacote desta classe e os subpacotes** procurando anotações |
 
-O `@ComponentScan` explica algo importante: `PetTrackApplication` está em
+O `@ComponentScan` explica algo importante: `ClyvovetApplication` está em
 `br.com.fiap.clyvovet`, então o Spring varre **daí para baixo**. Uma classe em
 `br.com.outro.pacote` seria simplesmente ignorada — e a injeção falharia no boot com
 "nenhum bean deste tipo encontrado".
@@ -281,7 +281,7 @@ Valor que muda por ambiente **não** fica no código.
 
 ```java
 // src/main/java/br/com/fiap/clyvovet/security/ControleTentativasLogin.java
-@Value("${PetTrack.seguranca.max-tentativas-login:5}")
+@Value("${clyvovet.seguranca.max-tentativas-login:5}")
 private int maxTentativas;
 ```
 

@@ -40,7 +40,7 @@ usa **Vite (5173)**, Angular (4200) ou outra porta precisa acrescentar a própri
 origem:
 
 ```properties
-PetTrack.cors.origens=http://localhost:5173,http://localhost:3000
+clyvovet.cors.origens=http://localhost:5173,http://localhost:3000
 ```
 
 Não existe `*`, e isso é proposital. Headers aceitos: só `Authorization` e
@@ -80,8 +80,8 @@ Authorization: Bearer <accessToken>
 ```
 
 `expiraEmSegundos` é o access token (15 min por padrão,
-`PetTrack.jwt.access-token-minutos`). O refresh dura 7 dias
-(`PetTrack.jwt.refresh-token-dias`).
+`clyvovet.jwt.access-token-minutos`). O refresh dura 7 dias
+(`clyvovet.jwt.refresh-token-dias`).
 
 ### 2.2 Onde guardar
 
@@ -378,7 +378,7 @@ do clique — é um acesso sem consentimento que fica registrado com nome e moti
 
 ## 9. Checklist
 
-- [ ] Origem do dev server em `PetTrack.cors.origens`
+- [ ] Origem do dev server em `clyvovet.cors.origens`
 - [ ] PATCH liberado no CORS do backend, ou `PUT` com objeto completo
 - [ ] Interceptor: `Authorization` em toda chamada, refresh com fila no 401
 - [ ] Access token em memória, refresh em `localStorage`

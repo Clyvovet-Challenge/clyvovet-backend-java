@@ -112,7 +112,7 @@ a aplicação subiria contra um banco sem tabela.
 O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
 ```properties
-spring.application.name=PetTrack
+spring.application.name=clyvovet
 server.port=8080
 spring.profiles.active=${SPRING_PROFILES_ACTIVE:mysql}
 spring.config.import=classpath:comum.properties
@@ -171,7 +171,7 @@ local use o perfil `dev`.
 | Uso pretendido | **banco de teste real** | **produção (padrão)** | container | desenvolvimento local |
 | Já rodou de verdade? | sim | **não** | sim | sim |
 
-> ⚠️ O perfil `h2` aponta para o host `PetTrack-db`, que só existe na rede do
+> ⚠️ O perfil `h2` aponta para o host `clyvovet-db`, que só existe na rede do
 > docker-compose. Para rodar localmente sem Docker, use o perfil **`dev`**.
 
 ---
@@ -199,7 +199,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.OracleDialect
 spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
 spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
 
-PetTrack.jwt.secret=${JWT_SECRET}
+clyvovet.jwt.secret=${JWT_SECRET}
 ```
 
 Pontos de atenção:
@@ -235,7 +235,7 @@ Server**.
 > revisado, não como configuração validada em produção.
 
 ```properties
-spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/PetTrack?sslMode=REQUIRED}
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/clyvovet?sslMode=REQUIRED}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.flyway.locations=classpath:db/migration/mysql
 spring.jpa.hibernate.ddl-auto=validate
@@ -271,10 +271,10 @@ referência ao Key Vault, nunca como variável de ambiente em texto no manifesto
 
 ```properties
 server.port=8080
-spring.application.name=PetTrack
+spring.application.name=clyvovet
 spring.jackson.serialization.write-dates-as-timestamps=false
 
-spring.datasource.url=jdbc:h2:tcp://PetTrack-db:1521/PetTrack
+spring.datasource.url=jdbc:h2:tcp://clyvovet-db:1521/clyvovet
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
@@ -286,12 +286,12 @@ spring.h2.console.enabled=true
 spring.h2.console.settings.web-allow-others=true
 ```
 
-É o perfil do container. O host `PetTrack-db` é o nome do serviço H2 no
+É o perfil do container. O host `clyvovet-db` é o nome do serviço H2 no
 [`docker-compose.yml`](../docker-compose.yml), e a porta 1521 é a porta TCP do H2
 (coincide com a do Oracle por escolha do compose, não por acaso técnico).
 
 Com `ddl-auto=update`, o Hibernate cria as tabelas no primeiro boot e as preserva
-entre reinícios — os dados sobrevivem no volume `PetTrack-h2-data`.
+entre reinícios — os dados sobrevivem no volume `clyvovet-h2-data`.
 
 `web-allow-others=true` libera o console H2 para conexões externas ao container.
 
@@ -300,7 +300,7 @@ entre reinícios — os dados sobrevivem no volume `PetTrack-h2-data`.
 ## Perfil `dev`
 
 ```properties
-spring.datasource.url=jdbc:h2:mem:PetTrackdb
+spring.datasource.url=jdbc:h2:mem:clyvovetdb
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
@@ -353,7 +353,7 @@ Sobe H2 em container + API no perfil `h2`. Detalhes em [05-deploy.md](05-deploy.
 
 ```bash
 ./mvnw clean package
-java -jar target/PetTrack-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar target/clyvovet-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 ```
 
 ---

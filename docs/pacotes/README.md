@@ -24,7 +24,7 @@ que ele faz ali, comece pelo documento do pacote dele.
 | [config.md](config.md) | 5 | Spring Security, cache, prefixo de versão, Swagger, seed de dev |
 | [exception.md](exception.md) | 5 | As exceções de domínio e a tradução delas para status HTTP |
 
-São **164 arquivos** em `src/main/java`, mais `PetTrackApplication.java` na
+São **164 arquivos** em `src/main/java`, mais `ClyvovetApplication.java` na
 raiz do pacote — a classe de boot, com `@SpringBootApplication` e
 `@EnableCaching`, e nada além disso.
 

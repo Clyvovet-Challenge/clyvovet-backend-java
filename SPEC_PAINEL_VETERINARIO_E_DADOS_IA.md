@@ -556,8 +556,8 @@ medianaDiasEntreAtendimentos = mediana dos intervalos entre atendimentos consecu
 ```
 
 `TOLERANCIA` (30 dias) e a separação mínima (30 dias) são **parâmetros configuráveis**,
-não constantes soltas: `PetTrack.painel.retorno.tolerancia-dias` e
-`PetTrack.painel.retencao.separacao-minima-dias`, com esses defaults.
+não constantes soltas: `clyvovet.painel.retorno.tolerancia-dias` e
+`clyvovet.painel.retencao.separacao-minima-dias`, com esses defaults.
 
 ### R5 — Score de risco por pet (endpoint 6)
 
@@ -589,7 +589,7 @@ Regras de corte:
 - `motivos` traz um rótulo por componente que contribuiu com ≥ 10 pontos
   (ex.: `"Retorno em atraso há 47 dias"`, `"Sem atendimento há 19 meses"`).
 
-Pesos e limiares em `application.properties` sob `PetTrack.painel.risco.*`, injetados com
+Pesos e limiares em `application.properties` sob `clyvovet.painel.risco.*`, injetados com
 `@Value` no service — o modelo será calibrado com uso real, e recompilar para mudar um peso
 não é aceitável.
 
@@ -967,7 +967,7 @@ confianca = casos_com_A_e_B / casos_com_A
 lift      = confianca / (casos_com_B / total_do_estrato)
 ```
 
-Cortes default, configuráveis em `PetTrack.ia.cluster.*`:
+Cortes default, configuráveis em `clyvovet.ia.cluster.*`:
 
 | Parâmetro | Default | Por quê |
 |---|---|---|
@@ -1046,7 +1046,7 @@ efetivamente enviado, e é isso que uma auditoria precisa ver.
 | Cliente | `RestClient` do Spring Framework 6 (já disponível via `spring-boot-starter-web`) — não adicionar WebFlux só para isso |
 | Chave | variável de ambiente, **nunca versionada** (precedente: item 2 de `docs/07`) |
 | Rate limit | faixa própria no `RateLimitFilter` (`Faixa.IA`), bem abaixo de `GERAL(100/min)` — sugestão: 10/min. Sem isso, um cliente em laço gera custo real |
-| Interruptor | `PetTrack.ia.habilitada=false` desliga a camada 2 inteira sem redeploy |
+| Interruptor | `clyvovet.ia.habilitada=false` desliga a camada 2 inteira sem redeploy |
 
 ## IV.5 Camadas a criar (Módulo 2)
 
@@ -1058,7 +1058,7 @@ efetivamente enviado, e é isso que uma auditoria precisa ver.
 | `service/` | `AssistenteClinicoService`, `ValidacaoMedicacaoService`, `ClusterPatologiaService`, `SugestaoIaService` (registro e auditoria), `AnonimizadorClinico` |
 | `integration/` (**pacote novo**) | `ClienteIa` (interface) + implementação HTTP + `ClienteIaDesabilitado` como no-op |
 | `controller/` | `AssistenteClinicoController` + CRUDs de `Prescricao`, `Diagnostico`, `Medicamento`, `Patologia` (no padrão dos 6 existentes) |
-| `config/` | propriedades `PetTrack.ia.*`; nova faixa no `RateLimitFilter` |
+| `config/` | propriedades `clyvovet.ia.*`; nova faixa no `RateLimitFilter` |
 | `exception/` | novos valores no enum `Recurso`; possivelmente `IaIndisponivelException` → 503 no handler |
 
 **O pacote `integration/` é o único desvio estrutural do projeto** (hoje só há camadas

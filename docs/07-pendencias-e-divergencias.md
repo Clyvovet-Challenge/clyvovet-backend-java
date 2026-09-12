@@ -197,7 +197,7 @@ O [README](../README.md) instrui usar `spring.profiles.active=h2` para desenvolv
 local sem Oracle. Mas o perfil aponta para um host que só existe na rede do compose:
 
 ```properties
-spring.datasource.url=jdbc:h2:tcp://PetTrack-db:1521/PetTrack
+spring.datasource.url=jdbc:h2:tcp://clyvovet-db:1521/clyvovet
 ```
 
 **Efeito:** quem segue o README recebe erro de conexão. O perfil que de fato serve para
@@ -454,7 +454,7 @@ e melhor do que antes, porque o texto que ela lê agora é uniforme.
 
 **Severidade: baixa**
 
-[`PetTrackApplicationTests`](../src/test/java/br/com/fiap/clyvovet/PetTrackApplicationTests.java)
+[`ClyvovetApplicationTests`](../src/test/java/br/com/fiap/clyvovet/ClyvovetApplicationTests.java)
 tem só o `contextLoads()` do Initializr. Sendo `@SpringBootTest`, ele sobe o contexto
 inteiro — e como o perfil default é `oracle`, **falha sem conectividade com a FIAP**.
 
@@ -479,8 +479,8 @@ com esses nomes:
 
 | README diz | Realidade |
 |---|---|
-| `documentos/DiagramaClasses_PETTRACK.pdf` | `documentos/Diagrama_De_Classes.pdf` |
-| `documentos/PetTrack_insomnia.json` | não existe |
+| `documentos/DiagramaClasses_CLYVOVET.pdf` | `documentos/Diagrama_De_Classes.pdf` |
+| `documentos/clyvovet_insomnia.json` | não existe |
 
 A seção "Testando os Endpoints" também afirma que a coleção do Insomnia está em
 `documentos/`. O commit `2b2108d` menciona tê-la adicionado, mas o arquivo não está na

@@ -58,7 +58,7 @@ gravação corra sem parar.
 
 Mostre [`docs/arquitetura-azure.svg`](arquitetura-azure.svg) na tela inteira.
 
-> "PetTrack é uma plataforma veterinária. O diferencial dela é reunir o histórico
+> "CLYVO VET é uma plataforma veterinária. O diferencial dela é reunir o histórico
 > clínico do animal num lugar só — vacina, consulta, exame e medicação deixam de
 > viver em papéis de clínicas diferentes.
 >
@@ -87,9 +87,9 @@ Diga a frase que o avaliador precisa ouvir:
 **Comece a gravação de terminal aqui, e não antes.** Primeiro comando na tela:
 
 ```bash
-git clone https://github.com/PetTrack-Challenge/clyvovet-backend-java.git
+git clone https://github.com/Clyvovet-Challenge/clyvovet-backend-java.git
 cd clyvovet-backend-java
-git clone https://github.com/PetTrack-Challenge/ClyvoVet-api.git ../ClyvoVet-api
+git clone https://github.com/Clyvovet-Challenge/ClyvoVet-api.git ../ClyvoVet-api
 ```
 
 > "Começo pelo clone, como o edital pede. Clono também a API .NET ao lado, porque
@@ -160,7 +160,7 @@ Ao terminar o `06`:
 Confirme no portal ou por CLI que os cinco recursos existem:
 
 ```bash
-az resource list -g rg-PetTrack-sprint3 -o table
+az resource list -g rg-clyvovet-sprint3 -o table
 ```
 
 ---
@@ -179,7 +179,7 @@ bash azure/08-deploy-dotnet.sh
 Depois do `07`, mostre o Flyway trabalhando no log ao vivo:
 
 ```bash
-az webapp log tail -g rg-PetTrack-sprint3 -n app-clyvovet-java-rm562312
+az webapp log tail -g rg-clyvovet-sprint3 -n app-clyvovet-java-rm562312
 ```
 
 > "Aqui está o Flyway aplicando V1 até V12 num banco que estava vazio há dois
@@ -220,8 +220,8 @@ Tela dividida: **API à esquerda, banco à direita.** Alterne, não corte.
 Abra o cliente na janela da direita e deixe aberto:
 
 ```bash
-mysql -h mysql-PetTrack-rm562312.mysql.database.azure.com \
-      -u PetTrackadmin -p PetTrack --ssl-mode=REQUIRED
+mysql -h mysql-clyvovet-rm562312.mysql.database.azure.com \
+      -u clyvovetadmin -p clyvovet --ssl-mode=REQUIRED
 ```
 
 > "Duas tabelas relacionadas, e as duas são o coração da solução: o tutor, e o

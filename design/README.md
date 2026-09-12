@@ -1,6 +1,6 @@
 # design/
 
-Maquetes das telas da API, no design system do app **PetTrack**.
+Maquetes das telas da API, no design system do app **Clyvo Vet**.
 
 Os tokens saem de `clyvo-rn/src/theme/tokens.ts` do projeto de design — teal
 `#008060`, orange `#d97a3d`, DM Sans, raios 8/12/16/20/999, sombras em
@@ -17,7 +17,7 @@ estendido a partir do mesmo vocabulário, só mudando a densidade.
 
 ## Regerar o canvas
 
-O `PetTrack-telas.html` publicado não está versionado: são 2,2 MB de editor
+O `clyvovet-telas.html` publicado não está versionado: são 2,2 MB de editor
 embutido, e ele sai destes três arquivos com um comando (`/design` no Claude
 Code, ou o `seed-canvas.mjs` do skill).
 

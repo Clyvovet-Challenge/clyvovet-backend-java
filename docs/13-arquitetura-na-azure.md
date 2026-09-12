@@ -17,9 +17,9 @@ Cinco recursos, todos criados por **Azure CLI** — recurso criado fora da CLI v
 
 | # | Recurso | Nome | Configuração | Script |
 |---|---|---|---|---|
-| 1 | Resource Group | `rg-PetTrack-sprint3` | `brazilsouth` | [`azure/01-resource-group.sh`](../azure/01-resource-group.sh) |
-| 2 | Azure Database for MySQL Flexible Server | `mysql-PetTrack-rm562312` | `Standard_B1ms`, Burstable, MySQL 8.0, banco `PetTrack` | [`azure/02-banco-mysql.sh`](../azure/02-banco-mysql.sh) |
-| 3 | App Service Plan | `plan-PetTrack-sprint3` | **B1** Linux, 1 core, 1,75 GB, 1 instância | [`azure/03-plano-app-service.sh`](../azure/03-plano-app-service.sh) |
+| 1 | Resource Group | `rg-clyvovet-sprint3` | `brazilsouth` | [`azure/01-resource-group.sh`](../azure/01-resource-group.sh) |
+| 2 | Azure Database for MySQL Flexible Server | `mysql-clyvovet-rm562312` | `Standard_B1ms`, Burstable, MySQL 8.0, banco `clyvovet` | [`azure/02-banco-mysql.sh`](../azure/02-banco-mysql.sh) |
+| 3 | App Service Plan | `plan-clyvovet-sprint3` | **B1** Linux, 1 core, 1,75 GB, 1 instância | [`azure/03-plano-app-service.sh`](../azure/03-plano-app-service.sh) |
 | 4 | Web App (Java) | `app-clyvovet-java-rm562312` | runtime `JAVA:17-java17`, nativo | [`azure/04-webapp-java.sh`](../azure/04-webapp-java.sh) |
 | 5 | Web App (.NET) | `app-clyvovet-dotnet-rm562312` | runtime `DOTNETCORE:8.0`, nativo | [`azure/05-webapp-dotnet.sh`](../azure/05-webapp-dotnet.sh) |
 
@@ -50,7 +50,7 @@ B1 é o SKU mais barato **com** Always On. Se 1,75 GB apertarem para as duas API
 subir para B2 é um comando e não recria nada:
 
 ```bash
-az appservice plan update -g rg-PetTrack-sprint3 -n plan-PetTrack-sprint3 --sku B2
+az appservice plan update -g rg-clyvovet-sprint3 -n plan-clyvovet-sprint3 --sku B2
 ```
 
 ### Um plano para as duas APIs
@@ -153,7 +153,7 @@ export DOTNET_API_KEY='...'      TELEGRAM_BOT_TOKEN='...'
 ```
 
 Na Azure eles chegam como **App Settings**, não como arquivo. E nos perfis de banco
-real (`mysql`, `oracle`, `h2`) a propriedade `PetTrack.jwt.secret` é `${JWT_SECRET}`
+real (`mysql`, `oracle`, `h2`) a propriedade `clyvovet.jwt.secret` é `${JWT_SECRET}`
 **sem valor padrão**, de propósito: a ausência da variável derruba o boot em vez de
 subir com uma chave conhecida.
 
@@ -179,7 +179,7 @@ Os dois interruptores são **app settings**: viram sem recompilar, sem republica
 
 ```bash
 # ligar o recorte
-az webapp config appsettings set -g rg-PetTrack-sprint3    -n app-clyvovet-dotnet-rm562312 --settings Api__EscopoPorTutor=true
+az webapp config appsettings set -g rg-clyvovet-sprint3    -n app-clyvovet-dotnet-rm562312 --settings Api__EscopoPorTutor=true
 ```
 
 ### A ordem de desligar importa, e errar nela é pior que não desligar
