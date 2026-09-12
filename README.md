@@ -606,6 +606,12 @@ Os requisitos do Challenge que originaram o projeto estão em
 
 ## Deploy na Azure — passo a passo
 
+> 📋 **Este capítulo é o roteiro do vídeo de DevOps** — a régua exige o deploy
+> *"seguindo exatamente os passos descritos no README.md"*. O roteiro de
+> gravação, com os tempos e o CRUD provado por `SELECT`, está em
+> [`docs/roteiro-do-video.md`](docs/roteiro-do-video.md).
+
+
 ### Os recursos, antes dos comandos
 
 ![Arquitetura na Azure](docs/arquitetura-azure.svg)
