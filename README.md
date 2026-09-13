@@ -611,6 +611,8 @@ Os requisitos do Challenge que originaram o projeto estão em
 > gravação, com os tempos e o CRUD provado por `SELECT`, está em
 > [`docs/14-roteiro-do-video.md`](docs/14-roteiro-do-video.md).
 
+**🎥 Vídeo de apresentação:** [assista aqui](https://www.youtube.com/watch?v=WBNx3ZSore0)
+
 
 ### Os recursos, antes dos comandos
 
