@@ -1,0 +1,186 @@
+===========================================================================
+ CLYVOVET - CHALLENGE FIAP 2026 - SPRINT 3
+ Links de entrega
+===========================================================================
+
+ Cada disciplina pede um formato diferente. Este arquivo tem duas partes:
+ os dados crus, e os blocos prontos para copiar em cada entrega.
+
+ NAO copie este arquivo inteiro para lugar nenhum. Copie o bloco da
+ disciplina -- a regra de DevOps recusa PDF com qualquer coisa a mais.
+
+
+---------------------------------------------------------------------------
+ INTEGRANTES                                (ordem alfabetica)
+---------------------------------------------------------------------------
+
+  RM563237 - Fabricio Henrique Pereira      - 2TDSPW
+  RM563065 - Leonardo Jose Pereira          - 2TDSPW
+  RM565492 - Miguel Henrique Oliveira Dias  - 2TDSPW
+  RM562312 - Pedro Henrique de Oliveira     - 2TDSPW
+
+  A ordem alfabetica nao e enfeite: a disciplina de Banco de Dados exige a
+  capa assim. Confira a turma de cada um antes de enviar -- 2TDSPW veio do
+  nome do repositorio do Classroom, nao de um cadastro.
+
+
+---------------------------------------------------------------------------
+ REPOSITORIOS
+---------------------------------------------------------------------------
+
+  Java (Spring Boot)
+  https://github.com/Clyvovet-Challenge/clyvovet-backend-java
+
+  .NET (ASP.NET Core 8)
+  https://github.com/Clyvovet-Challenge/ClyvoVet-api
+
+  App (React Native / Expo) -- repositorio do GitHub Classroom
+  https://github.com/Fabriciopereira-sp/2tdspw-challenge-clyvovet-challenge
+
+
+---------------------------------------------------------------------------
+ VIDEOS
+---------------------------------------------------------------------------
+
+  DevOps Tools & Cloud Computing
+  https://www.youtube.com/watch?v=WBNx3ZSore0
+
+  Java Advanced
+  https://www.youtube.com/watch?v=GzwneyCpGCw
+
+  Mobile Application Development
+  [ PENDENTE ]
+
+  Disruptive Architectures (pitch de IA)
+  [ PENDENTE ]
+
+  Todos devem estar como NAO LISTADOS. Privado o professor nao abre, e a
+  regra trata "professor sem acesso ao video" como nota zero.
+
+
+===========================================================================
+ BLOCOS PRONTOS PARA COPIAR
+===========================================================================
+
+
+---------------------------------------------------------------------------
+ [1] DEVOPS TOOLS & CLOUD COMPUTING  ->  arquivo PDF
+---------------------------------------------------------------------------
+ A regra: "Nao pode ter mais nada no PDF, todo o resto e no GitHub."
+ Sem o PDF: -30 pontos. Com qualquer extra, o desconto tambem vale.
+ Copie DAQUI ate a linha de fim, e nada alem.
+
+--- inicio ---
+
+CLYVOVET - Challenge FIAP 2026 - Sprint 3
+DevOps Tools & Cloud Computing
+
+Integrantes:
+RM563237 - Fabricio Henrique Pereira - 2TDSPW
+RM563065 - Leonardo Jose Pereira - 2TDSPW
+RM565492 - Miguel Henrique Oliveira Dias - 2TDSPW
+RM562312 - Pedro Henrique de Oliveira - 2TDSPW
+
+Repositorio GitHub:
+https://github.com/Clyvovet-Challenge/clyvovet-backend-java
+
+Video YouTube:
+https://www.youtube.com/watch?v=WBNx3ZSore0
+
+--- fim ---
+
+
+---------------------------------------------------------------------------
+ [2] JAVA ADVANCED  ->  links no portal
+---------------------------------------------------------------------------
+ Repositorio publico com o codigo da aplicacao Spring, README com as
+ instrucoes de instalacao e execucao, e o video (maximo 10 minutos).
+
+Repositorio:
+https://github.com/Clyvovet-Challenge/clyvovet-backend-java
+
+Video:
+https://www.youtube.com/watch?v=GzwneyCpGCw
+
+
+---------------------------------------------------------------------------
+ [3] ADVANCED BUSINESS DEVELOPMENT WITH .NET  ->  link no portal
+---------------------------------------------------------------------------
+ O enunciado da Sprint 3 lista os requisitos (health checks, testes AAA,
+ README) mas nao declara o formato de envio. Confira no portal antes.
+
+Repositorio:
+https://github.com/Clyvovet-Challenge/ClyvoVet-api
+
+
+---------------------------------------------------------------------------
+ [4] MOBILE APPLICATION DEVELOPMENT  ->  GitHub Classroom
+---------------------------------------------------------------------------
+ A entrega e feita EXCLUSIVAMENTE pelo repositorio do Classroom. Entregar
+ por outro meio custa -20 pontos. O link do video vai no README.md do
+ proprio repositorio, e nao em arquivo separado.
+
+Repositorio (Classroom):
+https://github.com/Fabriciopereira-sp/2tdspw-challenge-clyvovet-challenge
+
+Video:
+[ PENDENTE -- trocar tambem o placeholder no readme.md do app ]
+
+
+---------------------------------------------------------------------------
+ [5] DISRUPTIVE ARCHITECTURES (IoT, IoB & Generative IA)  ->  arquivo .zip
+---------------------------------------------------------------------------
+ Este e o UNICO .zip da entrega, e ele leva apenas os dois links -- nao
+ leva codigo-fonte. O video precisa estar como nao listado.
+
+Video YouTube (nao listado):
+[ PENDENTE ]
+
+Repositorio GitHub:
+https://github.com/Clyvovet-Challenge/ClyvoVet-api
+
+
+---------------------------------------------------------------------------
+ [6] MASTERING RELATIONAL AND NON-RELATIONAL DATABASE
+---------------------------------------------------------------------------
+ Dois arquivos, com nome exato:
+   2TDSX_2024_Proj_BD.pdf              (capa com nomes e RMs, em ordem
+                                        alfabetica, mais os prints)
+   2TDSX_2024_CodigoSql_Integrantes.sql
+
+ O DDL do projeto esta em documentos/script_bd.sql e e gerado a partir
+ das migrations por scripts/gerar-script-bd.py. Nao edite o script a mao:
+ ele envelhece em silencio, e ha teste no repositorio guardando isso.
+
+
+---------------------------------------------------------------------------
+ [7] COMPLIANCE, QUALITY ASSURANCE & TESTS  ->  link do Azure Boards
+---------------------------------------------------------------------------
+ O professor precisa estar na organizacao como membro e ser administrador
+ do projeto. Sem esse acesso a entrega nao e corrigida.
+
+Link do projeto:
+[ PREENCHER ]
+
+
+===========================================================================
+ ANTES DE ENVIAR
+===========================================================================
+
+  [ ] Os videos estao como NAO LISTADOS, e abrem numa janela anonima
+  [ ] Java e .NET estao PUBLICOS -- a regra de Java Advanced pede
+      repositorio publico, e a de DevOps zera a nota se o professor
+      nao alcancar o repositorio. Conferido: os dois abrem em janela
+      anonima
+  [ ] O repositorio do app e PRIVADO, e isso esta certo: ele e do
+      GitHub Classroom, e o professor chega por la. Nao torne publico
+      so para 'garantir' -- a entrega dessa disciplina e pelo proprio
+      Classroom
+  [ ] O PDF de DevOps tem SO o bloco [1] -- nada de capa, indice ou logo
+  [ ] O readme.md do app nao tem mais o placeholder do video
+  [ ] A aplicacao esta no ar. Entrega em localhost e nota zero em DevOps,
+      mesmo com o video gravado: o professor precisa alcancar o que foi
+      mostrado
+  [ ] A turma de cada integrante confere
+
+===========================================================================
