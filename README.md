@@ -71,6 +71,15 @@ transportar a informação clínica do próprio animal.
 
 ---
 
+**🎥 Vídeo — Java Advanced (Sprint 3):** [assista aqui](https://www.youtube.com/watch?v=GzwneyCpGCw)
+
+> Este é o vídeo desta disciplina (frontend, Flyway, Spring Security e
+> funcionalidades completas). O vídeo de DevOps — outra disciplina, sobre o
+> deploy na Azure — está mais abaixo, no capítulo
+> [Deploy na Azure](#deploy-na-azure--passo-a-passo).
+
+---
+
 ## Começando
 
 Para rodar localmente **não é preciso configurar nada** — o perfil `dev` sobe um H2
