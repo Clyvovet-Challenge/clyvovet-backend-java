@@ -317,8 +317,20 @@ public class SecurityConfig {
         // preflight OPTIONS responde sem o metodo na lista, e a requisicao nem chega
         // a sair. Do app nativo funcionava, porque ali nao ha CORS.
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setExposedHeaders(List.of("Retry-After"));
+        // X-Correlation-Id nas DUAS listas, e as duas por motivos diferentes.
+        //
+        // Em allowedHeaders porque o app manda o id em TODA requisicao: sem ele
+        // aqui, o preflight responde sem o cabecalho na lista e o navegador
+        // bloqueia a chamada inteira -- nao so o cabecalho. O alvo web morria em
+        // cem por cento das telas, e o app nativo nao sentia nada, porque ali
+        // nao existe CORS. Era o mesmo furo que o PATCH tinha acima.
+        //
+        // Em exposedHeaders porque o app LE o id de volta da resposta para
+        // mostrar na mensagem de erro de servidor. Sem expor, o navegador
+        // entrega a resposta com o cabecalho escondido, e o suporte perde o
+        // unico numero que liga a tela do usuario a linha do log.
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id"));
+        config.setExposedHeaders(List.of("Retry-After", "X-Correlation-Id"));
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
