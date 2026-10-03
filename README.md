@@ -65,6 +65,7 @@ transportar a informação clínica do próprio animal.
 | Nome | RM |
 |---|---|
 | Fabrício Henrique Pereira | RM 563237 |
+| Henrique Sinkevicius Maran | RM 562977 |
 | Leonardo José Pereira | RM 563065 |
 | Miguel Henrique Oliveira Dias | RM 565492 |
 | Pedro Henrique de Oliveira | RM 562312 |

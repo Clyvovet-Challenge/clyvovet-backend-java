@@ -78,7 +78,7 @@ DevOps, a IA de Disruptive Architectures integrada.
 | **Entrega fora do prazo ou fora do portal** | **−100** |
 
 "Ausência de evidência de colaboração entre membros" (−10) é verificável pelo
-histórico do Git: commits distribuídos entre os quatro integrantes ao longo do tempo,
+histórico do Git: commits distribuídos entre os cinco integrantes ao longo do tempo,
 não um push único no fim.
 
 ---
@@ -102,6 +102,6 @@ Derivado dos critérios acima, para uso perto da entrega:
 - [ ] UI sem falhas graves de usabilidade
 - [ ] README com visão geral, arquitetura, instalação, execução, acesso e integrantes
 - [ ] Evidências de cada disciplina reunidas e referenciadas
-- [ ] Vídeo ≤ 15 min com participação dos 4 integrantes
+- [ ] Vídeo ≤ 15 min com participação dos 5 integrantes
 - [ ] Histórico Git mostrando colaboração distribuída
 - [ ] Entrega feita **no portal**, dentro do prazo

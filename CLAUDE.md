@@ -86,8 +86,8 @@ código repetido que poderia ser extraído (−5 cada).
 
 ## Equipe
 
-Fabricio Henrique Pereira (RM563237) · Leonardo José Pereira (RM563065) ·
-Miguel Henrique Oliveira Dias (RM565492) · Pedro Henrique de Oliveira (RM562312).
+Fabricio Henrique Pereira (RM563237) · Henrique Sinkevicius Maran (RM562977) ·
+Leonardo José Pereira (RM563065) · Miguel Henrique Oliveira Dias (RM565492) · Pedro Henrique de Oliveira (RM562312).
 
 A ausência de colaboração custa −10 e é conferida pelo histórico do Git: os commits
-precisam estar distribuídos entre os quatro.
+precisam estar distribuídos entre os cinco.
