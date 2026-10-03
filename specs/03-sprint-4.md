@@ -1,6 +1,6 @@
 # Sprint 4 — Java Advanced
 
-**Entrega:** 04/11/2026 · **Peso:** 100 pontos · **Status:** não iniciado
+**Entrega:** 04/11/2026 · **Peso:** 100 pontos · **Status:** em andamento (branch `sprint-4`, plano em [`docs/18`](../docs/18-plano-de-entrega-sprint4.md))
 
 Entrega final da disciplina. Consolida o trabalho das Sprints 1 a 3.
 
