@@ -95,9 +95,9 @@ cd clyvovet-backend-java
 A aplicação sobe em `http://localhost:8080` e o Swagger fica em
 `http://localhost:8080/swagger-ui.html`.
 
-> ⚠️ O perfil ativo por padrão é `oracle`, não `dev`. Rodar `./mvnw spring-boot:run`
-> sem argumento faz a aplicação tentar conectar no Oracle da FIAP e falhar se as
-> variáveis de ambiente não estiverem definidas.
+> ⚠️ O perfil ativo por padrão é `mysql`, não `dev`. Rodar `./mvnw spring-boot:run`
+> sem argumento faz a aplicação tentar conectar num MySQL em `localhost:3306` e falhar
+> se ele não existir ou se as variáveis de ambiente não estiverem definidas.
 
 ### A API exige autenticação
 
@@ -778,7 +778,7 @@ bash azure/99-destruir.sh
 ### Rodar localmente, sem Azure
 
 ```bash
-./mvnw spring-boot:run                             # perfil dev, H2 em memória
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # H2 em memória
 JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
 ```
 
@@ -798,7 +798,7 @@ desenvolvimento — **não** é o deploy, e nada dele vai para a nuvem.
 ./mvnw test
 ```
 
-São **205 testes** cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
+São **392 testes** (4 ignorados) cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
 ownership, autorização por recurso, os dois fluxos não-CRUD, o acesso ao
 histórico em três níveis e as migrations do MySQL.
 
@@ -814,7 +814,8 @@ não é verdade — um arquivo só atende os dois.
 
 **Como usar:**
 
-1. Suba a aplicação com `./mvnw spring-boot:run` (perfil `dev`, H2 em memória).
+1. Suba a aplicação com `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
+   (H2 em memória).
 2. Rode as três requisições de `0. Autenticação`. Elas guardam os tokens de
    admin, veterinária e tutor nas variáveis da coleção; o resto já usa o token
    do perfil certo em cada rota.
