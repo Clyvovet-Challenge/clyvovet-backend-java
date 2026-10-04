@@ -1,6 +1,6 @@
 # 001 — A interface avaliada é o app mobile
 
-**Data:** 2026-10-03 · **Status:** aceito
+**Data:** 2026-10-03 · **Status:** substituído por [002](002-telas-thymeleaf-no-spring.md)
 
 ## Contexto
 

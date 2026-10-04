@@ -28,4 +28,5 @@ O que fica mais fácil, o que fica mais difícil e o que passa a ser obrigatóri
 
 | ADR | Decisão | Status |
 |---|---|---|
-| [001](001-ui-pelo-app-mobile.md) | A interface avaliada é o app mobile, e não telas no Spring | aceito |
+| [001](001-ui-pelo-app-mobile.md) | A interface avaliada é o app mobile, e não telas no Spring | substituído por 002 |
+| [002](002-telas-thymeleaf-no-spring.md) | Telas Thymeleaf no próprio Spring, com login OAuth2 | aceito |

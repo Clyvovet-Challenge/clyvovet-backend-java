@@ -11,10 +11,10 @@
 
 ## 1. Onde o trabalho acontece
 
-A nota da Sprint 3 ainda não saiu, então a `main` continua sendo a entrega avaliada.
+A `main` é a entrega da Sprint 3, cuja nota saiu em 04/10/2026: 34/100 (ver L9).
 
 - Todo trabalho da Sprint 4 vai para a branch **`sprint-4`**.
-- Merge `sprint-4` → `main` só depois da nota sair, via PR, sem rebase nem force-push.
+- Merge `sprint-4` → `main` só quando o Leonardo pedir, via PR, sem rebase nem force-push.
 - O CI só roda em push na `main` e em PR para a `main`. Até o PR, a suíte roda localmente
   antes de cada commit.
 
@@ -46,9 +46,10 @@ Levantados em 03/10/2026, ao abrir a sprint.
   Leonardo (`leojp04` 26 + `leop04` 5). Fabricio, Miguel e Henrique têm
   **zero** (Henrique foi incluído na lista da equipe em 03/10/2026). Os commits da Sprint 4
   precisam vir dos cinco, distribuídos no tempo, e não num push único no fim.
-- **A interface avaliada é de outro repositório.** A UI/UX vem do app mobile (ver
-  [ADR-001](adr/001-ui-pelo-app-mobile.md)). O app precisa rodar os fluxos principais contra
-  a API **publicada**, e não contra o localhost.
+- ~~**A interface avaliada é de outro repositório.**~~ Revisto em 04/10/2026: a nota da Sprint 3
+  (34/100) zerou a parte web, e o professor exigiu telas Thymeleaf com login OAuth2. A
+  interface avaliada passa a ser este repositório (ver [ADR-002](adr/002-telas-thymeleaf-no-spring.md)).
+  O app mobile segue como evidência de integração e precisa rodar contra a API **publicada**.
 - **O README diverge do código.** Ele diz que o perfil padrão é `oracle` (o código diz `mysql`,
   em `application.properties`), que a suíte tem 205 testes (são 392) e se contradiz sobre o que
   `spring-boot:run` sem perfil faz. O README completo vale nota (critério 5).
@@ -64,7 +65,9 @@ Levantados em 03/10/2026, ao abrir a sprint.
 
 ## 4. O que este repositório precisa entregar
 
-Escopo decidido em 03/10/2026: **consolidar** o que existe, sem módulo novo. O deploy sai na
+Escopo decidido em 03/10/2026: **consolidar** o que existe, sem módulo novo. **Revisto em
+04/10/2026**, depois da nota da Sprint 3: entra um módulo novo, a camada web Thymeleaf com login
+OAuth2 (L9 e Fase 1b). O deploy sai na
 conta Azure do Pedro (os nomes em `azure/00-variaveis.sh` já são dela), mais perto da gravação.
 
 ### Lacunas
@@ -79,12 +82,23 @@ conta Azure do Pedro (os nomes em `azure/00-variaveis.sh` já são dela), mais p
 | L6 | 3 de 5 integrantes sem commit | −10 | `git log` |
 | L7 | Sem roteiro do vídeo nem seção de integração multidisciplinar com evidências | 20 + 20 + 10 pts | não existe |
 | L8 | Pipeline sem deploy automático, com gatilho só na `main` | DevOps, se o grupo usar o Java lá | `azure-pipelines.yml` |
+| L9 | Sem telas web: o professor exigiu Thymeleaf, login OAuth2 (Google/GitHub) e os fluxos na interface | 40 pts (demonstração, "boa UI e UX") | feedback da Sprint 3, nota 34/100 |
 
 ### Fases
 
 **Fase 1, não depende de ninguém**
 - L3 e L4: corrigir o README e o índice de `docs/`.
 - L5: revisão de código (skill `/code-review`). Cada achado é corrigido com teste antes.
+  Os achados restantes (2 e 3) ficam para depois da Fase 1b, que também passa pela revisão.
+
+**Fase 1b, camada web (L9)** — ver [ADR-002](adr/002-telas-thymeleaf-no-spring.md)
+- Base: duas cadeias de segurança (API stateless com JWT; telas com sessão e CSRF), login por
+  formulário, layout e login OAuth2 (Google e GitHub). OAuth2 só autentica e-mail que já tem conta.
+- Fluxo do tutor: agendar consulta e cancelar, com formulário e validação.
+- Fluxo do veterinário: concluir atendimento e marcar retorno; lista de retornos vencidos.
+- README: seção "Aplicação web".
+- **Em aberto:** quem implementa cada fluxo. O Leonardo vai perguntar ao professor que evidência
+  de colaboração ele espera (ver L6); os fluxos foram desenhados como tarefas independentes.
 
 **Fase 2, local e sem crédito**
 - L2: subir o perfil `mysql` contra um MySQL 8 no Docker e confirmar o `validate`.
@@ -93,7 +107,8 @@ conta Azure do Pedro (os nomes em `azure/00-variaveis.sh` já são dela), mais p
 **Fase 3, na conta do Pedro**
 - L1: recriar os recursos com os scripts de `azure/`.
 - Apontar o app para a URL pública (`EXPO_PUBLIC_JAVA_BASE_URL`).
-- Rodar um smoke test dos fluxos principais.
+- Cadastrar a URL pública como redirect nos apps OAuth do Google e do GitHub.
+- Rodar um smoke test dos fluxos principais, pelas telas e pelo app.
 - L8: CD no Azure DevOps, se o grupo usar o Java em DevOps.
 
 **Fase 4, narrativa e vídeo**
@@ -112,16 +127,21 @@ material bruto da narrativa (critério 2).
 
 | ADR | Decisão |
 |---|---|
-| [001](adr/001-ui-pelo-app-mobile.md) | A interface avaliada é o app mobile, e não telas no Spring |
+| [001](adr/001-ui-pelo-app-mobile.md) | ~~A interface avaliada é o app mobile, e não telas no Spring~~ (substituído por 002) |
+| [002](adr/002-telas-thymeleaf-no-spring.md) | Telas Thymeleaf no próprio Spring, com login OAuth2 |
 
 ## 6. Cronograma
 
+Revisto em 04/10/2026 para incluir a Fase 1b. As datas de 19/10 em diante não mudam.
+
 | Até | Meta |
 |---|---|
-| 12/10 | Fase 1: README corrigido e revisão de código feita |
+| 07/10 | Fase 1b, base: duas cadeias de segurança, login por formulário e OAuth2 |
+| 12/10 | Fase 1: README corrigido (feito em 04/10) e primeira revisão de código |
+| 14/10 | Fase 1b, fluxos: telas do tutor e do veterinário |
 | 19/10 | Fase 2: perfil `mysql` validado num MySQL real local |
-| **26/10** | **Fase 3: API no ar na conta do Pedro, com o app apontando para ela** |
-| 31/10 | Fase 4: roteiro pronto e vídeo gravado |
+| **26/10** | **Fase 3: API e telas no ar na conta do Pedro, com o app apontando para ela** |
+| 31/10 | Fase 4: roteiro pronto e vídeo gravado, navegando pelas telas Thymeleaf |
 | 01–03/11 | Margem para regravar e conferir a entrega |
 | **04/11** | Entrega no portal |
 

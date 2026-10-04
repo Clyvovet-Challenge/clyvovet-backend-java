@@ -8,9 +8,9 @@ produto é combater o **absenteísmo** (retorno e falta). Visão de negócio em
 
 ## Branch: a `main` está congelada
 
-A `main` é a entrega da Sprint 3 e **a nota ainda não saiu**. Todo trabalho da Sprint 4
-vai para a branch **`sprint-4`**. Nada é commitado nem mergeado na `main` até a nota sair
-e o Leonardo pedir o merge (via PR).
+A `main` é a entrega da Sprint 3 (nota 34/100, saiu em 04/10/2026). Todo trabalho da
+Sprint 4 vai para a branch **`sprint-4`**. Nada é commitado nem mergeado na `main` até o
+Leonardo pedir o merge (via PR).
 
 O CI (`.github/workflows/ci.yml`) só roda em push na `main` e em PR para a `main`. Push
 na `sprint-4` **não** dispara CI: rode a suíte localmente antes de cada commit.
@@ -79,7 +79,9 @@ Explicação arquivo por arquivo em [`docs/pacotes/`](docs/pacotes/).
 
 Prazo **04/11/2026**, entrega pelo portal (fora do prazo = −100). Régua completa e
 penalidades em [`specs/03-sprint-4.md`](specs/03-sprint-4.md). A interface avaliada
-("boa UI e UX") é o app mobile Expo consumindo esta API.
+("boa UI e UX") são as **telas Thymeleaf deste repositório**, com login OAuth2 (Google/GitHub),
+exigidas pelo professor no feedback da Sprint 3 ([ADR-002](docs/adr/002-telas-thymeleaf-no-spring.md)).
+O app mobile Expo continua consumindo a API e entra como integração multidisciplinar.
 
 Penalidades que o código pode causar: violação evidente de boas práticas (−10 cada) e
 código repetido que poderia ser extraído (−5 cada).
