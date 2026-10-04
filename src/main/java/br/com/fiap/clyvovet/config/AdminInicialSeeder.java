@@ -91,12 +91,7 @@ public class AdminInicialSeeder {
                 return;
             }
 
-            Usuario admin = new Usuario();
-            admin.setEmail(email);
-            admin.setSenha(passwordEncoder.encode(senha));
-            admin.setPerfil(Perfil.ADMIN);
-            admin.setAtivo(true);
-            usuarioRepository.save(admin);
+            usuarioRepository.save(Usuario.novo(email, passwordEncoder.encode(senha), Perfil.ADMIN));
 
             log.warn("ADMIN inicial criado: {}. Troque a senha no primeiro acesso e "
                     + "remova a variável do ambiente depois.", email);

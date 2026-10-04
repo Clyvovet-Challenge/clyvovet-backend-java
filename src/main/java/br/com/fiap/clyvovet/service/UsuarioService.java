@@ -82,13 +82,7 @@ public class UsuarioService {
 
     private Usuario novoUsuario(String email, String senha, Perfil perfil) {
         garantirEmailDisponivel(email);
-
-        Usuario usuario = new Usuario();
-        usuario.setEmail(email);
-        usuario.setSenha(passwordEncoder.encode(senha));
-        usuario.setPerfil(perfil);
-        usuario.setAtivo(true);
-        return usuario;
+        return Usuario.novo(email, passwordEncoder.encode(senha), perfil);
     }
 
     /**

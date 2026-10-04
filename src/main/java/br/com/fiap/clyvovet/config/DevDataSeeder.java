@@ -114,11 +114,7 @@ public class DevDataSeeder {
         if (usuarioRepository.existsByEmail(email)) {
             return;
         }
-        Usuario usuario = new Usuario();
-        usuario.setEmail(email);
-        usuario.setSenha(passwordEncoder.encode(senha));
-        usuario.setPerfil(perfil);
-        usuario.setAtivo(true);
+        Usuario usuario = Usuario.novo(email, passwordEncoder.encode(senha), perfil);
         vincular.accept(usuario);
         usuarioRepository.save(usuario);
     }
