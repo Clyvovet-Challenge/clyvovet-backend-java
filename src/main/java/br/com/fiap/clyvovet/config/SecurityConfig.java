@@ -2,12 +2,14 @@ package br.com.fiap.clyvovet.config;
 
 import br.com.fiap.clyvovet.security.JwtAuthenticationFilter;
 import br.com.fiap.clyvovet.security.RateLimitFilter;
+import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
 import br.com.fiap.clyvovet.security.RespostaErroSeguranca;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -41,6 +43,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     private final RespostaErroSeguranca respostaErroSeguranca;
+    private final ResultadoDoLoginWeb resultadoDoLoginWeb;
 
     /** Origens permitidas para CORS. Nunca "*" combinado com credenciais. */
     @Value("${clyvovet.cors.origens:http://localhost:3000,http://localhost:8081}")
@@ -50,9 +53,35 @@ public class SecurityConfig {
     @Value("${spring.h2.console.enabled:false}")
     private boolean h2ConsoleHabilitado;
 
+    // ====================================================================
+    // DUAS CADEIAS, PORQUE SAO DOIS CLIENTES COM SEGURANCA OPOSTA (ADR 002)
+    //
+    // O app mobile fala com /api/** por token no header: nada de sessao, nada
+    // de CSRF, e erro em JSON. As telas Thymeleaf vivem de cookie de sessao --
+    // e cookie e exatamente o que torna o CSRF um ataque real. Uma cadeia so
+    // teria de escolher um dos dois e quebraria o outro.
+    //
+    // O Spring testa as cadeias em ordem e usa a PRIMEIRA cujo securityMatcher
+    // casar. A da API vem antes e declara as proprias rotas; a web nao declara
+    // nenhuma, entao fica com todo o resto. Rota nova fora de /api nasce, por
+    // isso, protegida pela web: redireciona para o login em vez de abrir.
+    //
+    // O que a API prometia antes da divisao esta fixado no CadeiaDaApiTest.
+    // ====================================================================
+
+    /** Rotas atendidas pela cadeia da API. Tudo o que nao casar aqui e tela. */
+    private static final String[] ROTAS_DA_API = {
+            WebConfig.PREFIXO_API + "/**",
+            "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
+            "/actuator/**", "/h2-console/**"
+    };
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain cadeiaDaApi(HttpSecurity http) throws Exception {
         http
+            .securityMatcher(ROTAS_DA_API)
+
             // ----------------------------------------------------------------
             // CSRF desabilitado — decisao consciente, nao esquecimento.
             //
@@ -62,9 +91,9 @@ public class SecurityConfig {
             // header Authorization, que so e enviado se o cliente o colocar
             // explicitamente — um site malicioso nao consegue faze-lo.
             //
-            // GATILHO PARA REATIVAR: se a Sprint 3 adicionar form login com
-            // sessao (frontend Thymeleaf), o vetor passa a existir e o CSRF
-            // deve ser habilitado para as rotas baseadas em sessao.
+            // O gatilho previsto aqui -- form login com sessao para telas
+            // Thymeleaf -- chegou na Sprint 4. O CSRF foi religado, mas na
+            // cadeiaWeb, que e onde a sessao existe; nesta continua desligado.
             // ----------------------------------------------------------------
             .csrf(AbstractHttpConfigurer::disable)
 
@@ -86,6 +115,39 @@ public class SecurityConfig {
             // login precisa ser barrada antes de custar um BCrypt por request.
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(jwtAuthenticationFilter, RateLimitFilter.class);
+
+        return http.build();
+    }
+
+    /**
+     * As telas: sessao por cookie, CSRF ligado (padrao do Spring) e login por
+     * formulario. Quem nao esta logado e levado ao /login, e nao recebe JSON.
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain cadeiaWeb(HttpSecurity http) throws Exception {
+        http
+            .headers(this::configurarHeaders)
+
+            .authorizeHttpRequests(rotas -> rotas
+                // Mesmo motivo da API: o despacho para a pagina de erro e uma
+                // nova passagem pela cadeia, e nao pode exigir login de novo.
+                .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                .requestMatchers("/login", "/css/**", "/img/**", "/favicon.ico").permitAll()
+                .requestMatchers("/tutor/**").hasRole("TUTOR")
+                .requestMatchers("/veterinario/**").hasAnyRole(VETERINARIO, ADMIN)
+                .anyRequest().authenticated())
+
+            // Os nomes dos campos sao os mesmos do JSON de /auth/login: quem le
+            // um formulario e o outro ve a mesma palavra.
+            .formLogin(form -> form
+                .loginPage("/login")
+                .usernameParameter("email")
+                .passwordParameter("senha")
+                .successHandler(resultadoDoLoginWeb)
+                .failureHandler(resultadoDoLoginWeb))
+
+            .logout(logout -> logout.logoutSuccessUrl("/login?saiu"));
 
         return http.build();
     }

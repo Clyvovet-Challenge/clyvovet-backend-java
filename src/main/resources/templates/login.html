@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Entrar')}"></head>
+<body class="pagina-login">
+
+<main class="cartao cartao-login">
+    <h1 class="marca marca-grande">Clyvo<span>Vet</span></h1>
+    <p class="subtitulo">Entre com o e-mail e a senha da sua conta.</p>
+
+    <!-- Mensagem unica para qualquer recusa: dizer "e-mail nao existe" ou
+         "conta bloqueada" ajudaria quem tenta adivinhar contas. -->
+    <p class="aviso aviso-erro" role="alert" th:if="${param.erro}">
+        E-mail ou senha incorretos. Depois de 5 tentativas erradas, a conta fica
+        bloqueada por 15 minutos.
+    </p>
+    <p class="aviso aviso-ok" role="status" th:if="${param.saiu}">
+        Você saiu da sua conta.
+    </p>
+
+    <!-- O th:action faz o Thymeleaf incluir o token CSRF sozinho. -->
+    <form th:action="@{/login}" method="post" class="formulario">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="username" required autofocus>
+
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+
+        <button type="submit" class="botao botao-primario">Entrar</button>
+    </form>
+</main>
+
+</body>
+</html>

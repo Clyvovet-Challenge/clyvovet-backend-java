@@ -1,0 +1,131 @@
+/*
+ * Estilo das telas ClyvoVet. Arquivo proprio, sem Bootstrap: a CSP da
+ * aplicacao (default-src 'self') nao deixa carregar CSS de CDN.
+ *
+ * Os tokens sao os do design system do app (design/README.md).
+ */
+:root {
+    --verde: #008060;
+    --verde-escuro: #00664d;
+    --verde-claro: #ebf6f1;
+    --laranja: #d97a3d;
+    --erro: #c64a36;
+    --erro-fundo: #fbe1db;
+    --texto: #0f1521;
+    --texto-suave: #475569;
+    --borda: #dceadf;
+    --fundo: #f1f5f3;
+    --branco: #ffffff;
+    --raio: 12px;
+    --raio-grande: 16px;
+    --sombra: 0 4px 16px rgba(0, 80, 64, 0.08);
+    --foco: 0 0 0 3px rgba(0, 128, 96, 0.3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--texto);
+    background: var(--fundo);
+    line-height: 1.5;
+}
+
+h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
+
+.subtitulo { color: var(--texto-suave); margin: 0 0 1.5rem; }
+
+/* --- Marca --- */
+.marca {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--texto);
+    text-decoration: none;
+}
+.marca span { color: var(--verde); }
+.marca-grande { font-size: 2rem; margin: 0 0 0.25rem; }
+
+/* --- Cabecalho --- */
+.cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--branco);
+    border-bottom: 1px solid var(--borda);
+}
+.usuario { display: flex; align-items: center; gap: 1rem; }
+.usuario form { margin: 0; }
+.usuario-dados { display: flex; flex-direction: column; align-items: flex-end; }
+.usuario-email { font-size: 0.9rem; }
+.selo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--verde-escuro);
+    background: var(--verde-claro);
+    border-radius: 999px;
+    padding: 0 0.6rem;
+}
+
+/* --- Conteudo --- */
+.conteudo { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.cartao {
+    background: var(--branco);
+    border-radius: var(--raio-grande);
+    box-shadow: var(--sombra);
+    padding: 2rem;
+}
+
+/* --- Login --- */
+.pagina-login {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+.cartao-login { width: 100%; max-width: 400px; }
+
+/* --- Formularios --- */
+.formulario { display: flex; flex-direction: column; gap: 0.4rem; }
+.formulario label { font-weight: 600; font-size: 0.9rem; margin-top: 0.6rem; }
+.formulario input {
+    font: inherit;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: var(--branco);
+}
+.formulario input:focus { outline: none; border-color: var(--verde); box-shadow: var(--foco); }
+.formulario .botao { margin-top: 1.2rem; }
+
+/* --- Botoes --- */
+.botao {
+    display: inline-block;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--raio);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+.botao:focus-visible { outline: none; box-shadow: var(--foco); }
+.botao-primario { background: var(--verde); color: var(--branco); }
+.botao-primario:hover { background: var(--verde-escuro); }
+.botao-secundario { background: var(--branco); color: var(--verde-escuro); border-color: var(--borda); }
+.botao-secundario:hover { background: var(--verde-claro); }
+
+/* --- Avisos --- */
+.aviso { border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1rem; font-size: 0.9rem; }
+.aviso-erro { background: var(--erro-fundo); color: var(--erro); }
+.aviso-ok { background: var(--verde-claro); color: var(--verde-escuro); }
+
+@media (max-width: 560px) {
+    .cabecalho { padding: 0.75rem 1rem; }
+    .usuario-email { display: none; }
+    .cartao { padding: 1.5rem; }
+}

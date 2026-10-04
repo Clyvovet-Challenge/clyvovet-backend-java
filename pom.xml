@@ -158,6 +158,19 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <!--
+            Telas Thymeleaf no proprio Spring (ADR 002). O extras-springsecurity6
+            da as telas o usuario logado (sec:authentication) e o token CSRF
+            automatico em todo th:action.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <!--
             HATEOAS: leva a API do nivel 2 ao nivel 3 de Richardson.
 
             O cliente deixa de precisar saber, por fora, o que pode fazer com um

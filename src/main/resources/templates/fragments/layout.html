@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!--
+    Pedacos comuns a todas as telas. Cada pagina inclui o head e o cabecalho
+    com th:replace, em vez de repetir o HTML.
+-->
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' · ClyvoVet'">ClyvoVet</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header class="cabecalho" th:fragment="cabecalho">
+    <a class="marca" th:href="@{/}">Clyvo<span>Vet</span></a>
+    <div class="usuario" sec:authorize="isAuthenticated()">
+        <span class="usuario-dados">
+            <span class="usuario-email" sec:authentication="name">usuario@exemplo.com</span>
+            <span class="selo" th:switch="${#authentication.principal.usuario.perfil.name()}">
+                <th:block th:case="'TUTOR'">Tutor</th:block>
+                <th:block th:case="'VETERINARIO'">Veterinário</th:block>
+                <th:block th:case="'ADMIN_CLINICA'">Gestão da clínica</th:block>
+                <th:block th:case="'ADMIN'">Administrador</th:block>
+            </span>
+        </span>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="botao botao-secundario">Sair</button>
+        </form>
+    </div>
+</header>
+
+</body>
+</html>
