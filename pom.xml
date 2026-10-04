@@ -171,6 +171,14 @@
             <artifactId>thymeleaf-extras-springsecurity6</artifactId>
         </dependency>
         <!--
+            Login das telas com Google e GitHub (ADR 002). So nas telas: a API
+            continua no JWT proprio, e o app mobile nao muda.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <!--
             HATEOAS: leva a API do nivel 2 ao nivel 3 de Richardson.
 
             O cliente deixa de precisar saber, por fora, o que pode fazer com um

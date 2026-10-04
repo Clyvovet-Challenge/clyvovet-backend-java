@@ -119,6 +119,14 @@ h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
 .botao-secundario { background: var(--branco); color: var(--verde-escuro); border-color: var(--borda); }
 .botao-secundario:hover { background: var(--verde-claro); }
 
+/* --- Login com Google e GitHub --- */
+.separador {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 1.5rem 0 1rem; color: var(--texto-suave); font-size: 0.85rem;
+}
+.separador::before, .separador::after { content: ""; flex: 1; border-top: 1px solid var(--borda); }
+.entrar-com { display: flex; flex-direction: column; gap: 0.6rem; }
+
 /* --- Avisos --- */
 .aviso { border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1rem; font-size: 0.9rem; }
 .aviso-erro { background: var(--erro-fundo); color: var(--erro); }

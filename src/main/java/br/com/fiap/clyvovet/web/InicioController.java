@@ -1,9 +1,12 @@
 package br.com.fiap.clyvovet.web;
 
+import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
 import br.com.fiap.clyvovet.security.UsuarioAutenticado;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 /**
  * Entrada das telas: o login e a pagina inicial de cada perfil.
@@ -15,8 +18,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class InicioController {
 
+    /** O e-mail da tentativa recusada, quando houver, volta preenchido no campo. */
     @GetMapping("/login")
-    public String login() {
+    public String login(@SessionAttribute(name = ResultadoDoLoginWeb.EMAIL_DIGITADO, required = false)
+                        String emailDigitado, Model model) {
+        model.addAttribute("emailDigitado", emailDigitado);
         return "login";
     }
 

@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.config;
 
 import br.com.fiap.clyvovet.security.JwtAuthenticationFilter;
+import br.com.fiap.clyvovet.security.OAuth2UsuarioService;
 import br.com.fiap.clyvovet.security.RateLimitFilter;
 import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
 import br.com.fiap.clyvovet.security.RespostaErroSeguranca;
@@ -44,6 +45,7 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
     private final RespostaErroSeguranca respostaErroSeguranca;
     private final ResultadoDoLoginWeb resultadoDoLoginWeb;
+    private final OAuth2UsuarioService oauth2UsuarioService;
 
     /** Origens permitidas para CORS. Nunca "*" combinado com credenciais. */
     @Value("${clyvovet.cors.origens:http://localhost:3000,http://localhost:8081}")
@@ -146,6 +148,19 @@ public class SecurityConfig {
                 .passwordParameter("senha")
                 .successHandler(resultadoDoLoginWeb)
                 .failureHandler(resultadoDoLoginWeb))
+
+            // Google e GitHub, na mesma tela de login. O provedor so prova quem
+            // e a pessoa; quem decide se ela entra, e como quem, e o
+            // OAuth2UsuarioService -- e o principal que ele devolve e o mesmo
+            // UsuarioAutenticado do formulario. O sucesso passa pelo mesmo
+            // handler: volta a tela que pediu o login e zera as senhas erradas.
+            .oauth2Login(oauth -> oauth
+                .loginPage("/login")
+                .userInfoEndpoint(info -> info
+                    .oidcUserService(oauth2UsuarioService::carregarGoogle)
+                    .userService(oauth2UsuarioService::carregarGithub))
+                .successHandler(resultadoDoLoginWeb)
+                .failureUrl("/login?sem-conta"))
 
             .logout(logout -> logout.logoutSuccessUrl("/login?saiu"));
 

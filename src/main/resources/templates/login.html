@@ -13,6 +13,12 @@
         E-mail ou senha incorretos. Depois de 5 tentativas erradas, a conta fica
         bloqueada por 15 minutos.
     </p>
+    <!-- Aqui a pessoa ja provou ao Google/GitHub que o e-mail e dela: dizer que
+         nao ha conta com ele nao ajuda ninguem a adivinhar contas alheias. -->
+    <p class="aviso aviso-erro" role="alert" th:if="${param['sem-conta']}">
+        Nenhuma conta do ClyvoVet usa este e-mail. Peça à sua clínica para
+        cadastrá-lo, ou entre com e-mail e senha.
+    </p>
     <p class="aviso aviso-ok" role="status" th:if="${param.saiu}">
         Você saiu da sua conta.
     </p>
@@ -20,13 +26,22 @@
     <!-- O th:action faz o Thymeleaf incluir o token CSRF sozinho. -->
     <form th:action="@{/login}" method="post" class="formulario">
         <label for="email">E-mail</label>
-        <input id="email" name="email" type="email" autocomplete="username" required autofocus>
+        <input id="email" name="email" type="email" autocomplete="username" required autofocus
+               th:value="${emailDigitado}">
 
         <label for="senha">Senha</label>
         <input id="senha" name="senha" type="password" autocomplete="current-password" required>
 
         <button type="submit" class="botao botao-primario">Entrar</button>
     </form>
+
+    <!-- Links, e nao formularios: o inicio do OAuth2 e um GET que so
+         redireciona ao provedor, sem nada a proteger com CSRF. -->
+    <div class="separador" aria-hidden="true">ou</div>
+    <nav class="entrar-com" aria-label="Entrar com outra conta">
+        <a class="botao botao-secundario" th:href="@{/oauth2/authorization/google}">Entrar com Google</a>
+        <a class="botao botao-secundario" th:href="@{/oauth2/authorization/github}">Entrar com GitHub</a>
+    </nav>
 </main>
 
 </body>

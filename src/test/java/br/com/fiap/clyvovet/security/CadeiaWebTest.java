@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,6 +86,16 @@ class CadeiaWebTest extends TesteDeTela {
                 .andExpect(unauthenticated());
 
         assertThat(usuarioRepository.findByEmail(EMAIL).orElseThrow().getTentativasFalhas()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("depois da senha errada, o e-mail digitado volta preenchido no formulario")
+    void senhaErradaMantemOEmailPreenchido() throws Exception {
+        MockHttpSession sessao = (MockHttpSession) enviarFormulario("/login", "email", EMAIL, "senha", "senhaErrada999")
+                .andReturn().getRequest().getSession();
+
+        mockMvc.perform(get("/login").param("erro", "").session(sessao))
+                .andExpect(content().string(containsString("value=\"" + EMAIL + "\"")));
     }
 
     @Test
