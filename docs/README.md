@@ -17,8 +17,8 @@ silenciosamente corrigido no texto.
 | [00-funcionalidades.md](00-funcionalidades.md) | **Comece aqui.** O que o sistema faz: domínio, funcionalidades, fluxo de ponta a ponta e o que ainda não existe |
 | [01-arquitetura.md](01-arquitetura.md) | Camadas, fluxo de uma requisição, responsabilidades, cache, tratamento de erros |
 | [02-modelo-de-dados.md](02-modelo-de-dados.md) | Entidades JPA, relacionamentos, enums, mapeamento objeto↔tabela, DDL Oracle |
-| [03-api-rest.md](03-api-rest.md) | Os 74 endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
-| [04-configuracao.md](04-configuracao.md) | Perfis Spring (`oracle`, `h2`, `dev`), propriedades, como rodar localmente |
+| [03-api-rest.md](03-api-rest.md) | Os endpoints sob `/api/v1`, filtros, paginação, PATCH, contratos, códigos de erro |
+| [04-configuracao.md](04-configuracao.md) | Perfis Spring (`mysql`, o padrão, `oracle`, `h2`, `dev`), propriedades, como rodar localmente |
 | [05-deploy.md](05-deploy.md) | Como o artefato chega à Azure e **por que** cada decisão: App Service nativo em vez de container, banco vazio, ordem de boot. O `deploy.sh` que provisionava VM com Compose e H2 foi removido — ele disparava três penalidades de −40 |
 | [06-guia-de-desenvolvimento.md](06-guia-de-desenvolvimento.md) | Convenções do código, como adicionar uma entidade nova, build, testes e o grafo do codebase |
 | [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md) | Inconsistências conhecidas entre código, banco e documentação |
@@ -71,10 +71,11 @@ Clinica ─1:N─> Veterinario ──┘
 | Linguagem | Java 17 |
 | Framework | Spring Boot 3.5.16 |
 | Persistência | Spring Data JPA / Hibernate 6.6 |
-| Banco (entrega) | Oracle 19c (FIAP) |
-| Banco (alvo do deploy) | MySQL 8 (Azure Database for MySQL) |
-| Banco (dev/container) | H2 em `MODE=Oracle` |
-| Segurança | Spring Security + JWT (jjwt) · BCrypt · Bucket4j (rate limit) |
+| Banco (perfil padrão `mysql`) | MySQL 8 (Azure Database for MySQL) |
+| Banco (perfil `oracle`) | Oracle 19c (FIAP) |
+| Banco (perfis `dev` e `h2`) | H2 em `MODE=Oracle` |
+| Telas | Thymeleaf + `thymeleaf-extras-springsecurity6` |
+| Segurança | Spring Security + JWT (jjwt) na API · login por formulário e OAuth2 (Google/GitHub) nas telas · BCrypt · Bucket4j (rate limit) |
 | Migrations | Flyway |
 | Validação | Bean Validation (Jakarta) |
 | Cache | Spring Cache — Caffeine, TTL de 10 min |
@@ -84,20 +85,21 @@ Clinica ─1:N─> Veterinario ──┘
 
 ### Números do projeto
 
-Conferidos no código em 02/09/2026.
+Conferidos no código em 04/10/2026.
 
 | Item | Quantidade |
 |---|---|
-| Entidades JPA | 13 + 1 `@Embeddable` |
-| Enums | 13 |
-| Controllers | 14 + 2 classes de links HATEOAS |
-| Endpoints REST | **74**, todos sob `/api/v1` |
-| Services | 18 |
-| Repositories | 13 + `RepositorioBase` |
+| Entidades JPA | 16 + 1 `@Embeddable` |
+| Enums | 16 |
+| Controllers REST | 18 + 2 classes de links HATEOAS |
+| Endpoints REST | **89**, todos sob `/api/v1` |
+| Controllers de tela (Thymeleaf) | 1, no pacote `web`, fora de `/api/v1` |
+| Services | 26 (22 em `service/` e 4 em `security/`) |
+| Repositories | 16 + `RepositorioBase` |
 | Mappers | 9 + 3 classes de apoio |
-| DTOs | 56 |
-| Migrations Flyway | 7, em **dois conjuntos** (`oracle/` e `mysql/`) |
-| Testes automatizados | **277** (4 ignorados) |
+| DTOs | 67 |
+| Migrations Flyway | 20, em **dois conjuntos** (`oracle/` e `mysql/`) |
+| Testes automatizados | **425** (4 ignorados) |
 
 O detalhamento arquivo a arquivo de cada pacote está em [pacotes/](pacotes/).
 
