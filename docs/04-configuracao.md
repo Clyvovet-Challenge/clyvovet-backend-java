@@ -4,10 +4,10 @@
 
 | Variável | Onde | Observação |
 |---|---|---|
-| `JWT_SECRET` | todos os perfis | Base64 com ≥ 32 bytes. `dev` e `h2` têm default local; **`oracle` não** |
-| `DB_USERNAME` | perfil `oracle` | sem default — a aplicação não sobe sem |
-| `DB_PASSWORD` | perfil `oracle` | idem |
-| `DB_URL` | perfil `oracle` | opcional; default é o Oracle da FIAP |
+| `JWT_SECRET` | todos os perfis | Base64 com ≥ 32 bytes. Só o `dev` tem default local; **`h2`, `mysql` e `oracle` não** |
+| `DB_USERNAME` | perfis `mysql` e `oracle` | sem default — a aplicação não sobe sem |
+| `DB_PASSWORD` | perfis `mysql` e `oracle` | idem |
+| `DB_URL` | perfis `mysql` e `oracle` | opcional; no `mysql` o default é `localhost:3306/clyvovet` com TLS obrigatório, no `oracle` é o Oracle da FIAP |
 
 ```bash
 export JWT_SECRET=$(openssl rand -base64 48)
