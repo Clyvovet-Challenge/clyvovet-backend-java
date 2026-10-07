@@ -11,7 +11,8 @@
 
 ## 1. Onde o trabalho acontece
 
-A `main` é a entrega da Sprint 3, cuja nota saiu em 04/10/2026: 34/100 (ver L9).
+A `main` é a entrega da Sprint 3, cuja nota saiu em 04/10/2026: 34/100. Em 07/10 o professor
+informou que ela sobe para 44 (ver L9 e a [seção 2.1](#21-a-nota-da-sprint-3-por-critério)).
 
 - Todo trabalho da Sprint 4 vai para a branch **`sprint-4`**.
 - Merge `sprint-4` → `main` só quando o Leonardo pedir, via PR, sem rebase nem force-push.
@@ -38,6 +39,28 @@ Penalidades que mais nos ameaçam (lista completa no spec):
 | Código repetido que poderia ser extraído | −5 cada | Idem |
 | Erro visual ou de fluxo durante a apresentação | −5 | A demo depende do app e da API no ar ao mesmo tempo |
 
+### 2.1 A nota da Sprint 3 por critério
+
+Detalhada pelo professor em 07/10/2026, a pedido do grupo:
+
+| Critério da Sprint 3 | Nota | O que faltou |
+|---|---|---|
+| Frontend | 0/50 | A aplicação web: telas, formulários e validações |
+| Spring Security | 20/30 | Com um front, esperava-se OAuth2 e a tela de login configurada, não só JWT protegendo a API |
+| Funcionalidades completas | 14/20 | Os fluxos de negócio expostos na interface |
+| **Total** | **34 + 10 = 44** | |
+
+Os 10 pontos a mais foram um ajuste do professor: as migrations não entraram na nota, porque esse
+requisito saiu da sprint e os pontos foram para o frontend.
+
+**O que isso muda aqui:** o que faltou em Security (OAuth2 e tela de login) é a base da Fase 1b,
+feita em `a8f1e96`. O que faltou em Frontend e Funcionalidades são as telas dos fluxos, nas
+etapas seguintes da Fase 1b. É a mesma lacuna L9.
+
+**Como a Sprint 4 será avaliada, nas palavras do professor:** a nota será "praticamente sobre a
+apresentação", e ele vai avaliar **se todos sabem explicar o sistema**. Essa é a evidência de
+colaboração que conta: os cinco precisam dominar o projeto inteiro, não só a parte que fizeram.
+
 ## 3. Riscos já conhecidos
 
 Levantados em 03/10/2026, ao abrir a sprint.
@@ -46,6 +69,9 @@ Levantados em 03/10/2026, ao abrir a sprint.
   Leonardo (`leojp04` 26 + `leop04` 5). Fabricio, Miguel e Henrique têm
   **zero** (Henrique foi incluído na lista da equipe em 03/10/2026). Os commits da Sprint 4
   precisam vir dos cinco, distribuídos no tempo, e não num push único no fim.
+  **Atualizado em 07/10/2026:** o professor vai medir a colaboração na apresentação, perguntando
+  sobre o sistema a cada integrante (ver seção 2.1). Commits de todos continuam ajudando, mas o
+  risco maior passou a ser alguém não saber explicar o que o sistema faz e por quê.
 - ~~**A interface avaliada é de outro repositório.**~~ Revisto em 04/10/2026: a nota da Sprint 3
   (34/100) zerou a parte web, e o professor exigiu telas Thymeleaf com login OAuth2. A
   interface avaliada passa a ser este repositório (ver [ADR-002](adr/002-telas-thymeleaf-no-spring.md)).
