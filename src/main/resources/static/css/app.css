@@ -91,15 +91,67 @@ h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
 /* --- Formularios --- */
 .formulario { display: flex; flex-direction: column; gap: 0.4rem; }
 .formulario label { font-weight: 600; font-size: 0.9rem; margin-top: 0.6rem; }
-.formulario input {
+.formulario input,
+.formulario select,
+.formulario textarea {
     font: inherit;
     padding: 0.65rem 0.8rem;
     border: 1px solid var(--borda);
     border-radius: 8px;
     background: var(--branco);
 }
-.formulario input:focus { outline: none; border-color: var(--verde); box-shadow: var(--foco); }
+.formulario input:focus,
+.formulario select:focus,
+.formulario textarea:focus { outline: none; border-color: var(--verde); box-shadow: var(--foco); }
+.formulario .campo-com-erro { border-color: var(--erro); }
+.erro-campo { color: var(--erro); font-size: 0.85rem; margin: 0; }
+.dica { color: var(--texto-suave); font-size: 0.85rem; margin: 0; }
+.formulario label.opcao {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 400; margin-top: 1rem;
+}
+.formulario label.opcao input { width: 1.1rem; height: 1.1rem; accent-color: var(--verde); }
+.aviso p { margin: 0; }
 .formulario .botao { margin-top: 1.2rem; }
+
+/* --- Listas e resumos --- */
+h2 { font-size: 1.15rem; margin: 0; }
+.titulo-com-acao {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.titulo-com-acao .subtitulo { margin-bottom: 0; }
+.vazio { color: var(--texto-suave); }
+.lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: 1rem 1.25rem;
+}
+.item-dados { display: flex; flex-direction: column; }
+.item-detalhe { color: var(--texto-suave); font-size: 0.85rem; }
+.item-acoes { display: flex; align-items: center; gap: 0.75rem; }
+.resumo {
+    display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem;
+    margin: 0 0 0.5rem; padding: 1rem; background: var(--verde-claro); border-radius: 8px;
+}
+.resumo dt { font-weight: 600; color: var(--verde-escuro); }
+.resumo dd { margin: 0; }
+.voltar { display: inline-block; margin-top: 1.5rem; color: var(--verde-escuro); }
+
+/* --- Vagas --- */
+.vagas { margin-top: 2rem; }
+.grade-vagas {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;
+}
+.vaga {
+    display: flex; flex-direction: column; padding: 0.75rem 1rem;
+    background: var(--branco); border: 1px solid var(--borda); border-radius: var(--raio);
+    color: var(--texto); text-decoration: none;
+}
+.vaga strong { text-transform: capitalize; }
+.vaga:hover { border-color: var(--verde); background: var(--verde-claro); }
+.vaga:focus-visible { outline: none; box-shadow: var(--foco); }
 
 /* --- Botoes --- */
 .botao {
@@ -136,4 +188,5 @@ h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
     .cabecalho { padding: 0.75rem 1rem; }
     .usuario-email { display: none; }
     .cartao { padding: 1.5rem; }
+    .item { flex-direction: column; align-items: flex-start; }
 }

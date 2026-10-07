@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Agendar consulta')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Agendar consulta</h1>
+    <p class="subtitulo">Escolha o pet, a clínica e o serviço para ver os horários livres.</p>
+
+    <!--
+        GET, e nao POST: escolher ainda nao grava nada. Cada escolha volta como
+        parametro da URL, e a tela mostra o passo seguinte.
+    -->
+    <form class="cartao formulario" th:action="@{/tutor/agendamentos/novo}" method="get">
+        <label for="animalId">Pet</label>
+        <select id="animalId" name="animalId" required>
+            <option value="">Selecione</option>
+            <option th:each="p : ${pets}" th:value="${p.id()}" th:text="${p.nome()}"
+                    th:selected="${p.id() == animalId}">Bolinha</option>
+        </select>
+
+        <label for="clinicaId">Clínica</label>
+        <select id="clinicaId" name="clinicaId" required>
+            <option value="">Selecione</option>
+            <option th:each="c : ${clinicas}" th:value="${c.id()}" th:text="${c.nome()}"
+                    th:selected="${c.id() == clinicaId}">VetCare</option>
+        </select>
+
+        <th:block th:if="${servicos != null}">
+            <label for="servicoId">Serviço</label>
+            <select id="servicoId" name="servicoId" required>
+                <option value="">Selecione</option>
+                <option th:each="s : ${servicos}" th:value="${s.id()}"
+                        th:text="|${s.nome()} · ${s.duracaoMinutos()} min · R$ ${#numbers.formatDecimal(s.preco(), 1, 'POINT', 2, 'COMMA')}|"
+                        th:selected="${s.id() == servicoId}">Consulta de rotina · 30 min · R$ 180,00</option>
+            </select>
+            <p class="dica" th:if="${#lists.isEmpty(servicos)}">Esta clínica ainda não oferece serviços para agendar.</p>
+        </th:block>
+
+        <button type="submit" class="botao botao-primario"
+                th:text="${servicos == null} ? 'Ver serviços' : 'Ver horários'">Ver horários</button>
+    </form>
+
+    <section th:if="${vagas != null}" class="vagas">
+        <div class="titulo-com-acao">
+            <h2>Horários livres a partir de <span th:text="${#temporals.format(de, 'dd/MM')}">20/10</span></h2>
+            <a class="botao botao-secundario"
+               th:href="@{/tutor/agendamentos/novo(animalId=${animalId}, clinicaId=${clinicaId}, servicoId=${servicoId}, de=${semanaSeguinte})}">
+                Próxima semana</a>
+        </div>
+
+        <p class="cartao vazio" th:if="${#lists.isEmpty(vagas)}">
+            Nenhum horário livre nesta semana. Tente a próxima.
+        </p>
+
+        <ul class="grade-vagas" th:unless="${#lists.isEmpty(vagas)}">
+            <li th:each="v : ${vagas}">
+                <a class="vaga"
+                   th:href="@{/tutor/agendamentos/confirmar(animalId=${animalId}, clinicaId=${clinicaId}, servicoId=${servicoId}, veterinarioId=${v.veterinarioId()}, data=${v.data()}, hora=${v.horaInicio()})}">
+                    <strong th:text="${#temporals.format(v.data(), 'EEE dd/MM', new java.util.Locale('pt', 'BR'))}">ter 20/10</strong>
+                    <span th:text="${v.horaInicio()}">08:00</span>
+                    <span class="item-detalhe" th:text="${v.veterinarioNome()}">Dra. Camila</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <a class="voltar" th:href="@{/tutor/agendamentos}">Voltar aos meus agendamentos</a>
+</main>
+
+</body>
+</html>
