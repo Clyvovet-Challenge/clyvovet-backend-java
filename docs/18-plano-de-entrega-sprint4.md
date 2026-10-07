@@ -57,8 +57,9 @@ Levantados em 03/10/2026, ao abrir a sprint.
 - **`LINKS-ENTREGA.txt` ainda é da Sprint 3.**
 - **A API está fora do ar.** O Web App da Sprint 3 foi apagado:
   `app-clyvovet-java-rm562312.azurewebsites.net` não resolve no DNS (NXDOMAIN em 03/10/2026).
-- **O perfil `mysql` nunca rodou num MySQL real.** Só foi validado em H2 `MODE=MySQL`
-  (`MigrationsMySqlTest`). O primeiro boot real pode falhar no `ddl-auto=validate`.
+- ~~**O perfil `mysql` nunca rodou num MySQL real.**~~ Engano corrigido em 06/10/2026: ele
+  já tinha rodado em 06/09 (V1 a V7), e a prova foi repetida com V1 a V20 num MySQL 8 local,
+  passando no `ddl-auto=validate`. Falta só o servidor da Azure.
 - **Database fica fora do escopo deste repositório** até termos o enunciado oficial da Sprint 4
   de Database. O `specs/04-dependencias-externas.md` fala em procedures chamadas pelo Java, mas
   isso vem de um documento interno de agosto, não do enunciado.
@@ -75,7 +76,7 @@ conta Azure do Pedro (os nomes em `azure/00-variaveis.sh` já são dela), mais p
 | # | Lacuna | Pesa em | Evidência |
 |---|---|---|---|
 | L1 | API fora do ar | 40 pts (demonstração) | NXDOMAIN, ver seção 3 |
-| L2 | Perfil `mysql` nunca rodou num MySQL real | risco de o deploy falhar no boot | só H2 `MODE=MySQL` |
+| ~~L2~~ | ~~Perfil `mysql` nunca rodou num MySQL real~~ | risco de o deploy falhar no boot | ✅ MySQL 8 local, V1 a V20 (06/10/2026); o Azure fica para a Fase 3 |
 | L3 | README diverge do código | 10 pts (organização) | `application.properties:5` diz `mysql`; a suíte tem 392 testes |
 | L4 | Índice de `docs/` sem o 17; `LINKS-ENTREGA.txt` da Sprint 3 | 10 pts (organização) | `docs/README.md` |
 | L5 | Código não revisado contra as penalidades de boas práticas (−10) e repetição (−5) | penalidades | — |
@@ -139,7 +140,7 @@ Revisto em 04/10/2026 para incluir a Fase 1b. As datas de 19/10 em diante não m
 | 07/10 | Fase 1b, base: duas cadeias de segurança, login por formulário e OAuth2 |
 | 12/10 | Fase 1: README corrigido (feito em 04/10) e primeira revisão de código |
 | 14/10 | Fase 1b, fluxos: telas do tutor e do veterinário |
-| 19/10 | Fase 2: perfil `mysql` validado num MySQL real local |
+| ~~19/10~~ | Fase 2: perfil `mysql` validado num MySQL real local — ✅ feito em 06/10 |
 | **26/10** | **Fase 3: API e telas no ar na conta do Pedro, com o app apontando para ela** |
 | 31/10 | Fase 4: roteiro pronto e vídeo gravado, navegando pelas telas Thymeleaf |
 | 01–03/11 | Margem para regravar e conferir a entrega |

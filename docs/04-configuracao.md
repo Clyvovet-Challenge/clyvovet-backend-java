@@ -80,7 +80,8 @@ alguém adicionar uma migration só de um lado.
 
 Ele **não** substitui um MySQL real: H2 em `MODE=MySQL` valida sintaxe e semântica
 principal, não o comportamento de tipos do servidor. Verde ali é "o SQL está
-coerente", não "validado em produção".
+coerente", não "validado em produção". A prova contra o servidor real é feita à mão,
+e está registrada na [seção do perfil `mysql`](#perfil-mysql).
 
 ### Bancos já provisionados
 
@@ -107,7 +108,7 @@ a aplicação subiria contra um banco sem tabela.
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
-| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Ainda não executado contra um MySQL real |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8 real (V1 a V20, 06/10/2026); falta o servidor da Azure |
 
 O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
@@ -228,11 +229,15 @@ mvn spring-boot:run \
 Alvo do deploy no **Azure Container Apps + Azure Database for MySQL Flexible
 Server**.
 
-> ⚠️ **Este perfil ainda não foi executado contra um MySQL real.** Ele foi escrito
-> junto com as migrations de `db/migration/mysql/` enquanto a infraestrutura era
-> definida com o time de devops, e validado apenas por
-> `MigrationsMySqlTest` (H2 em `MODE=MySQL`). Trate-o como ponto de partida
-> revisado, não como configuração validada em produção.
+> ✅ **Validado num MySQL 8.0 real em 06/10/2026.** Banco vazio em container, perfil
+> `mysql` sozinho: o Flyway aplicou V1 a V20, a aplicação subiu com
+> `ddl-auto=validate`, e login e `GET /api/v1/racas` responderam 200. A primeira
+> prova, em 06/09/2026 (V1 a V7), foi a que achou as 54 colunas que reprovavam no
+> `validate` — ver o [item 19 das pendências](07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real).
+>
+> ⚠️ **Ainda não exercitado:** o Azure Database for MySQL Flexible Server, que difere
+> do MySQL de container em TLS obrigatório e nos privilégios do admin. Quem prova é o
+> primeiro deploy.
 
 ```properties
 spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/clyvovet?sslMode=REQUIRED}
