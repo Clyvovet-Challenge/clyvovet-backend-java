@@ -7,9 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,32 +29,12 @@ class AgendamentoFluxoTest extends TesteDeApi {
     private String servicoId;
     private LocalDate proximaTerca;
 
-    /**
-     * A grade e montada numa terca futura de proposito.
-     *
-     * Datas relativas ao "hoje" da execucao evitam o teste que passa hoje e
-     * quebra em janeiro — e a antecedencia minima de 2 horas da regra A10
-     * tornaria qualquer horario fixo de hoje uma aposta contra o relogio.
-     */
+    /** A grade fica numa terca futura: ver {@code montarAgendaDeTerca}. */
     @BeforeEach
     void montarCatalogoEGrade() throws Exception {
-        String admin = tokenAdmin();
-        proximaTerca = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.TUESDAY)).plusWeeks(1);
-
-        ResultActions servico = criar("/api/v1/servicos", admin, """
-                {"clinicaId":"%s","nome":"Consulta de rotina %s","tipoEvento":"CONSULTA",
-                 "preco":180.00,"duracaoMinutos":30}"""
-                .formatted(SeedV2.CLINICA_VETCARE, System.nanoTime()));
-        servico.andExpect(status().isCreated());
-        servicoId = idDe(servico);
-        removerDepois("/api/v1/servicos/" + servicoId);
-
-        ResultActions faixa = criar("/api/v1/disponibilidades", admin, """
-                {"veterinarioId":"%s","diaSemana":"TERCA","horaInicio":"08:00","horaFim":"12:00",
-                 "vigenciaInicio":"%s"}"""
-                .formatted(SeedV2.VET_CAMILA, LocalDate.now().minusDays(1)));
-        faixa.andExpect(status().isCreated());
-        removerDepois("/api/v1/disponibilidades/" + idDe(faixa));
+        AgendaDeTerca agenda = montarAgendaDeTerca();
+        servicoId = agenda.servicoId();
+        proximaTerca = agenda.terca();
     }
 
     @Test

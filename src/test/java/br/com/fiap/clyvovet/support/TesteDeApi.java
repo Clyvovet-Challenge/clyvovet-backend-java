@@ -12,6 +12,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -140,6 +143,43 @@ public abstract class TesteDeApi {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(corpo).get("accessToken").asText();
+    }
+
+    /**
+     * Um servico de 30 min da VetCare e a grade da Camila nas tercas, das 08:00
+     * as 12:00: oito vagas por terca.
+     *
+     * <p>A terca e futura e relativa ao "hoje" da execucao. Uma data fixa passaria
+     * hoje e quebraria em janeiro, e a antecedencia minima de 2 horas (regra A10)
+     * tornaria qualquer horario de hoje uma aposta contra o relogio.</p>
+     *
+     * <p>Fica aqui porque o fluxo de agendamento e testado por dois lados -- pela
+     * API e pela tela -- e os dois precisam da mesma agenda montada.</p>
+     */
+    protected AgendaDeTerca montarAgendaDeTerca() throws Exception {
+        String admin = tokenAdmin();
+        LocalDate terca = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.TUESDAY)).plusWeeks(1);
+        String nome = "Consulta de rotina " + System.nanoTime();
+
+        ResultActions servico = criar("/api/v1/servicos", admin, """
+                {"clinicaId":"%s","nome":"%s","tipoEvento":"CONSULTA",
+                 "preco":180.00,"duracaoMinutos":30}"""
+                .formatted(SeedV2.CLINICA_VETCARE, nome));
+        servico.andExpect(status().isCreated());
+        String servicoId = idDe(servico);
+        removerDepois("/api/v1/servicos/" + servicoId);
+
+        ResultActions faixa = criar("/api/v1/disponibilidades", admin, """
+                {"veterinarioId":"%s","diaSemana":"TERCA","horaInicio":"08:00","horaFim":"12:00",
+                 "vigenciaInicio":"%s"}"""
+                .formatted(SeedV2.VET_CAMILA, LocalDate.now().minusDays(1)));
+        faixa.andExpect(status().isCreated());
+        removerDepois("/api/v1/disponibilidades/" + idDe(faixa));
+
+        return new AgendaDeTerca(servicoId, nome, terca);
+    }
+
+    protected record AgendaDeTerca(String servicoId, String servicoNome, LocalDate terca) {
     }
 
     protected ResultActions buscar(String url, String token) throws Exception {
