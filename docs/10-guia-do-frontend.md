@@ -260,7 +260,8 @@ devolvem `_links` junto do objeto:
 
 **Se o link não veio, a ação não existe.** Um evento `AGENDADO` traz `cancelar` e
 `concluir`; o mesmo evento depois de `CANCELADO` não traz nenhum dos dois. Um
-`REALIZADO` traz `marcar-retorno` — mas só se houver retorno previsto.
+`REALIZADO` traz `marcar-retorno` — mas só enquanto não houver outro retorno em aberto
+para ele (R14).
 
 Habilitar botão por `if (status === 'AGENDADO')` funciona hoje e envelhece mal: é
 uma cópia da máquina de estados do servidor mantida à mão, que passa a mentir na

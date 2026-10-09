@@ -114,6 +114,11 @@ public class RetornoService {
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(retorno));
     }
 
+    /** A R14 perguntada antes da chamada: e o que o link "marcar-retorno" consulta. */
+    public boolean temRetornoEmAberto(UUID origemId) {
+        return eventoClinicoRepository.temRetornoEmAberto(origemId);
+    }
+
     /**
      * Quais destes atendimentos ja tem retorno em aberto. E a R14 perguntada
      * antes do clique: a tela esconde o "Marcar retorno" que seria recusado.

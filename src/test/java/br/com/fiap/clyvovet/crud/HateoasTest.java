@@ -120,8 +120,39 @@ class HateoasTest extends TesteDeApi {
 
         JsonNode depois = corpoDe(buscar("/api/v1/eventos-clinicos/" + id, tokenVeterinaria()));
         assertThat(depois.at("/_links/concluir").isMissingNode()).isTrue();
-        // REALIZADO com retorno previsto abre a proxima transicao do ciclo.
+        // REALIZADO abre a proxima transicao do ciclo.
         assertThat(depois.at("/_links/marcar-retorno").isMissingNode()).isFalse();
+    }
+
+    @Test
+    @DisplayName("sem retorno previsto o marcar-retorno continua oferecido: o service aceita")
+    void semRetornoPrevistoAindaOfereceMarcarRetorno() throws Exception {
+        // O retorno previsto so alimenta a lista de vencidos (R17). Marcar o
+        // retorno pede R11 e R14, e o link nao pode esconder uma chamada aceita.
+        String id = registrarAtendimentoDeOntem();
+        concluirSemRetornoPrevisto(id);
+
+        JsonNode evento = corpoDe(buscar("/api/v1/eventos-clinicos/" + id, tokenVeterinaria()));
+        assertThat(evento.at("/_links/marcar-retorno").isMissingNode()).isFalse();
+    }
+
+    @Test
+    @DisplayName("com retorno em aberto o marcar-retorno some: a R14 recusaria a chamada")
+    void retornoEmAbertoTiraOMarcarRetorno() throws Exception {
+        AgendaDeTerca agenda = montarAgendaDeTerca();
+        String id = registrarAtendimentoDeOntem();
+        // Com retorno previsto: assim o link so pode sumir por causa da R14.
+        criar("/api/v1/eventos-clinicos/" + id + "/concluir", tokenVeterinaria(), """
+                {"desfecho":"MELHORA","dataRetornoPrevisto":"%s"}""".formatted(agenda.terca()))
+                .andExpect(status().isOk());
+
+        ResultActions retorno = criar("/api/v1/eventos-clinicos/" + id + "/retorno", tokenVeterinaria(), """
+                {"data":"%s","hora":"09:00"}""".formatted(agenda.terca()));
+        retorno.andExpect(status().isCreated());
+        removerDepois("/api/v1/eventos-clinicos/" + idDe(retorno));
+
+        JsonNode evento = corpoDe(buscar("/api/v1/eventos-clinicos/" + id, tokenVeterinaria()));
+        assertThat(evento.at("/_links/marcar-retorno").isMissingNode()).isTrue();
     }
 
     // ------------------------------------------------------------------
@@ -165,5 +196,11 @@ class HateoasTest extends TesteDeApi {
         String id = idDe(evento);
         removerDepois("/api/v1/eventos-clinicos/" + id);
         return id;
+    }
+
+    private void concluirSemRetornoPrevisto(String id) throws Exception {
+        criar("/api/v1/eventos-clinicos/" + id + "/concluir", tokenVeterinaria(), """
+                {"desfecho":"MELHORA"}""")
+                .andExpect(status().isOk());
     }
 }
