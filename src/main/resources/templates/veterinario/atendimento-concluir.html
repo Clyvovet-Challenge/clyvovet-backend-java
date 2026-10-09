@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Concluir atendimento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Concluir atendimento</h1>
+    <p class="subtitulo">
+        <span th:text="${evento.servicoNome() ?: evento.descricao()}">Consulta de rotina</span> de
+        <span th:text="${evento.animalNome()}">Bolinha</span> em
+        <span th:text="${#temporals.format(evento.data(), 'dd/MM/yyyy')}">08/10/2026</span>
+        às <span th:text="${evento.hora()}">09:00</span>.
+    </p>
+
+    <form class="cartao formulario" th:action="@{/veterinario/atendimentos/{id}/concluir(id=${evento.id()})}"
+          th:object="${conclusao}" method="post">
+        <p class="aviso aviso-erro" role="alert" th:if="${#fields.hasGlobalErrors()}"
+           th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erro</p>
+
+        <label for="pesoKg">Peso (kg)</label>
+        <input type="number" th:field="*{pesoKg}" th:errorclass="campo-com-erro" step="0.001" min="0.001">
+        <p class="erro-campo" th:if="${#fields.hasErrors('pesoKg')}" th:errors="*{pesoKg}">Peso inválido</p>
+
+        <label for="desfecho">Desfecho</label>
+        <select th:field="*{desfecho}" th:errorclass="campo-com-erro">
+            <option value="">Não informado</option>
+            <option th:each="d : ${desfechos}" th:value="${d}"
+                    th:text="${#strings.capitalize(#strings.toLowerCase(d.name()))}">Melhora</option>
+        </select>
+
+        <label for="dataRetornoPrevisto">Retorno previsto</label>
+        <input type="date" th:field="*{dataRetornoPrevisto}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('dataRetornoPrevisto')}"
+           th:errors="*{dataRetornoPrevisto}">Data inválida</p>
+        <p class="dica">Se o pet não voltar até esta data, ele aparece na lista de retornos vencidos.</p>
+
+        <label for="descricao">Observações</label>
+        <textarea th:field="*{descricao}" th:errorclass="campo-com-erro" rows="3" maxlength="1000"></textarea>
+        <p class="erro-campo" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}">Texto longo demais</p>
+
+        <button type="submit" class="botao botao-primario">Concluir atendimento</button>
+    </form>
+
+    <a class="voltar" th:href="@{/veterinario/atendimentos}">Voltar sem concluir</a>
+</main>
+
+</body>
+</html>

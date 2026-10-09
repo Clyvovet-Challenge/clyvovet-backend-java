@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -17,10 +18,13 @@ import java.util.UUID;
  * Aceitar o animalId aqui permitiria marcar um retorno de um pet ligado a
  * consulta de outro, o que quebraria R10 sem que nada no banco reclamasse: a
  * FK evento_origem_id nao sabe nada sobre qual animal e qual.
+ *
+ * O @Setter e do formulario das telas, como no AgendamentoRequest.
  */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class RetornoRequest {
 
     @NotNull

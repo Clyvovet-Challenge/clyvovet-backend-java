@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,10 +20,13 @@ import java.time.LocalDate;
  * desfecho conclusivo e sem retorno programado. O que a chamada faz de
  * obrigatorio e a TRANSICAO — AGENDADO vira REALIZADO —, e essa nao vem do
  * corpo, e a propria operacao.
+ *
+ * O @Setter e do formulario das telas, como no AgendamentoRequest.
  */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class ConclusaoRequest {
 
     @Positive(message = "Peso deve ser positivo")
