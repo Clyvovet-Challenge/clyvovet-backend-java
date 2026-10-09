@@ -20,11 +20,11 @@
 
         <dl class="resumo">
             <dt>Pet</dt>
-            <dd th:text="${pet.nome()}">Bolinha</dd>
+            <dd th:text="${pet != null} ? ${pet.nome()} : '—'">Bolinha</dd>
             <dt>Serviço</dt>
             <dd th:text="${servico != null} ? ${servico.nome()} : '—'">Consulta de rotina</dd>
             <dt>Veterinário</dt>
-            <dd th:text="${veterinario.nome()}">Dra. Camila</dd>
+            <dd th:text="${veterinario != null} ? ${veterinario.nome()} : '—'">Dra. Camila</dd>
         </dl>
 
         <input type="hidden" th:field="*{animalId}">

@@ -152,11 +152,19 @@ public class TutorAgendamentoController {
      * Os nomes do que o tutor escolheu. O formulario carrega so os ids; mostrar
      * "Bolinha, Consulta de rotina, Dra. Camila" e o que deixa ele conferir antes
      * de confirmar.
+     *
+     * <p>Os ids vem de campos ocultos e podem chegar vazios num formulario
+     * adulterado. Ai o @NotNull ja marcou o erro, e o resumo mostra so o que
+     * existe -- buscar por id nulo derrubaria a tela com um 500.</p>
      */
     private void resumir(AgendamentoRequest agendamento, UUID clinicaId, Model model) {
         model.addAttribute("clinicaId", clinicaId);
-        model.addAttribute("pet", animalService.buscarPorId(agendamento.getAnimalId()));
-        model.addAttribute("veterinario", veterinarioService.buscarPorId(agendamento.getVeterinarioId()));
+        if (agendamento.getAnimalId() != null) {
+            model.addAttribute("pet", animalService.buscarPorId(agendamento.getAnimalId()));
+        }
+        if (agendamento.getVeterinarioId() != null) {
+            model.addAttribute("veterinario", veterinarioService.buscarPorId(agendamento.getVeterinarioId()));
+        }
         model.addAttribute("servico", servicoService.daClinica(clinicaId, false).stream()
                 .filter(servico -> servico.id().equals(agendamento.getServicoId()))
                 .findFirst()

@@ -112,6 +112,33 @@ class AgendamentoTelaTest extends TesteDeTela {
     }
 
     @Test
+    @DisplayName("formulario sem veterinario volta com o erro, e nao quebra montando o resumo")
+    void semVeterinarioMostraErro() throws Exception {
+        // Os ids vao em campos ocultos: so chegam vazios se alguem mexer no
+        // formulario. Ainda assim a resposta e a tela com o erro, nao um 500.
+        enviarFormulario("/tutor/agendamentos", comoUsuario(LUCAS),
+                "animalId", SeedV2.ANIMAL_BOLINHA_DO_LUCAS,
+                "clinicaId", SeedV2.CLINICA_VETCARE,
+                "servicoId", agenda.servicoId(),
+                "data", agenda.terca().toString(),
+                "hora", "09:00")
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("agendamento", "veterinarioId"));
+    }
+
+    @Test
+    @DisplayName("formulario sem pet e 403: nao ha pet do tutor para autorizar")
+    void semPetRecebe403() throws Exception {
+        enviarFormulario("/tutor/agendamentos", comoUsuario(LUCAS),
+                "clinicaId", SeedV2.CLINICA_VETCARE,
+                "servicoId", agenda.servicoId(),
+                "veterinarioId", SeedV2.VET_CAMILA,
+                "data", agenda.terca().toString(),
+                "hora", "09:00")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("cancelar pela tela registra o motivo e volta a lista")
     void cancelaComMotivo() throws Exception {
         String id = agendarPelaApi("10:00");
