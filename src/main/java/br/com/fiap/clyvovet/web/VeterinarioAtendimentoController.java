@@ -65,7 +65,11 @@ public class VeterinarioAtendimentoController {
     @GetMapping("/atendimentos/{id}/concluir")
     @PreAuthorize("@seguranca.podeAcessarEvento(#id)")
     public String telaDeConclusao(@PathVariable UUID id, Model model) {
-        model.addAttribute("conclusao", new ConclusaoRequest());
+        // A conclusao grava a descricao por cima da atual, como na API. Vir
+        // preenchida faz a troca ser vista: campo vazio apagava o texto sem aviso.
+        ConclusaoRequest conclusao = new ConclusaoRequest();
+        conclusao.setDescricao(eventoClinicoService.buscarPorId(id).descricao());
+        model.addAttribute("conclusao", conclusao);
         return mostrarConclusao(id, model);
     }
 

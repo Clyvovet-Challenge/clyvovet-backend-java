@@ -35,9 +35,10 @@
            th:errors="*{dataRetornoPrevisto}">Data inválida</p>
         <p class="dica">Se o pet não voltar até esta data, ele aparece na lista de retornos vencidos.</p>
 
-        <label for="descricao">Observações</label>
+        <label for="descricao">Descrição do atendimento</label>
         <textarea th:field="*{descricao}" th:errorclass="campo-com-erro" rows="3" maxlength="1000"></textarea>
         <p class="erro-campo" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}">Texto longo demais</p>
+        <p class="dica">O texto salvo aqui substitui a descrição atual do atendimento.</p>
 
         <button type="submit" class="botao botao-primario">Concluir atendimento</button>
     </form>

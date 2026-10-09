@@ -97,6 +97,15 @@ class AtendimentoTelaTest extends TesteDeTela {
     }
 
     @Test
+    @DisplayName("a descricao atual ja vem no campo: quem conclui ve o texto que esta trocando")
+    void descricaoAtualVemPreenchida() throws Exception {
+        abrir(ATENDIMENTOS + "/" + eventoDeOntem + "/concluir", VETERINARIA)
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Descrição do atendimento")))
+                .andExpect(content().string(containsString(">Consulta de rotina</textarea>")));
+    }
+
+    @Test
     @DisplayName("peso negativo volta ao formulario com o erro ao lado do campo peso")
     void pesoNegativoMostraErroNoCampo() throws Exception {
         enviarFormulario(ATENDIMENTOS + "/" + eventoDeOntem + "/concluir", comoUsuario(VETERINARIA),
