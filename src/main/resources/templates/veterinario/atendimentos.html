@@ -38,8 +38,12 @@
                 <a class="botao botao-primario"
                    th:if="${a.statusEvento().podeConcluir() and !a.data().isAfter(hoje)}"
                    th:href="@{/veterinario/atendimentos/{id}/concluir(id=${a.id()})}">Concluir</a>
-                <a class="botao botao-secundario" th:if="${a.statusEvento().podeGerarRetorno()}"
-                   th:href="@{/veterinario/atendimentos/{id}/retorno(id=${a.id()})}">Marcar retorno</a>
+                <!-- Com retorno em aberto a R14 recusaria o clique: no lugar do botao, o fato. -->
+                <th:block th:if="${a.statusEvento().podeGerarRetorno()}">
+                    <span class="selo" th:if="${comRetornoEmAberto.contains(a.id())}">Retorno marcado</span>
+                    <a class="botao botao-secundario" th:unless="${comRetornoEmAberto.contains(a.id())}"
+                       th:href="@{/veterinario/atendimentos/{id}/retorno(id=${a.id()})}">Marcar retorno</a>
+                </th:block>
             </div>
         </li>
     </ul>

@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -146,6 +147,32 @@ class AtendimentoTelaTest extends TesteDeTela {
                 .orElseThrow(() -> new AssertionError("A tela nao gravou o retorno"));
         removerDepois("/api/v1/eventos-clinicos/" + retorno.getId());
         assertThat(retorno.getData()).isEqualTo(segundaFutura);
+    }
+
+    @Test
+    @DisplayName("atendimento concluido sem retorno mostra o botao de marcar retorno")
+    void semRetornoMostraOBotao() throws Exception {
+        concluirPelaApi(eventoDeOntem);
+
+        abrir(ATENDIMENTOS, VETERINARIA)
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(ATENDIMENTOS + "/" + eventoDeOntem + "/retorno")));
+    }
+
+    @Test
+    @DisplayName("com retorno em aberto o botao some: a R14 recusaria o clique")
+    void retornoEmAbertoEscondeOBotao() throws Exception {
+        concluirPelaApi(eventoDeOntem);
+        ResultActions retorno = criar("/api/v1/eventos-clinicos/" + eventoDeOntem + "/retorno", tokenVeterinaria(),
+                """
+                {"data":"%s","hora":"08:00"}""".formatted(segundaFutura));
+        retorno.andExpect(status().isCreated());
+        removerDepois("/api/v1/eventos-clinicos/" + idDe(retorno));
+
+        abrir(ATENDIMENTOS, VETERINARIA)
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(ATENDIMENTOS + "/" + eventoDeOntem + "/retorno"))))
+                .andExpect(content().string(containsString("Retorno marcado")));
     }
 
     @Test

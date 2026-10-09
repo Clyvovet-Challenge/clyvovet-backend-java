@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.web;
 
 import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoRequest;
 import br.com.fiap.clyvovet.dto.eventoClinico.ConclusaoResponse;
+import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.dto.eventoClinico.RetornoRequest;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.model.Desfecho;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -57,8 +59,11 @@ public class VeterinarioAtendimentoController {
     public String atendimentos(Model model) {
         LocalDate hoje = LocalDate.now();
         model.addAttribute("hoje", hoje);
-        model.addAttribute("atendimentos", eventoClinicoService.listarTodos(null, null, null, null,
-                hoje.minusDays(DIAS_DA_JANELA), hoje.plusDays(DIAS_DA_JANELA), ATENDIMENTOS_DA_JANELA).getContent());
+        List<EventoClinicoResponse> atendimentos = eventoClinicoService.listarTodos(null, null, null, null,
+                hoje.minusDays(DIAS_DA_JANELA), hoje.plusDays(DIAS_DA_JANELA), ATENDIMENTOS_DA_JANELA).getContent();
+        model.addAttribute("atendimentos", atendimentos);
+        model.addAttribute("comRetornoEmAberto", retornoService.comRetornoEmAberto(
+                atendimentos.stream().map(EventoClinicoResponse::id).toList()));
         return "veterinario/atendimentos";
     }
 

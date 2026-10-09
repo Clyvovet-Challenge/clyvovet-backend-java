@@ -14,7 +14,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> {
@@ -121,6 +123,14 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
               AND r.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.AGENDADO
             """)
     boolean temRetornoEmAberto(@Param("origemId") UUID origemId);
+
+    /** A R14 para uma lista inteira de uma vez: quais destas origens ja tem retorno em aberto. */
+    @Query("""
+            SELECT DISTINCT r.eventoOrigem.id FROM EventoClinico r
+            WHERE r.eventoOrigem.id IN :origens
+              AND r.statusEvento = br.com.fiap.clyvovet.model.StatusEvento.AGENDADO
+            """)
+    Set<UUID> origensComRetornoEmAberto(@Param("origens") Collection<UUID> origens);
 
     /** Historico do animal em ordem de data. Alimenta a serie de peso e a linha do tempo. */
     List<EventoClinico> findByAnimalIdOrderByDataAsc(UUID animalId);
