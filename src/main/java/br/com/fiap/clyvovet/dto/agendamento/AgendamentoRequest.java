@@ -37,8 +37,10 @@ public class AgendamentoRequest {
     @NotNull
     private UUID veterinarioId;
 
-    /** A antecedencia minima e verificada no service, com a hora junto. */
-    /** O formulario manda a data como texto (yyyy-MM-dd); o JSON ja vinha assim. */
+    /**
+     * A antecedencia minima e verificada no service, com a hora junto. O
+     * formulario manda a data como texto (yyyy-MM-dd); o JSON ja vinha assim.
+     */
     @NotNull
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Future(message = "Não é possível agendar para uma data passada")
