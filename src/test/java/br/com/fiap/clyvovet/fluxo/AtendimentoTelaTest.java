@@ -87,6 +87,16 @@ class AtendimentoTelaTest extends TesteDeTela {
     }
 
     @Test
+    @DisplayName("os desfechos aparecem com acento, e o valor enviado continua sendo o da API")
+    void desfechosComAcento() throws Exception {
+        abrir(ATENDIMENTOS + "/" + eventoDeOntem + "/concluir", VETERINARIA)
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">Estável<")))
+                .andExpect(content().string(containsString(">Óbito<")))
+                .andExpect(content().string(containsString("value=\"OBITO\"")));
+    }
+
+    @Test
     @DisplayName("peso negativo volta ao formulario com o erro ao lado do campo peso")
     void pesoNegativoMostraErroNoCampo() throws Exception {
         enviarFormulario(ATENDIMENTOS + "/" + eventoDeOntem + "/concluir", comoUsuario(VETERINARIA),

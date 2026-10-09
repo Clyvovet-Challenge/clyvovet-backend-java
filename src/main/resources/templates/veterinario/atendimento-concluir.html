@@ -26,7 +26,7 @@
         <select th:field="*{desfecho}" th:errorclass="campo-com-erro">
             <option value="">Não informado</option>
             <option th:each="d : ${desfechos}" th:value="${d}"
-                    th:text="${#strings.capitalize(#strings.toLowerCase(d.name()))}">Melhora</option>
+                    th:text="${d.rotulo()}">Melhora</option>
         </select>
 
         <label for="dataRetornoPrevisto">Retorno previsto</label>
