@@ -154,6 +154,21 @@ Sem o cabeçalho, a resposta é **401**. Com um token de perfil insuficiente, **
 | `oracle` | Oracle 19c FIAP | entrega e banco de testes |
 | `mysql` | Azure Database for MySQL | alvo do deploy — [validado num MySQL 8 local, V1 a V20; falta o Azure](docs/07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real) |
 
+| `demo` | o do perfil ao lado | demonstração — **soma-se** a outro perfil, nunca sozinho |
+
+**Perfil de demonstração.** O [`DemoDataSeeder`](src/main/java/br/com/fiap/clyvovet/config/DemoDataSeeder.java)
+dá à VetCare Prime um catálogo (consulta, retorno, vacinação) e à Camila uma agenda de
+segunda a sábado, 09h–12h e 14h–18h. Assim o tutor agenda com ela pelas telas, e o
+atendimento aparece na lista da veterinária. Ele não entra no `dev` porque a suíte de
+testes roda nesse perfil e conta vagas exatas da Camila (o motivo está no cabeçalho da
+V11). É idempotente: subir de novo não duplica nada.
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev,demo
+```
+
+No Docker de desenvolvimento, o equivalente é `SPRING_PROFILES_ACTIVE=mysql,local,demo`.
+
 Os perfis `oracle` e `mysql` não têm credenciais no código: elas vêm do ambiente, e a
 aplicação não sobe sem elas.
 
@@ -279,10 +294,12 @@ da Azure.
   atendimentos nesse período, os mais tardios não aparecem, e a tela não avisa. Para o
   volume de uma clínica do seed isso não chega perto; com volume real, a próxima versão
   precisa de paginação ou de uma janela menor.
-- **A base `dev` não traz agenda para a clínica da veterinária do seed.** A VetCare não
-  tem serviço cadastrado, então o tutor não consegue marcar com a Camila pelas telas, e
-  a lista dela começa vazia. As capturas acima usaram a PetMed Centro para o
-  agendamento e um atendimento criado pela API para a veterinária.
+- **A base `dev` sozinha não traz agenda para a clínica da veterinária do seed.** A
+  VetCare não tem serviço cadastrado no `dev`, então o tutor não consegue marcar com a
+  Camila pelas telas, e a lista dela começa vazia. O perfil `demo` (em
+  [Outros perfis](#outros-perfis)) resolve isso para demonstração. As capturas acima são
+  anteriores a ele: usaram a PetMed Centro para o agendamento e um atendimento criado
+  pela API para a veterinária.
 
 ---
 
