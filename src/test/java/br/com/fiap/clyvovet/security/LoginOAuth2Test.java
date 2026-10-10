@@ -52,6 +52,21 @@ class LoginOAuth2Test extends TesteDeTela {
     }
 
     @Test
+    @DisplayName("atras do proxy da nuvem o redirect do Google volta para o endereco https de fora")
+    void redirectUsaOEnderecoVistoPeloNavegador() throws Exception {
+        // No App Service o TLS termina no proxy e o Tomcat recebe http puro. Sem
+        // honrar X-Forwarded-*, o redirect_uri sai http://<host interno>/... e o
+        // Google recusa com redirect_uri_mismatch.
+        mockMvc.perform(get("/oauth2/authorization/google")
+                        .header("X-Forwarded-Proto", "https")
+                        .header("X-Forwarded-Host", "clyvovet.exemplo.com")
+                        .header("X-Forwarded-Port", "443"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString(
+                        "redirect_uri=https://clyvovet.exemplo.com/login/oauth2/code/google")));
+    }
+
+    @Test
     @DisplayName("o botao do GitHub leva ao GitHub pedindo a lista de e-mails")
     void botaoDoGithubLevaAoGithub() throws Exception {
         mockMvc.perform(get("/oauth2/authorization/github"))
