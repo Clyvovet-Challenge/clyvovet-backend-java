@@ -46,4 +46,26 @@ class RateLimitTest extends TesteDeApi {
                         .content(LOGIN_INVALIDO))
                 .andExpect(status().isTooManyRequests());
     }
+
+    @Test
+    @DisplayName("o mesmo cliente com a porta de origem mudando continua no mesmo balde")
+    void portaDeOrigemNaoMudaOBalde() throws Exception {
+        // O proxy do App Service anexa "ip:porta" ao X-Forwarded-For, e a porta
+        // de origem muda a cada conexao. Se a chave levasse a porta, cada
+        // tentativa cairia num balde novo e o limite de forca bruta nunca
+        // dispararia.
+        for (int tentativa = 1; tentativa <= 10; tentativa++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .header("X-Forwarded-For", "203.0.113.7:" + (50000 + tentativa))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(LOGIN_INVALIDO))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("X-Forwarded-For", "203.0.113.7:60000")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(LOGIN_INVALIDO))
+                .andExpect(status().isTooManyRequests());
+    }
 }

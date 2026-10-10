@@ -161,15 +161,34 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Considera X-Forwarded-For por causa do proxy da Azure. Em producao isso
-     * so e confiavel se o proxy sobrescrever o header — do contrario o cliente
-     * poderia forjar o IP e escapar do limite.
+     * Com {@code server.forward-headers-strategy=framework} o ForwardedHeaderFilter
+     * do Spring esconde o X-Forwarded-For da aplicacao e entrega o endereco do
+     * cliente em {@code getRemoteAddr()} -- por isso o caminho comum aqui e o
+     * segundo. O cabecalho so e lido se alguem desligar a estrategia.
+     *
+     * <p>Em producao isso so e confiavel se o proxy sobrescrever o header: do
+     * contrario o cliente poderia forjar o IP e escapar do limite.</p>
      */
     private String ipDoCliente(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+            return semPorta(forwarded.split(",")[0].trim());
         }
-        return request.getRemoteAddr();
+        return semPorta(request.getRemoteAddr());
+    }
+
+    /**
+     * O proxy do App Service anexa "ip:porta" e a porta de origem muda a cada
+     * conexao: com ela na chave, cada tentativa cairia num balde novo. Aceita
+     * "1.2.3.4:5678" e "[::1]:5678"; IPv6 sem colchetes fica como veio.
+     */
+    private static String semPorta(String enderecoComPossivelPorta) {
+        if (enderecoComPossivelPorta.startsWith("[")) {
+            int fim = enderecoComPossivelPorta.indexOf(']');
+            return fim > 0 ? enderecoComPossivelPorta.substring(1, fim) : enderecoComPossivelPorta;
+        }
+        int doisPontos = enderecoComPossivelPorta.indexOf(':');
+        boolean ipv4ComPorta = doisPontos > 0 && doisPontos == enderecoComPossivelPorta.lastIndexOf(':');
+        return ipv4ComPorta ? enderecoComPossivelPorta.substring(0, doisPontos) : enderecoComPossivelPorta;
     }
 }
