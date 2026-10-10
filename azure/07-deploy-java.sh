@@ -2,7 +2,7 @@
 # Deploy da API Java: build local do jar e publicacao por --type jar.
 #
 # A JAVA SOBE PRIMEIRO, E ISSO E ORDEM, NAO PREFERENCIA
-# O Flyway desta aplicacao cria as 20 tabelas, incluindo as seis t_clyvo_* que a
+# O Flyway desta aplicacao cria as 24 tabelas, incluindo as seis t_clyvo_* que a
 # API .NET consome. Se a .NET subir antes, ela nao encontra as tabelas dela --
 # e o EF Core nao valida schema no boot, entao ela sobe normalmente e falha so na
 # primeira consulta, com "Table doesn't exist".

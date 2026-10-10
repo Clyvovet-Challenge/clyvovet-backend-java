@@ -152,7 +152,7 @@ Sem o cabeçalho, a resposta é **401**. Com um token de perfil insuficiente, **
 | `dev` | H2 em memória | desenvolvimento local — **recomendado** |
 | `h2` | H2 em modo servidor | dentro do docker-compose (o host `clyvovet-db` só existe lá) |
 | `oracle` | Oracle 19c FIAP | entrega e banco de testes |
-| `mysql` | Azure Database for MySQL | alvo do deploy — [validado num MySQL 8 local, V1 a V20; falta o Azure](docs/07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real) |
+| `mysql` | Azure Database for MySQL | alvo do deploy — [validado num MySQL 8 local, V1 a V20 (a V21 só rodou em H2); falta o Azure](docs/07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real) |
 
 | `demo` | o do perfil ao lado | demonstração — **soma-se** a outro perfil, nunca sozinho |
 
@@ -862,8 +862,8 @@ bash azure/05-webapp-dotnet.sh       # Web App DOTNETCORE:8.0
 bash azure/06-configuracoes.sh       # app settings das duas APIs
 ```
 
-O banco nasce **vazio**: o Flyway cria as 20 tabelas no primeiro boot da API Java,
-da V1 à V12. Não rode DDL à mão — é assim que o banco e o
+O banco nasce **vazio**: o Flyway cria as 24 tabelas no primeiro boot da API Java,
+da V1 à V21. Não rode DDL à mão — é assim que o banco e o
 [`documentos/script_bd.sql`](documentos/script_bd.sql) deixam de divergir.
 
 ### 5. Publicar as aplicações

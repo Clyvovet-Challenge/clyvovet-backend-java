@@ -199,7 +199,7 @@ na URL JDBC e `SslMode=Required` na connection string da .NET.
 ### Ordem de subida
 
 A **Java sobe primeiro**, e isso é dependência, não preferência: o Flyway dela cria
-as 19 tabelas, incluindo as seis `t_clyvo_*` que a API .NET consome. Se a .NET subir
+as 24 tabelas, incluindo as seis `t_clyvo_*` que a API .NET consome. Se a .NET subir
 antes, ela **sobe normalmente** — o EF Core não valida schema no boot — e falha só na
 primeira consulta, dizendo que a tabela não existe.
 
