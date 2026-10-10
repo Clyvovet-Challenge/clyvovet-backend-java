@@ -76,6 +76,8 @@ transportar a informação clínica do próprio animal.
 
 ---
 
+**🎥 Vídeo — Java Advanced (Sprint 4):** a gravar (roteiro em preparação).
+
 **🎥 Vídeo — Java Advanced (Sprint 3):** [assista aqui](https://www.youtube.com/watch?v=GzwneyCpGCw)
 
 > Este é o vídeo desta disciplina (frontend, Flyway, Spring Security e
@@ -733,6 +735,28 @@ em [`docs/08-seguranca.md`](docs/08-seguranca.md).
 | `origem` (alerta clínico) | `TUTOR` `VETERINARIO` |
 | `status` (autorização) | `VIGENTE` `REVOGADA` `EXPIRADA` |
 | `diaSemana` | `SEGUNDA` … `DOMINGO` |
+
+---
+
+## Integração multidisciplinar
+
+O backend Java é o centro de um sistema que as outras disciplinas do semestre completam.
+A tabela diz o que cada uma entrega, onde está a evidência e, quando falta algo, diz que falta.
+
+| Disciplina | O que entra no sistema | Evidência |
+|---|---|---|
+| **Java Advanced** (este repositório) | API REST com 84 endpoints, telas Thymeleaf, Spring Security (JWT na API; sessão, CSRF e OAuth2 nas telas), Flyway, cache | [Aplicação web](#aplicação-web), [Endpoints](#endpoints), [ADR 002](docs/adr/002-telas-thymeleaf-no-spring.md), [ADR 003](docs/adr/003-prontuario-pertence-ao-tutor.md) |
+| **Mobile** | App React Native/Expo que consome esta API com o token JWT. Na nuvem, o endereço da API vem de `EXPO_PUBLIC_JAVA_BASE_URL` | [Guia do frontend](docs/10-guia-do-frontend.md), [repositório do app](https://github.com/Fabriciopereira-sp/2tdspw-challenge-clyvovet-challenge) |
+| **Advanced Business Development with .NET** | API de engajamento (lembretes, sugestão de produtos, widget de saúde preditiva) no **mesmo banco**, lendo tabelas daqui | [ADR 004](docs/adr/004-banco-compartilhado-java-dona-do-schema.md), [ADR 007](docs/adr/007-contrato-de-erro-com-referencia.md), [repositório da API .NET](https://github.com/Clyvovet-Challenge/ClyvoVet-api) |
+| **Database** | Modelo relacional em 24 tabelas, versionado em 21 migrations (Oracle e MySQL), catálogo de raças e base de doenças | [Modelo de dados](docs/02-modelo-de-dados.md), [Configuração](docs/04-configuracao.md), [ADR 005](docs/adr/005-perfis-de-banco-e-migrations-por-dialeto.md), [ADR 006](docs/adr/006-catalogo-de-racas-com-chave.md), [`script_bd.sql`](documentos/script_bd.sql), [Diagrama de classes](documentos/Diagrama_De_Classes.pdf) |
+| **Disruptive Architectures (IA)** | Saúde preditiva: a base de doenças por raça (migration V15) alimenta o widget da API .NET | [IA de saúde preditiva](docs/16-ia-saude-preditiva.md) |
+| **DevOps Tools & Cloud Computing** | Nesta Sprint o aplicativo da disciplina é a **API .NET**, com pipeline e deploy no Azure DevOps. Este repositório mantém os scripts de Azure da Sprint 3 e o `azure-pipelines.yml` | [Deploy](docs/05-deploy.md), [Arquitetura na Azure](docs/13-arquitetura-na-azure.md), pasta [`azure/`](azure/) |
+
+**O que ainda não tem evidência neste repositório:**
+
+- As procedures de Database chamadas pelo backend (citadas em [`specs/04`](specs/04-dependencias-externas.md)) **não existem aqui**; não há prova de que sejam exigidas.
+- O pipeline de CI/CD da Sprint 4 fica no repositório da API .NET e ainda não existe.
+- Evidências de Mobile, .NET e IA vivem nos repositórios deles, e este README só aponta para lá.
 
 ---
 
