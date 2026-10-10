@@ -156,6 +156,11 @@ material bruto da narrativa (critério 2).
 |---|---|
 | [001](adr/001-ui-pelo-app-mobile.md) | ~~A interface avaliada é o app mobile, e não telas no Spring~~ (substituído por 002) |
 | [002](adr/002-telas-thymeleaf-no-spring.md) | Telas Thymeleaf no próprio Spring, com login OAuth2 |
+| [003](adr/003-prontuario-pertence-ao-tutor.md) | O prontuário pertence ao tutor: três níveis de acesso e quebra de vidro |
+| [004](adr/004-banco-compartilhado-java-dona-do-schema.md) | Banco compartilhado entre as duas APIs, com a Java dona do schema |
+| [005](adr/005-perfis-de-banco-e-migrations-por-dialeto.md) | Perfis de banco e migrations em dois conjuntos (Oracle e MySQL) |
+| [006](adr/006-catalogo-de-racas-com-chave.md) | Catálogo de raças com `chave`, em vez de texto livre ou enum |
+| [007](adr/007-contrato-de-erro-com-referencia.md) | Contrato de erro das três pontas, com referência só na falha de servidor |
 
 ## 6. Cronograma
 
