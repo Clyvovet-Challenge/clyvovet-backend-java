@@ -69,6 +69,19 @@ class AgendamentoTelaTest extends TesteDeTela {
     }
 
     @Test
+    @DisplayName("trocar a clinica descarta o servico da clinica anterior e nao mostra as vagas dele")
+    void trocarClinicaDescartaServicoDaAnterior() throws Exception {
+        // O select da clinica reenvia o formulario inteiro: o servicoId que o
+        // tutor tinha escolhido na VetCare chega junto com a PetMed.
+        abrir("/tutor/agendamentos/novo?animalId=%s&clinicaId=%s&servicoId=%s&de=%s"
+                .formatted(SeedV2.ANIMAL_BOLINHA_DO_LUCAS, SeedV2.CLINICA_PETMED,
+                        agenda.servicoId(), agenda.terca()), LUCAS)
+                .andExpect(status().isOk())
+                .andExpect(model().attributeDoesNotExist("vagas"))
+                .andExpect(model().attribute("servicoId", (Object) null));
+    }
+
+    @Test
     @DisplayName("agendar numa vaga valida grava e volta a lista com a confirmacao")
     void agendaNumaVagaValida() throws Exception {
         enviarAgendamento(SeedV2.ANIMAL_BOLINHA_DO_LUCAS, agenda.terca(), "09:00")

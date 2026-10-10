@@ -80,11 +80,21 @@ public class TutorAgendamentoController {
         model.addAttribute("clinicas", clinicaService.listarTodos(null, null, null, PRIMEIRA_PAGINA).getContent());
         model.addAttribute("animalId", animalId);
         model.addAttribute("clinicaId", clinicaId);
-        model.addAttribute("servicoId", servicoId);
 
-        if (clinicaId != null) {
-            model.addAttribute("servicos", servicoService.daClinica(clinicaId, false));
+        if (clinicaId == null) {
+            servicoId = null;
+        } else {
+            var servicos = servicoService.daClinica(clinicaId, false);
+            model.addAttribute("servicos", servicos);
+            // Trocar a clinica reenvia o servico escolhido na anterior. Ele nao e
+            // desta clinica, entao o tutor volta a escolher em vez de ver as vagas
+            // de um servico que nao esta na lista.
+            UUID escolhido = servicoId;
+            if (servicos.stream().noneMatch(servico -> servico.id().equals(escolhido))) {
+                servicoId = null;
+            }
         }
+        model.addAttribute("servicoId", servicoId);
         if (animalId != null && clinicaId != null && servicoId != null) {
             LocalDate inicio = de != null && de.isAfter(LocalDate.now()) ? de : LocalDate.now();
             model.addAttribute("de", inicio);
