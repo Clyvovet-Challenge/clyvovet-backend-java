@@ -135,7 +135,8 @@ public class SecurityConfig {
                 // Mesmo motivo da API: o despacho para a pagina de erro e uma
                 // nova passagem pela cadeia, e nao pode exigir login de novo.
                 .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
-                .requestMatchers("/login", "/css/**", "/img/**", "/favicon.ico").permitAll()
+                // /cadastro e publico: e a tela de quem ainda nao tem conta.
+                .requestMatchers("/login", "/cadastro", "/css/**", "/img/**", "/favicon.ico").permitAll()
                 .requestMatchers("/tutor/**").hasRole("TUTOR")
                 .requestMatchers("/veterinario/**").hasAnyRole(VETERINARIO, ADMIN)
                 .anyRequest().authenticated())

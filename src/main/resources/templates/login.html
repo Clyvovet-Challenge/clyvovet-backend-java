@@ -22,6 +22,9 @@
     <p class="aviso aviso-ok" role="status" th:if="${param.saiu}">
         Você saiu da sua conta.
     </p>
+    <p class="aviso aviso-ok" role="status" th:if="${param['conta-criada']}">
+        Conta criada. Entre com o e-mail e a senha que você acabou de escolher.
+    </p>
 
     <!-- O th:action faz o Thymeleaf incluir o token CSRF sozinho. -->
     <form th:action="@{/login}" method="post" class="formulario">
@@ -42,6 +45,8 @@
         <a class="botao botao-secundario" th:href="@{/oauth2/authorization/google}">Entrar com Google</a>
         <a class="botao botao-secundario" th:href="@{/oauth2/authorization/github}">Entrar com GitHub</a>
     </nav>
+
+    <p class="subtitulo rodape-login">Ainda não tem conta? <a th:href="@{/cadastro}">Criar conta</a></p>
 </main>
 
 </body>

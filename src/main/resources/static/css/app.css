@@ -178,6 +178,7 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 .separador::before, .separador::after { content: ""; flex: 1; border-top: 1px solid var(--borda); }
 .entrar-com { display: flex; flex-direction: column; gap: 0.6rem; }
+.rodape-login { margin: 1.5rem 0 0; text-align: center; }
 
 /* --- Avisos --- */
 .aviso { border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1rem; font-size: 0.9rem; }
