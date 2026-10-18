@@ -168,6 +168,14 @@ Cadastradas no painel da Render, aba *Environment*. Só os **nomes** ficam no re
 | `DB_USERNAME` | usuário do Aiven (`avnadmin` por padrão) |
 | `DB_PASSWORD` | senha do Aiven. **Segredo: só no painel da Render** |
 | `JWT_SECRET` | texto aleatório longo, gerado para este deploy (`openssl rand -base64 48`). **Segredo** |
+| `GOOGLE_CLIENT_ID` | ID do cliente OAuth criado no Google Cloud Console (termina em `.apps.googleusercontent.com`) |
+| `GOOGLE_CLIENT_SECRET` | segredo desse cliente (começa com `GOCSPX-`). **Segredo** |
+| `GITHUB_CLIENT_ID` | ID do OAuth App do GitHub (começa com `Ov23`, 20 caracteres) |
+| `GITHUB_CLIENT_SECRET` | segredo desse app. **Segredo** |
+
+As quatro últimas ligam o login social. Sem elas o app sobe normal, mas os botões "Entrar com
+Google" e "Entrar com GitHub" mandam o `client_id=nao-configurado` ao provedor e falham lá.
+Variável de ambiente só vale depois de um **novo deploy**: gravar com *Save only* não reinicia o app.
 
 Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
 erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.
@@ -177,7 +185,8 @@ erro da primeira tentativa de deploy, e mostrou que o build e os testes já pass
 1. No Aiven, crie um serviço **MySQL** e copie host, porta, banco e usuário da *Overview*.
 2. Na Render, crie um **Web Service** a partir do repositório, ambiente **Docker**, branch
    `sprint-4`, plano gratuito.
-3. Cadastre as cinco variáveis acima e dispare o deploy.
+3. Cadastre as variáveis acima e dispare o deploy. As do login social dependem dos passos da
+   seção seguinte.
 4. O build roda `mvn package` **com os testes** dentro do Docker e leva alguns minutos.
 5. No primeiro boot o Flyway cria as 21 migrations no banco vazio. A Render detecta a porta
    8080 e **reinicia o deploy uma vez**: é normal no primeiro deploy.
@@ -188,8 +197,39 @@ erro da primeira tentativa de deploy, e mostrou que o build e os testes já pass
 - O app subiu com `ddl-auto=validate`, o que prova que as tabelas batem com as entidades.
 - `GET /actuator/health` respondeu `UP` e `/` redirecionou para `/login` com HTTP 200.
 
-**Não foi conferido:** login com uma conta, leitura de dados e o login social (Google e GitHub).
-Este último não está configurado nesse deploy (faltam as variáveis `GOOGLE_*` e `GITHUB_*`).
+Conferido depois, no app online, ainda em 18/10/2026:
+
+- Cadastro de tutor (`POST /api/v1/auth/registrar`, 201) e login com e-mail e senha: gravam e
+  leem no Aiven.
+- `GET /api/v1/racas` com token devolveu 200 e 44 raças das cinco espécies. A migração V14 tem
+  45 linhas de inserção; a diferença de uma não foi explicada (a API só lista raças ativas).
+- Login com GitHub e com Google: o redirecionamento sai com o `client_id` real e a
+  `redirect_uri` da Render, e o login com uma conta de tutor já cadastrada entrou no sistema.
+
+**Não foi conferido:** perfis de veterinário e de administrador, as telas de agendamento com
+dados, o refresh e o logout do token, e o limite de tentativas atrás do proxy da Render.
+
+### Login social (Google e GitHub)
+
+O app só aceita e-mail que já exista como usuário ([ADR 002](adr/002-telas-thymeleaf-no-spring.md)).
+Sem conta com aquele e-mail, o login volta para `/login` com "Nenhuma conta usa este e-mail".
+
+1. **GitHub:** *Settings → Developer settings → OAuth Apps → New OAuth App*. Homepage
+   `https://clyvovet-backend-java.onrender.com` e URL de retorno
+   `https://clyvovet-backend-java.onrender.com/login/oauth2/code/github`. O GitHub mostra o
+   segredo **uma vez só**.
+2. **Google:** no Google Cloud Console, crie um projeto, abra *Google Auth Platform*, monte a
+   tela de consentimento (público **Externo**) e crie um cliente do tipo *Aplicativo da Web* com
+   a URL de retorno `https://clyvovet-backend-java.onrender.com/login/oauth2/code/google`.
+   Enquanto o app estiver em modo **Teste**, só entra quem estiver em *Público-alvo → Usuários
+   de teste*, e o Google mostra o aviso de "app não verificado". A configuração pode levar de
+   cinco minutos a algumas horas para valer.
+3. Cadastre as quatro variáveis na Render e faça **Save, rebuild, and deploy**.
+4. Crie um tutor com o e-mail da conta social (`POST /api/v1/auth/registrar`, pelo Swagger).
+
+Cuidado com a troca entre ID e segredo: o ID vai na URL pública do botão; se o segredo for
+colado no campo do ID, ele aparece para qualquer pessoa. Se isso ocorrer, gere um segredo novo
+e apague o antigo no provedor.
 
 ### Limites que quem for avaliar precisa saber
 

@@ -38,8 +38,9 @@ Alternativas descartadas:
 
 - **Prova feita em 18/10/2026:** o Flyway conectou no MySQL 8.4 do Aiven com TLS, validou as 21
   migrations (schema na versão 21), o app subiu com `ddl-auto=validate`, `GET /actuator/health`
-  respondeu `UP` e `/` redirecionou para a tela de login (HTTP 200). Login e leitura de dados
-  **não** foram exercitados nessa rodada.
+  respondeu `UP` e `/` redirecionou para a tela de login (HTTP 200). Nessa primeira rodada, login
+  e leitura de dados **não** foram exercitados; foram no mesmo dia, em uma segunda rodada (ver
+  "Login social" abaixo e `docs/05-deploy.md`).
 - **O banco do Aiven é o MySQL 8.4**, e a validação anterior era em 8.0. O Flyway avisa que a 8.4
   é mais nova que a versão que ele testou; nada falhou por isso.
 - **O período de teste do Aiven é de 30 dias** a partir de 18/10/2026. Depois dele o serviço é
@@ -50,8 +51,14 @@ Alternativas descartadas:
   primeira requisição depois de parado espera por isso.
 - **Os segredos ficam só no painel da Render.** O repositório documenta o nome das variáveis,
   nunca o valor, e não registra o endereço do banco.
-- **Login social (Google e GitHub) não está configurado** nesse deploy: faltam
-  `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET`, e as
-  URLs de retorno dos provedores precisariam apontar para o endereço da Render.
+- **Login social (Google e GitHub) está configurado e foi testado.** O professor pediu esse
+  login. Foram necessários um OAuth App no GitHub, um cliente OAuth no Google Cloud, as quatro
+  variáveis `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` e
+  `GITHUB_CLIENT_SECRET` na Render, e a URL de retorno de cada um apontando para o endereço da
+  Render. No Google, o app está em modo **Teste**: só entra quem está em *Usuários de teste*, e
+  aparece o aviso de "app não verificado". O e-mail da conta social precisa existir como usuário.
+- **Uma troca de ID por segredo quase expôs o segredo.** O segredo do GitHub foi colado no campo
+  `GITHUB_CLIENT_ID`, e o ID vai na URL pública do botão. Foi percebido no teste de
+  redirecionamento, o segredo foi gerado de novo e o antigo, apagado.
 - A API .NET, no vídeo de DevOps, pode apontar para o mesmo banco do Aiven e usar a Azure só para
   hospedar o app. Isso ainda **não foi testado**.
