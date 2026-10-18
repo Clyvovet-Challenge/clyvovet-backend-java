@@ -87,6 +87,30 @@ transportar a informação clínica do próprio animal.
 
 ---
 
+## Aplicação online (Sprint 4)
+
+**Endereço:** https://clyvovet-backend-java.onrender.com — abre direto na tela de login.
+
+O Java roda na **Render** (container Docker, plano gratuito), com banco **MySQL 8.4 no
+Aiven**. A Azure ficou reservada à disciplina de DevOps. A decisão e o que foi descartado estão
+no [ADR 008](docs/adr/008-java-na-render-com-mysql-no-aiven.md); o passo a passo e as variáveis
+de ambiente estão em [docs/05-deploy.md](docs/05-deploy.md).
+
+Conferido em 18/10/2026: o Flyway validou as 21 migrations no MySQL do Aiven, o app subiu com
+`ddl-auto=validate`, `/actuator/health` respondeu `UP` e a tela de login respondeu 200.
+
+> ⚠️ **Antes de testar, leia isto:**
+> - **A primeira abertura demora.** No plano gratuito a Render desliga o app depois de uns 15
+>   minutos sem uso. A primeira requisição depois disso espera a subida do Spring, que passou
+>   de 4 minutos na primeira medição. Abra o endereço e aguarde.
+> - **O banco tem prazo.** O período de teste do Aiven vai até cerca de **17/11/2026**; depois
+>   disso o serviço é desligado, a menos que o grupo cadastre um cartão.
+> - **Login com Google e GitHub não está configurado** nesse endereço. Use e-mail e senha.
+> - Se o endereço não abrir, rode localmente, sem configurar nada:
+>   `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` (ver [Começando](#começando)).
+
+---
+
 ## Começando
 
 Para rodar localmente **não é preciso configurar nada** — o perfil `dev` sobe um H2
@@ -781,6 +805,10 @@ Os requisitos do Challenge que originaram o projeto estão em
 ---
 
 ## Deploy na Azure — passo a passo
+
+> ℹ️ **Sprint 4:** o Java passou a rodar na Render, com banco no Aiven — ver
+> [Aplicação online (Sprint 4)](#aplicação-online-sprint-4). Este capítulo continua valendo
+> como o roteiro de deploy na Azure da Sprint 3 e dos scripts de `azure/`.
 
 > 📋 **Este capítulo é o roteiro do vídeo de DevOps** — a régua exige o deploy
 > *"seguindo exatamente os passos descritos no README.md"*. O roteiro de

@@ -140,7 +140,79 @@ Para conectar no console H2, use a JDBC URL `jdbc:h2:tcp://clyvovet-db:1521/clyv
 usuário `sa`, senha vazia.
 
 ---
+## Render + Aiven — onde o Java roda na Sprint 4
+
+O edital de Java Advanced da Sprint 4 pede só que a aplicação esteja *rodando online*. Ela
+roda na **Render** (container) com banco **MySQL no Aiven**, fora da Azure, que ficou para a
+DevOps. O porquê, e o que foi descartado, está no
+[ADR 008](adr/008-java-na-render-com-mysql-no-aiven.md).
+
+**Endereço:** https://clyvovet-backend-java.onrender.com — entra direto na tela de login.
+
+| O quê | Valor |
+|---|---|
+| Serviço | Web Service Docker, plano gratuito, região Ohio |
+| Código | repositório `clyvovet-backend-java`, branch `sprint-4`, usando o `Dockerfile` da raiz |
+| Deploy | manual (auto-deploy desligado) |
+| Banco | Aiven MySQL 8.4, plano Developer (período de teste) |
+| Perfil Spring | `mysql`, o padrão do `application.properties` |
+
+### Variáveis de ambiente
+
+Cadastradas no painel da Render, aba *Environment*. Só os **nomes** ficam no repositório.
+
+| Variável | O que é |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `mysql` |
+| `DB_URL` | `jdbc:mysql://<host>:<porta>/<banco>?sslMode=REQUIRED` — host, porta e banco vêm da página *Overview* do serviço no Aiven. O Aiven recusa conexão sem TLS |
+| `DB_USERNAME` | usuário do Aiven (`avnadmin` por padrão) |
+| `DB_PASSWORD` | senha do Aiven. **Segredo: só no painel da Render** |
+| `JWT_SECRET` | texto aleatório longo, gerado para este deploy (`openssl rand -base64 48`). **Segredo** |
+
+Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
+erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.
+
+### Passo a passo
+
+1. No Aiven, crie um serviço **MySQL** e copie host, porta, banco e usuário da *Overview*.
+2. Na Render, crie um **Web Service** a partir do repositório, ambiente **Docker**, branch
+   `sprint-4`, plano gratuito.
+3. Cadastre as cinco variáveis acima e dispare o deploy.
+4. O build roda `mvn package` **com os testes** dentro do Docker e leva alguns minutos.
+5. No primeiro boot o Flyway cria as 21 migrations no banco vazio. A Render detecta a porta
+   8080 e **reinicia o deploy uma vez**: é normal no primeiro deploy.
+
+### O que foi conferido em 18/10/2026
+
+- O Flyway conectou no MySQL 8.4 do Aiven e validou as 21 migrations (schema na versão 21).
+- O app subiu com `ddl-auto=validate`, o que prova que as tabelas batem com as entidades.
+- `GET /actuator/health` respondeu `UP` e `/` redirecionou para `/login` com HTTP 200.
+
+**Não foi conferido:** login com uma conta, leitura de dados e o login social (Google e GitHub).
+Este último não está configurado nesse deploy (faltam as variáveis `GOOGLE_*` e `GITHUB_*`).
+
+### Limites que quem for avaliar precisa saber
+
+- **Subida a frio.** No plano gratuito a Render desliga o app depois de uns 15 minutos sem
+  uso, e a primeira requisição depois disso espera o Spring subir. A Render avisa "50
+  segundos ou mais"; a subida do Spring levou 256 s na primeira medição.
+- **Banco com prazo.** O período de teste do Aiven é de **30 dias a partir de 18/10/2026**.
+  Depois dele o serviço é desligado, a menos que se cadastre um cartão (US$ 5 por mês). O
+  plano Free do Aiven não vence, mas desliga por inatividade e só o dono da conta religa.
+
+### Rodar sem nuvem
+
+O perfil `dev` sobe um H2 em memória, sem configurar nada
+(`./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`). É o caminho para quem não alcançar o
+endereço acima.
+
+---
+
 ## Azure — App Service com banco PaaS
+
+> ℹ️ Este capítulo descreve o deploy da **Sprint 3** (disciplina de DevOps). Na Sprint 4 o Java
+> roda na Render, como descrito acima; o App Service, o plano B1 e os scripts de `azure/`
+> continuam documentados porque a API .NET e a DevOps ainda os usam.
 
 ### Por que não é mais uma VM
 

@@ -120,7 +120,7 @@ a aplicação subiria contra um banco sem tabela.
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
-| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8 real (V1 a V21, 18/10/2026); falta o servidor da Azure |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8.0 em container e no Aiven MySQL 8.4 (V1 a V21, 18/10/2026); falta o servidor da Azure |
 
 O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
@@ -241,8 +241,10 @@ export JWT_SECRET=$(openssl rand -base64 48)
 
 ## Perfil `mysql`
 
-Alvo do deploy: **Azure Database for MySQL Flexible Server**. O local onde o app
-roda é decisão de deploy e está em [05-deploy.md](05-deploy.md).
+Banco do deploy da Sprint 4: **Aiven MySQL 8.4**, com o app na Render
+([ADR 008](adr/008-java-na-render-com-mysql-no-aiven.md)). Os scripts de `azure/` continuam
+apontando para o **Azure Database for MySQL Flexible Server**. O local onde o app roda é
+decisão de deploy e está em [05-deploy.md](05-deploy.md).
 
 > ✅ **Validado num MySQL 8.0 real em 18/10/2026 (V1 a V21).** Banco vazio em container,
 > perfil `mysql` sozinho: o Flyway aplicou as 21 migrations, a aplicação subiu com
@@ -252,9 +254,16 @@ roda é decisão de deploy e está em [05-deploy.md](05-deploy.md).
 > prova, em 06/09/2026 (V1 a V7), foi a que achou as 54 colunas que reprovavam no
 > `validate` — ver o [item 19 das pendências](07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real).
 >
+> ✅ **Validado também no Aiven MySQL 8.4, em 18/10/2026** (deploy na Render). Com TLS
+> obrigatório (`sslMode=REQUIRED`) e o usuário admin do Aiven, o Flyway validou as 21
+> migrations (schema na versão 21), o app subiu com `ddl-auto=validate` e
+> `GET /actuator/health` respondeu `UP`. A tela de login respondeu 200. **Não** foram
+> exercitados login nem leitura de dados nessa rodada. O Flyway avisa que o MySQL 8.4 é mais
+> novo que a versão que ele testou (a última é a 8.1); nada falhou por causa disso.
+>
 > ⚠️ **Ainda não exercitado:** o Azure Database for MySQL Flexible Server, que difere
-> do MySQL de container em TLS obrigatório e nos privilégios do admin. Quem prova é o
-> primeiro deploy.
+> do MySQL de container nos privilégios do admin. Só a API .NET na DevOps deve tocá-lo, e
+> isso ainda não aconteceu.
 
 ```properties
 spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/clyvovet?sslMode=REQUIRED}

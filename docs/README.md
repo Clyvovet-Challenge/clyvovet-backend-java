@@ -34,7 +34,7 @@ silenciosamente corrigido no texto.
 | [17-contrato-de-erro.md](17-contrato-de-erro.md) | O formato de erro combinado entre API Java, API .NET e app, e a referência que liga a frase que o tutor vê ao log do servidor |
 | [18-plano-de-entrega-sprint4.md](18-plano-de-entrega-sprint4.md) | **O plano da entrega final de 04/11.** Branch `sprint-4`, régua, riscos conhecidos e cronograma |
 | [19-roteiro-do-video-sprint4.md](19-roteiro-do-video-sprint4.md) | O roteiro do vídeo de Java da Sprint 4 (≤ 15 min, os cinco falando), o que precisa estar pronto antes de gravar e a folha de perguntas que cada integrante deve saber responder |
-| [adr/](adr/README.md) | Registros de decisão (ADR 001 a 007): uma decisão com motivo não óbvio por arquivo. É o material da narrativa da entrega |
+| [adr/](adr/README.md) | Registros de decisão (ADR 001 a 008): uma decisão com motivo não óbvio por arquivo. É o material da narrativa da entrega |
 | [pacotes/](pacotes/) | **Um documento por pacote do código**, explicando arquivo por arquivo o que cada classe faz e por que ela é separada das outras |
 
 ### Fora desta pasta
@@ -72,7 +72,7 @@ Clinica ─1:N─> Veterinario ──┘
 | Linguagem | Java 17 |
 | Framework | Spring Boot 3.5.16 |
 | Persistência | Spring Data JPA / Hibernate 6.6 |
-| Banco (perfil padrão `mysql`) | MySQL 8 (Azure Database for MySQL) |
+| Banco (perfil padrão `mysql`) | MySQL 8 (Aiven MySQL 8.4 no deploy da Sprint 4; Azure Database for MySQL nos scripts `azure/`) |
 | Banco (perfil `oracle`) | Oracle 19c (FIAP) |
 | Banco (perfis `dev` e `h2`) | H2 em `MODE=Oracle` |
 | Telas | Thymeleaf + `thymeleaf-extras-springsecurity6` |

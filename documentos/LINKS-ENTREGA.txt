@@ -39,6 +39,18 @@
 
 
 ---------------------------------------------------------------------------
+ APLICACAO ONLINE                           (Sprint 4)
+---------------------------------------------------------------------------
+
+  Java (Spring Boot) -- Render + MySQL no Aiven
+  https://clyvovet-backend-java.onrender.com
+
+  Primeira abertura depois de parado demora (plano gratuito da Render).
+  O periodo de teste do Aiven vai ate cerca de 17/11/2026. Detalhes em
+  docs/05-deploy.md e docs/adr/008-java-na-render-com-mysql-no-aiven.md.
+
+
+---------------------------------------------------------------------------
  VIDEOS
 ---------------------------------------------------------------------------
 
