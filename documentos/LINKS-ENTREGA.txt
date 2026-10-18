@@ -45,6 +45,15 @@
   Java (Spring Boot) -- Render + MySQL no Aiven
   https://clyvovet-backend-java.onrender.com
 
+  Acesso para teste (um usuario por perfil, todos com a MESMA senha):
+    demo.tutor@clyvovet.com        tutor (Lucas, que ja tem pets)
+    demo.veterinaria@clyvovet.com  veterinaria (Camila, da VetCare)
+    demo.gestor@clyvovet.com       administrador da clinica VetCare
+    demo.admin@clyvovet.com        administrador da plataforma
+  A senha NAO esta neste arquivo nem no repositorio: ela e entregue ao
+  professor por fora, junto com o link. Quem quiser pode tambem se
+  cadastrar como tutor novo. O Swagger fica em /swagger-ui.html.
+
   Primeira abertura depois de parado demora (plano gratuito da Render).
   O periodo de teste do Aiven vai ate cerca de 17/11/2026. Detalhes em
   docs/05-deploy.md e docs/adr/008-java-na-render-com-mysql-no-aiven.md.

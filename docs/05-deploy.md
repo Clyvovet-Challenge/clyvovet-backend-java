@@ -172,10 +172,30 @@ Cadastradas no painel da Render, aba *Environment*. Só os **nomes** ficam no re
 | `GOOGLE_CLIENT_SECRET` | segredo desse cliente (começa com `GOCSPX-`). **Segredo** |
 | `GITHUB_CLIENT_ID` | ID do OAuth App do GitHub (começa com `Ov23`, 20 caracteres) |
 | `GITHUB_CLIENT_SECRET` | segredo desse app. **Segredo** |
+| `CLYVOVET_DEMO_SENHA` | senha dos 4 usuários de demonstração (mínimo 12 caracteres). **Segredo**, e opcional: sem ela nenhum usuário é criado |
 
 As quatro últimas ligam o login social. Sem elas o app sobe normal, mas os botões "Entrar com
 Google" e "Entrar com GitHub" mandam o `client_id=nao-configurado` ao provedor e falham lá.
 Variável de ambiente só vale depois de um **novo deploy**: gravar com *Save only* não reinicia o app.
+
+**Usuários de demonstração.** O banco do Aiven nasce com clínicas, veterinários e tutores, mas sem
+nenhum usuário (o `DevDataSeeder` não roda no perfil `mysql`, de propósito). Com
+`CLYVOVET_DEMO_SENHA` definida, o `UsuariosDeDemonstracaoSeeder` cria um usuário por perfil, todos
+com essa mesma senha, ligados a linhas que a V2 já semeia:
+
+| E-mail | Perfil | Ligado a |
+|---|---|---|
+| `demo.admin@clyvovet.com` | ADMIN | (plataforma) |
+| `demo.gestor@clyvovet.com` | ADMIN_CLINICA | clínica VetCare |
+| `demo.veterinaria@clyvovet.com` | VETERINARIO | veterinária Camila |
+| `demo.tutor@clyvovet.com` | TUTOR | tutor Lucas, que já tem pets |
+
+A senha **não está no repositório**: ela entra só no painel da Render e é entregue ao professor por
+fora. É idempotente (reiniciar não duplica nem troca a senha) e recusa senha com menos de 12
+caracteres. Terminada a avaliação, remova a variável; os usuários já criados continuam, e para
+apagá-los é preciso removê-los no banco. Variável nova só vale depois de um **novo deploy**.
+Coberto por `UsuariosDeDemonstracaoSeederTest`; a leitura da variável foi provada subindo o app local
+com ela e logando com os quatro perfis. **Ainda não foi feito na Render.**
 
 Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
 erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.
