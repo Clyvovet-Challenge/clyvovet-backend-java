@@ -50,11 +50,12 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final Duration JANELA = Duration.ofMinutes(1);
+    private static final Duration UM_MINUTO = Duration.ofMinutes(1);
+    private static final Duration UMA_HORA = Duration.ofHours(1);
 
     /**
-     * Faixas de limite, cada uma sabendo a propria capacidade e como se
-     * reconhecer numa requisicao.
+     * Faixas de limite, cada uma sabendo a propria capacidade, a propria janela e
+     * como se reconhecer numa requisicao.
      *
      * Antes isso vivia em dois metodos que precisavam concordar entre si: um
      * devolvia a categoria como String, o outro traduzia a mesma String em
@@ -63,18 +64,29 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     private enum Faixa {
 
-        LOGIN(10),
-        AUTH(30),
-        GERAL(100);
+        LOGIN(10, UM_MINUTO),
+        /**
+         * Criar conta, pela tela e pela API, no MESMO balde. Janela de uma hora: o
+         * abuso aqui nao e rajada, e volume lento -- 100 contas por minuto da
+         * faixa geral enchem a tabela de tutores em horas. Dez por hora por
+         * endereco deixa folga para uma sala ou clinica atras de um IP so.
+         */
+        CADASTRO(10, UMA_HORA),
+        AUTH(30, UM_MINUTO),
+        GERAL(100, UM_MINUTO);
 
         private final int capacidade;
+        private final Duration janela;
 
-        Faixa(int capacidade) {
+        Faixa(int capacidade, Duration janela) {
             this.capacidade = capacidade;
+            this.janela = janela;
         }
 
         private static final String ROTA_AUTH = WebConfig.PREFIXO_API + "/auth";
         private static final String ROTA_LOGIN = ROTA_AUTH + "/login";
+        private static final String ROTA_REGISTRAR_NA_API = ROTA_AUTH + "/registrar";
+        private static final String ROTA_CADASTRO_NA_TELA = "/cadastro";
 
         static Faixa de(HttpServletRequest request) {
             // Os caminhos saem da mesma constante que o WebConfig usa para
@@ -84,8 +96,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // minuto em vez de 10. Nada quebrou, nada apareceu no log -- so a
             // protecao contra forca bruta havia sumido.
             String path = request.getRequestURI();
-            if ("POST".equals(request.getMethod()) && ROTA_LOGIN.equals(path)) {
+            boolean ehPost = "POST".equals(request.getMethod());
+            if (ehPost && ROTA_LOGIN.equals(path)) {
                 return LOGIN;
+            }
+            // So o POST conta: abrir a tela de cadastro nao cria conta nenhuma.
+            if (ehPost && (ROTA_REGISTRAR_NA_API.equals(path) || ROTA_CADASTRO_NA_TELA.equals(path))) {
+                return CADASTRO;
             }
             return path.startsWith(ROTA_AUTH) ? AUTH : GERAL;
         }
@@ -94,7 +111,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return Bucket.builder()
                     .addLimit(Bandwidth.builder()
                             .capacity(capacidade)
-                            .refillIntervally(capacidade, JANELA)
+                            .refillIntervally(capacidade, janela)
                             .build())
                     .build();
         }
@@ -110,8 +127,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Value("${clyvovet.rate-limit.enabled:true}")
     private boolean habilitado;
 
+    // Maior que a maior janela (uma hora): se o balde expirasse antes de
+    // reabastecer, quem ficasse ocioso por meia hora ganharia um balde cheio e o
+    // limite por hora valeria o dobro.
     private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(30))
+            .expireAfterAccess(Duration.ofHours(2))
             .maximumSize(100_000)
             .build();
 
@@ -130,7 +150,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        recusarPorExcessoDeRequisicoes(response, probe);
+        recusarPorExcessoDeRequisicoes(request, response, probe);
     }
 
     /** Swagger e console H2 ficam fora do limite para nao atrapalhar a avaliacao. */
@@ -145,10 +165,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 || path.startsWith("/h2-console");
     }
 
-    private void recusarPorExcessoDeRequisicoes(HttpServletResponse response, ConsumptionProbe probe) throws IOException {
+    private void recusarPorExcessoDeRequisicoes(HttpServletRequest request, HttpServletResponse response,
+                                                ConsumptionProbe probe) throws IOException {
         long esperaSegundos = Duration.ofNanos(probe.getNanosToWaitForRefill()).toSeconds();
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader("Retry-After", String.valueOf(esperaSegundos));
+        if (!request.getRequestURI().startsWith(WebConfig.PREFIXO_API)) {
+            // Rota de tela: JSON cru nao serve a quem esta num navegador. O sendError
+            // entrega a error.html, que explica e oferece voltar.
+            response.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
+            return;
+        }
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), new ErroValidacao("requisicoes",

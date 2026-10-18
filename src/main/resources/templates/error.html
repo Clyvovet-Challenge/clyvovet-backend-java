@@ -18,6 +18,11 @@
         <h1>Página não encontrada</h1>
         <p class="subtitulo">O endereço não existe ou foi removido.</p>
     </th:block>
+    <th:block th:case="429">
+        <h1>Muitas tentativas</h1>
+        <p class="subtitulo">Por segurança, limitamos quantas contas podem ser criadas por hora a partir
+            do mesmo endereço. Tente de novo mais tarde.</p>
+    </th:block>
     <th:block th:case="*">
         <h1>Algo deu errado</h1>
         <p class="subtitulo">Tente de novo em instantes. Se continuar, avise o suporte.</p>
