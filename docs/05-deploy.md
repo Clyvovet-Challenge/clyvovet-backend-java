@@ -231,8 +231,11 @@ dados, o refresh e o logout do token, e o limite de tentativas atrás do proxy d
 
 ### Login social (Google e GitHub)
 
-O app só aceita e-mail que já exista como usuário ([ADR 002](adr/002-telas-thymeleaf-no-spring.md)).
-Sem conta com aquele e-mail, o login volta para `/login` com "Nenhuma conta usa este e-mail".
+No primeiro acesso por Google ou GitHub, quem ainda não tem conta ganha uma de **tutor**, desde
+que o provedor garanta que o e-mail é dele ([ADR 009](adr/009-login-social-cria-conta-de-tutor.md)).
+Quando o provedor não entrega e-mail verificado, a conta está bloqueada, ou o e-mail já é de um
+tutor cadastrado pela clínica, o login volta para `/login` com "Não foi possível entrar com essa
+conta".
 
 1. **GitHub:** *Settings → Developer settings → OAuth Apps → New OAuth App*. Homepage
    `https://clyvovet-backend-java.onrender.com` e URL de retorno

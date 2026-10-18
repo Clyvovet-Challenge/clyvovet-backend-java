@@ -22,7 +22,8 @@ API:
 
 - **Duas cadeias de segurança.** A da API (`/api/**`) continua stateless, com JWT e CSRF
   desligado. A das telas usa sessão, **CSRF ligado**, login por formulário e OAuth2.
-- **OAuth2 só autentica quem já tem conta.** Um e-mail desconhecido é recusado, pelo mesmo
+- **OAuth2 só autentica quem já tem conta.** *(Substituída pelo [ADR 009](009-login-social-cria-conta-de-tutor.md):
+  o primeiro acesso por provedor passou a criar a conta de tutor.)* Um e-mail desconhecido é recusado, pelo mesmo
   motivo pelo qual o cadastro não vincula conta por e-mail (regra X13 do `UsuarioService`).
 - **As telas não têm regra própria.** Elas chamam os mesmos services e as mesmas expressões
   `@seguranca.*` da API. A sessão guarda o mesmo `UsuarioAutenticado` que o filtro JWT monta.
