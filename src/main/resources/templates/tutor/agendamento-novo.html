@@ -12,7 +12,13 @@
         GET, e nao POST: escolher ainda nao grava nada. Cada escolha volta como
         parametro da URL, e a tela mostra o passo seguinte.
     -->
-    <form class="cartao formulario" th:action="@{/tutor/agendamentos/novo}" method="get">
+    <p class="cartao vazio" th:if="${#lists.isEmpty(pets)}">
+        Você ainda não tem pet cadastrado.
+        <a th:href="@{/tutor/pets/novo}">Cadastre seu primeiro pet</a> para poder agendar.
+    </p>
+
+    <form class="cartao formulario" th:unless="${#lists.isEmpty(pets)}"
+          th:action="@{/tutor/agendamentos/novo}" method="get">
         <label for="animalId">Pet</label>
         <select id="animalId" name="animalId" required>
             <option value="">Selecione</option>

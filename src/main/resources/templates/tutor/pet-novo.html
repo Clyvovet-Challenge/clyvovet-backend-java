@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cadastrar pet')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Cadastrar pet</h1>
+    <p class="subtitulo">Com o pet cadastrado, você já pode agendar consultas para ele.</p>
+
+    <!-- O th:action faz o Thymeleaf incluir o token CSRF sozinho. O dono do pet
+         nao e um campo: o servidor usa o tutor da sessao. -->
+    <form class="cartao formulario" th:action="@{/tutor/pets}" th:object="${pet}" method="post" novalidate>
+        <p class="aviso aviso-erro" role="alert" th:if="${#fields.hasGlobalErrors()}"
+           th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erro</p>
+
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" required autofocus
+               minlength="3" maxlength="100" th:value="*{nome}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}">Nome obrigatório</p>
+
+        <label for="racaId">Raça</label>
+        <select id="racaId" name="racaId" required th:errorclass="campo-com-erro">
+            <option value="">Selecione</option>
+            <option th:each="r : ${racas}" th:value="${r.id()}"
+                    th:text="|${r.nome()} (${r.especieRotulo()})|"
+                    th:selected="${r.id() == pet.racaId}">Golden Retriever (Cachorro)</option>
+        </select>
+        <p class="erro-campo" th:if="${#fields.hasErrors('racaId')}" th:errors="*{racaId}">Escolha a raça</p>
+        <p class="dica">Não achou a raça? Escolha <strong>Sem raça definida</strong>.</p>
+
+        <label for="porte">Porte</label>
+        <select id="porte" name="porte" required th:errorclass="campo-com-erro">
+            <option value="">Selecione</option>
+            <option value="PEQUENO" th:selected="${pet.porte == 'PEQUENO'}">Pequeno</option>
+            <option value="MEDIO" th:selected="${pet.porte == 'MEDIO'}">Médio</option>
+            <option value="GRANDE" th:selected="${pet.porte == 'GRANDE'}">Grande</option>
+        </select>
+        <p class="erro-campo" th:if="${#fields.hasErrors('porte')}" th:errors="*{porte}">Escolha o porte</p>
+
+        <label for="cor">Cor</label>
+        <input id="cor" name="cor" type="text" required minlength="3" maxlength="100"
+               th:value="*{cor}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('cor')}" th:errors="*{cor}">Cor obrigatória</p>
+
+        <label for="sexo">Sexo</label>
+        <select id="sexo" name="sexo" required th:errorclass="campo-com-erro">
+            <option value="">Selecione</option>
+            <option value="MACHO" th:selected="${pet.sexo != null and pet.sexo.name() == 'MACHO'}">Macho</option>
+            <option value="FEMEA" th:selected="${pet.sexo != null and pet.sexo.name() == 'FEMEA'}">Fêmea</option>
+            <option value="DESCONHECIDO" th:selected="${pet.sexo != null and pet.sexo.name() == 'DESCONHECIDO'}">Não sei</option>
+        </select>
+        <p class="erro-campo" th:if="${#fields.hasErrors('sexo')}" th:errors="*{sexo}">Escolha o sexo</p>
+
+        <label for="dataNascimento">Data de nascimento</label>
+        <input id="dataNascimento" name="dataNascimento" type="date" required
+               th:value="*{dataNascimento}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('dataNascimento')}"
+           th:errors="*{dataNascimento}">Informe a data</p>
+        <p class="dica">Se não souber a data exata, use uma aproximada.</p>
+
+        <label for="observacao">Observações (opcional)</label>
+        <textarea id="observacao" name="observacao" rows="3" maxlength="1000"
+                  th:text="*{observacao}" th:errorclass="campo-com-erro"></textarea>
+        <p class="erro-campo" th:if="${#fields.hasErrors('observacao')}" th:errors="*{observacao}">Texto longo demais</p>
+
+        <button type="submit" class="botao botao-primario">Cadastrar pet</button>
+    </form>
+
+    <a class="voltar" th:href="@{/tutor/pets}">Voltar para Meus pets</a>
+</main>
+
+</body>
+</html>
