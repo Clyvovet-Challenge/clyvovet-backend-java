@@ -64,6 +64,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     private enum Faixa {
 
+        /** Login pela API e pela tela no MESMO balde: limitar so um deixaria o outro como atalho. */
         LOGIN(10, UM_MINUTO),
         /**
          * Criar conta, pela tela e pela API, no MESMO balde. Janela de uma hora: o
@@ -85,6 +86,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         private static final String ROTA_AUTH = WebConfig.PREFIXO_API + "/auth";
         private static final String ROTA_LOGIN = ROTA_AUTH + "/login";
+        private static final String ROTA_LOGIN_NA_TELA = "/login";
         private static final String ROTA_REGISTRAR_NA_API = ROTA_AUTH + "/registrar";
         private static final String ROTA_CADASTRO_NA_TELA = "/cadastro";
 
@@ -97,7 +99,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // protecao contra forca bruta havia sumido.
             String path = request.getRequestURI();
             boolean ehPost = "POST".equals(request.getMethod());
-            if (ehPost && ROTA_LOGIN.equals(path)) {
+            if (ehPost && (ROTA_LOGIN.equals(path) || ROTA_LOGIN_NA_TELA.equals(path))) {
                 return LOGIN;
             }
             // So o POST conta: abrir a tela de cadastro nao cria conta nenhuma.

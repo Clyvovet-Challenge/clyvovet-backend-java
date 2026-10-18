@@ -262,7 +262,7 @@ resposta também não denuncie a diferença.
 
 | Escopo | Limite |
 |---|---|
-| `POST /api/v1/auth/login` | 10/min por IP |
+| `POST /api/v1/auth/login` e `POST /login` (tela) | 10/min por IP, no mesmo balde |
 | `POST /api/v1/auth/registrar` e `POST /cadastro` (tela) | 10/hora por IP, no mesmo balde |
 | `/api/v1/auth/**` | 30/min por IP |
 | Demais rotas | 100/min por IP |

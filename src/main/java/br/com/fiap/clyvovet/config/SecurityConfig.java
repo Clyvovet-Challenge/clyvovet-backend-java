@@ -163,7 +163,13 @@ public class SecurityConfig {
                 .successHandler(resultadoDoLoginWeb)
                 .failureUrl("/login?sem-conta"))
 
-            .logout(logout -> logout.logoutSuccessUrl("/login?saiu"));
+            .logout(logout -> logout.logoutSuccessUrl("/login?saiu"))
+
+            // O limite precisa rodar ANTES do filtro do formulario. Como @Component
+            // ele tambem entra na cadeia do servlet, mas la depois da seguranca:
+            // o POST /login ja teria sido respondido (redirect) sem ser contado.
+            // O OncePerRequestFilter garante que nao conta duas vezes.
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
