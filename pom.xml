@@ -255,6 +255,31 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- Cobertura de testes. O agente liga em `initialize` e o relatorio sai em
+                 `verify`, que e a fase que o CI roda: ./mvnw verify gera
+                 target/site/jacoco/index.html. Sem limite minimo de proposito: a
+                 primeira medicao serve para saber onde estamos, e um numero
+                 escolhido antes de medir nao diz nada. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.13</version>
+                <executions>
+                    <execution>
+                        <id>agente-de-cobertura</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>relatorio-de-cobertura</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
