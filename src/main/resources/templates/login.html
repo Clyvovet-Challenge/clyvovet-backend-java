@@ -13,11 +13,15 @@
         E-mail ou senha incorretos. Depois de 5 tentativas erradas, a conta fica
         bloqueada por 15 minutos.
     </p>
-    <!-- Aqui a pessoa ja provou ao Google/GitHub que o e-mail e dela: dizer que
-         nao ha conta com ele nao ajuda ninguem a adivinhar contas alheias. -->
+    <!-- O login social cria a conta de tutor no primeiro acesso (ADR 009), entao
+         esta recusa so acontece quando o provedor nao entregou um e-mail
+         verificado, a conta esta bloqueada ou o e-mail ja e de um tutor que a
+         clinica cadastrou. Uma mensagem so para os tres: a pessoa ja provou ao
+         provedor que o e-mail e dela, e distinguir os casos nao ajuda ninguem. -->
     <p class="aviso aviso-erro" role="alert" th:if="${param['sem-conta']}">
-        Nenhuma conta do ClyvoVet usa este e-mail. Peça à sua clínica para
-        cadastrá-lo, ou entre com e-mail e senha.
+        Não foi possível entrar com essa conta. Use uma conta Google ou GitHub
+        com e-mail verificado, ou entre com e-mail e senha. Se a sua clínica já
+        cadastrou o seu e-mail, peça a ela para vincular a sua conta.
     </p>
     <p class="aviso aviso-ok" role="status" th:if="${param.saiu}">
         Você saiu da sua conta.

@@ -1,9 +1,12 @@
 package br.com.fiap.clyvovet.security;
 
 import br.com.fiap.clyvovet.model.Perfil;
+import br.com.fiap.clyvovet.model.Tutor;
 import br.com.fiap.clyvovet.model.Usuario;
+import br.com.fiap.clyvovet.repository.TutorRepository;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
 import br.com.fiap.clyvovet.support.TesteDeApi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,19 +19,22 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Quem entra pelas telas com uma conta Google ou GitHub (ADR 002).
+ * Quem entra pelas telas com uma conta Google ou GitHub (ADR 002 e ADR 009).
  *
- * <p>A regra e a do {@code UsuarioService} (X13): o e-mail do provedor so abre
- * uma conta que ja existe, nunca cria nem vincula outra. E o e-mail precisa vir
- * verificado pelo provedor -- senao qualquer um cadastraria o e-mail alheio la
- * e entraria aqui como o dono dele.</p>
+ * <p>O e-mail do provedor abre a conta que ja existe. Quando nao existe, e SO se
+ * o provedor garante que o e-mail e de quem clicou, o login cria uma conta de
+ * TUTOR -- o perfil de menor poder, nunca outro. Nunca vincula a um cadastro que a
+ * clinica ja fez com aquele e-mail: isso continua sendo a regra X13 do
+ * {@code UsuarioService}.</p>
  */
 class OAuth2UsuarioServiceTest extends TesteDeApi {
 
@@ -36,11 +42,35 @@ class OAuth2UsuarioServiceTest extends TesteDeApi {
 
     @Autowired OAuth2UsuarioService oauth2UsuarioService;
     @Autowired UsuarioRepository usuarioRepository;
+    @Autowired TutorRepository tutorRepository;
+
+    private final List<String> emailsNovos = new ArrayList<>();
 
     @BeforeEach
     void criarUsuario() {
         usuarioRepository.findByEmail(EMAIL_PROPRIO).ifPresent(usuarioRepository::delete);
         usuarioRepository.save(Usuario.novo(EMAIL_PROPRIO, "sem-senha-usada-aqui", Perfil.TUTOR));
+    }
+
+    /** A suite compartilha o banco: apaga o usuario e depois o tutor, que ele referencia. */
+    @AfterEach
+    void apagarContasCriadasPeloLoginSocial() {
+        for (String email : emailsNovos) {
+            usuarioRepository.findByEmail(email).ifPresent(usuarioRepository::delete);
+            tutorRepository.findAll().stream()
+                    .filter(tutor -> email.equals(tutor.getEmail()))
+                    .forEach(tutorRepository::delete);
+        }
+    }
+
+    private String emailNovo() {
+        String email = "social-" + UUID.randomUUID() + "@exemplo.com";
+        emailsNovos.add(email);
+        return email;
+    }
+
+    private static OAuth2User contaComNome(String nome) {
+        return new DefaultOAuth2User(List.of(), Map.of("login", "ana-gh", "name", nome, "id", 7), "login");
     }
 
     private static OAuth2User contaGithub() {
@@ -60,11 +90,62 @@ class OAuth2UsuarioServiceTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("e-mail sem conta no ClyvoVet e recusado, sem criar conta nova")
-    void emailDesconhecidoERecusado() {
+    @DisplayName("e-mail verificado sem conta cria um TUTOR com o nome do provedor e entra")
+    void emailVerificadoSemContaCriaUmTutor() {
+        String email = emailNovo();
+
+        UsuarioOAuth2 usuario = oauth2UsuarioService.entrar(contaComNome("Ana Souza"), email);
+
+        assertThat(usuario.getUsername()).isEqualTo(email);
+        assertThat(usuario.getTutorId()).isNotNull();
+        assertThat(usuario.getAuthorities()).extracting(Object::toString).containsExactly("ROLE_TUTOR");
+
+        Usuario criado = usuarioRepository.findByEmail(email).orElseThrow();
+        assertThat(criado.getPerfil()).as("conta criada por provedor e sempre TUTOR").isEqualTo(Perfil.TUTOR);
+        assertThat(criado.getTutor().getNome()).isEqualTo("Ana Souza");
+        assertThat(criado.getSenha()).as("so o hash de uma senha que ninguem conhece").startsWith("$2");
+    }
+
+    @Test
+    @DisplayName("sem nome no provedor, usa o login; sem login, usa o e-mail")
+    void nomeCaiParaOLoginEDepoisParaOEmail() {
+        String comLogin = emailNovo();
+        oauth2UsuarioService.entrar(contaGithub(), comLogin);
+        assertThat(usuarioRepository.findByEmail(comLogin).orElseThrow().getTutor().getNome()).isEqualTo("lucas-gh");
+
+        String semNada = emailNovo();
+        OAuth2User soComId = new DefaultOAuth2User(List.of(), Map.of("id", 9), "id");
+        oauth2UsuarioService.entrar(soComId, semNada);
+        assertThat(usuarioRepository.findByEmail(semNada).orElseThrow().getTutor().getNome())
+                .isEqualTo(semNada.substring(0, semNada.indexOf('@')));
+    }
+
+    @Test
+    @DisplayName("entrar de novo com o mesmo e-mail abre a conta criada, sem duplicar")
+    void entrarDeNovoNaoDuplica() {
+        String email = emailNovo();
+        oauth2UsuarioService.entrar(contaComNome("Ana Souza"), email);
+        long depoisDoPrimeiro = usuarioRepository.count();
+
+        UsuarioOAuth2 segunda = oauth2UsuarioService.entrar(contaComNome("Outro Nome"), email);
+
+        assertThat(usuarioRepository.count()).isEqualTo(depoisDoPrimeiro);
+        assertThat(segunda.getUsername()).isEqualTo(email);
+        assertThat(usuarioRepository.findByEmail(email).orElseThrow().getTutor().getNome())
+                .as("o nome da primeira vez nao e trocado pelo provedor").isEqualTo("Ana Souza");
+    }
+
+    @Test
+    @DisplayName("e-mail que a clinica ja cadastrou como tutor, sem usuario, nao vira conta sozinho")
+    void tutorPreCadastradoNaoViraContaAutomaticamente() {
+        String email = emailNovo();
+        Tutor preCadastrado = new Tutor();
+        preCadastrado.setNome("Cadastrado pela clinica");
+        preCadastrado.setEmail(email);
+        tutorRepository.save(preCadastrado);
         long antes = usuarioRepository.count();
 
-        assertThatThrownBy(() -> oauth2UsuarioService.entrar(contaGithub(), "ninguem@nada.com"))
+        assertThatThrownBy(() -> oauth2UsuarioService.entrar(contaComNome("Quem Clicou"), email))
                 .isInstanceOf(OAuth2AuthenticationException.class)
                 .extracting(e -> ((OAuth2AuthenticationException) e).getError().getErrorCode())
                 .isEqualTo(OAuth2UsuarioService.CONTA_NAO_ENCONTRADA);
@@ -73,10 +154,14 @@ class OAuth2UsuarioServiceTest extends TesteDeApi {
     }
 
     @Test
-    @DisplayName("sem e-mail verificado pelo provedor, ninguem entra")
+    @DisplayName("sem e-mail verificado pelo provedor, ninguem entra e nada e criado")
     void semEmailVerificadoERecusado() {
+        long antes = usuarioRepository.count();
+
         assertThatThrownBy(() -> oauth2UsuarioService.entrar(contaGithub(), null))
                 .isInstanceOf(OAuth2AuthenticationException.class);
+
+        assertThat(usuarioRepository.count()).isEqualTo(antes);
     }
 
     @Test

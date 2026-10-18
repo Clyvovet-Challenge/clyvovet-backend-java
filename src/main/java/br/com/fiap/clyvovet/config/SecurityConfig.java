@@ -416,8 +416,16 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Estatico de proposito. O login social cria contas, entao o
+     * OAuth2UsuarioService depende do UsuarioService, que depende deste encoder --
+     * e o SecurityConfig, que injeta o OAuth2UsuarioService, e quem o declara. Um
+     * metodo de instancia pediria o SecurityConfig pronto para criar o encoder, e o
+     * SecurityConfig so fica pronto depois do OAuth2UsuarioService: ciclo, e o
+     * contexto nao sobe. Estatico, o encoder nao precisa do SecurityConfig.
+     */
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

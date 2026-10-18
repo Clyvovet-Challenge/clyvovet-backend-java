@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -55,6 +57,32 @@ public class UsuarioService {
         Usuario usuario = novoUsuario(request.getEmail(), request.getSenha(), Perfil.TUTOR);
         usuario.setTutor(novoTutor(request.getNome(), request.getEmail()));
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));
+    }
+
+    /**
+     * Cria a conta de quem entrou pela primeira vez com Google ou GitHub (ADR 009).
+     *
+     * <p>So e chamado depois de o provedor garantir que o e-mail e de quem clicou, e
+     * por isso nao pede senha: grava o hash de uma senha aleatoria que ninguem
+     * conhece, so para satisfazer a coluna NOT NULL. Essa conta nao tem como entrar
+     * por formulario; entra sempre pelo provedor.</p>
+     *
+     * <p>As regras do auto-cadastro continuam todas valendo: o perfil e sempre
+     * TUTOR, o tutor nasce junto, e um e-mail que ja tem usuario ou ja e de um
+     * tutor cadastrado pela clinica e recusado -- vincular a esse cadastro e o X13,
+     * que a verificacao do provedor sozinha nao autoriza.</p>
+     */
+    @Transactional
+    public Usuario registrarPorProvedor(String email, String nome) {
+        Usuario usuario = novoUsuario(email, senhaQueNinguemConhece(), Perfil.TUTOR);
+        usuario.setTutor(novoTutor(nome, email));
+        return usuarioRepository.save(usuario);
+    }
+
+    private static String senhaQueNinguemConhece() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     /** Criacao com perfil arbitrario. Restrito a ADMIN pela regra de rota. */

@@ -76,11 +76,13 @@ class LoginOAuth2Test extends TesteDeTela {
     }
 
     @Test
-    @DisplayName("quem volta do provedor sem conta aqui ve a mensagem de conta nao encontrada")
-    void recusaMostraContaNaoEncontrada() throws Exception {
+    @DisplayName("quem volta do provedor sem conseguir entrar ve o que fazer, sem a promessa antiga de a clinica cadastrar")
+    void recusaExplicaOQueFazer() throws Exception {
         mockMvc.perform(get("/login").param("sem-conta", ""))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Nenhuma conta do ClyvoVet usa este e-mail")));
+                .andExpect(content().string(containsString("Não foi possível entrar com essa conta")))
+                .andExpect(content().string(containsString("e-mail verificado")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("Peça à sua clínica"))));
     }
 
     @Test
