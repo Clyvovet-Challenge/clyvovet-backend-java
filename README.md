@@ -239,6 +239,8 @@ a página **Acesso negado**, não um JSON.
 | Rota | Perfil | O que faz |
 |---|---|---|
 | `GET /login` | público | e-mail e senha, ou os botões Google e GitHub |
+| `GET /tutor/pets` | `TUTOR` | **Meus pets**: lista os próprios pets, com atalho para cadastrar |
+| `GET /tutor/pets/novo` e `POST /tutor/pets` | `TUTOR` | cadastra um pet novo (já ligado ao tutor logado) escolhendo a raça do catálogo |
 | `GET /tutor/agendamentos` | `TUTOR` | os agendamentos dos próprios pets, com **Cancelar** enquanto o status permite |
 | `GET /tutor/agendamentos/novo` | `TUTOR` | escolhe pet, clínica e serviço e mostra os horários livres, semana a semana |
 | `GET /tutor/agendamentos/confirmar` | `TUTOR` | resumo do horário escolhido, com o consentimento opcional de acesso ao histórico |

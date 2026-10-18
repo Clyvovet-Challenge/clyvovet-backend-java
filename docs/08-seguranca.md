@@ -263,8 +263,11 @@ resposta também não denuncie a diferença.
 | Escopo | Limite |
 |---|---|
 | `POST /api/v1/auth/login` | 10/min por IP |
+| `POST /api/v1/auth/registrar` e `POST /cadastro` (tela) | 10/hora por IP, no mesmo balde |
 | `/api/v1/auth/**` | 30/min por IP |
 | Demais rotas | 100/min por IP |
+
+O cadastro tem janela de uma hora porque o abuso ali não é rajada, é volume lento: 100 contas por minuto (a faixa geral) encheriam a tabela de tutores em poucas horas. Dez por hora deixa folga para uma sala ou clínica atrás de um IP só. Pela tela, o 429 mostra a página de erro; pela API, o JSON.
 
 Excedido: **429** com `Retry-After`. Swagger e console H2 ficam fora do limite.
 

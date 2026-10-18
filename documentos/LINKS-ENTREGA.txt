@@ -54,6 +54,16 @@
   professor por fora, junto com o link. Quem quiser pode tambem se
   cadastrar como tutor novo. O Swagger fica em /swagger-ui.html.
 
+  Roteiro curto para o professor: entre como demo.tutor, abra "Meus pets"
+  (/tutor/pets) para ver os pets do Lucas e cadastrar um novo, e depois
+  marque uma consulta em "Agendamentos". Entre como demo.veterinaria para
+  ver o atendimento do outro lado.
+
+  Limite de seguranca a conhecer: o cadastro de contas aceita 10 por hora
+  por endereco de IP (excedido, a aplicacao responde 429). Se varios
+  colegas testarem a partir da mesma rede, use os usuarios demo em vez de
+  se cadastrar. A explicacao esta em docs/08-seguranca.md.
+
   Primeira abertura depois de parado demora (plano gratuito da Render).
   O periodo de teste do Aiven vai ate cerca de 17/11/2026. Detalhes em
   docs/05-deploy.md e docs/adr/008-java-na-render-com-mysql-no-aiven.md.
