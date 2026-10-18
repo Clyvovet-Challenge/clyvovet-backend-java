@@ -33,7 +33,7 @@ revisão e já entraram corrigidos e cobertos por teste.
 | 16 | Filtros por texto nunca casavam (`LIKE ... ESCAPE ''`) | **Alta** | Consultas | ✅ `ESCAPE '\'` explícito — falta confirmar no Oracle |
 | 17 | `tutorId` do corpo não passava por checagem de dono | **Alta** | Segurança | ✅ `@PreAuthorize` no POST e no PUT |
 | 18 | Validação mais permissiva que a coluna → 500 | Média | Validação | ✅ limites alinhados ao schema |
-| 19 | Perfil `mysql` validado contra um MySQL real | Média | Configuração | ✅ MySQL 8 local, V1 a V20 (06/10/2026) — falta o Azure |
+| 19 | Perfil `mysql` validado contra um MySQL real | Média | Configuração | ✅ MySQL 8 local, V1 a V21 (18/10/2026) — falta o Azure |
 | 20 | CORS não permite PATCH → as seis rotas PATCH são inalcançáveis pelo navegador | **Alta** | Configuração | aberto |
 | 21 | Coordenada da clínica sem consumidor — a tela de mapa não existe | Baixa | Produto | 🚧 **ainda em construção**, por decisão |
 
@@ -651,7 +651,13 @@ não).
 ## 19. Perfil `mysql` validado contra um MySQL real
 
 **Severidade:** Média · **Área:** Configuração · **Situação:** ✅ resolvido no MySQL 8
-local (06/10/2026) — falta o Azure Flexible Server
+local (18/10/2026) — falta o Azure Flexible Server
+
+> **Atualização de 18/10/2026.** Prova repetida com as 21 migrations: MySQL 8.0.46
+> vazio em container, perfil `mysql` sozinho, o Flyway aplicou V1 a V21 (`success = 1`),
+> a aplicação subiu com `ddl-auto=validate` em 4,5 s e `GET /actuator/health`
+> respondeu 200. Não se testou login nem o conteúdo da V21 (só que ela aplica). O
+> `MigrationsMySqlTest` continua em H2 modo MySQL e não conta como prova.
 
 > **Atualização de 06/10/2026.** Prova repetida do zero com as 20 migrations: MySQL
 > 8.0 vazio em container, perfil `mysql` sozinho (sem `local`), o Flyway aplicou V1 a
@@ -684,7 +690,7 @@ pontos que só um MySQL responde:
 
 **Como fechar:** subir um MySQL 8 local (`docker run` ou Testcontainers), rodar a
 aplicação com `SPRING_PROFILES_ACTIVE=mysql` e confirmar que o boot passa do
-`validate` — **feito em 06/09/2026 (V1 a V7) e de novo em 06/10/2026 (V1 a V20)**.
+`validate` — **feito em 06/09/2026 (V1 a V7), em 06/10/2026 (V1 a V20) e em 18/10/2026 (V1 a V21)**.
 O que sobra: trocar o `MigrationsMySqlTest` por um teste com Testcontainers no CI,
 que é o único jeito de manter a garantia viva, e o primeiro boot no Azure.
 

@@ -120,7 +120,7 @@ a aplicação subiria contra um banco sem tabela.
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
-| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8 real (V1 a V20, 06/10/2026); falta o servidor da Azure |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8 real (V1 a V21, 18/10/2026); falta o servidor da Azure |
 
 O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
@@ -182,7 +182,7 @@ local use o perfil `dev`.
 | Console H2 | — | — | `/h2-console` | `/h2-console` |
 | Roda fora do Docker? | sim | sim | **não** | sim |
 | Uso pretendido | **banco de teste real** | **produção (padrão)** | container | desenvolvimento local |
-| Já rodou de verdade? | sim | **sim, num MySQL 8 local** (V1 a V20); o Azure não | sim | sim |
+| Já rodou de verdade? | sim | **sim, num MySQL 8 local** (V1 a V21); o Azure não | sim | sim |
 
 > ⚠️ O perfil `h2` aponta para o host `clyvovet-db`, que só existe na rede do
 > docker-compose. Para rodar localmente sem Docker, use o perfil **`dev`**.
@@ -244,9 +244,11 @@ export JWT_SECRET=$(openssl rand -base64 48)
 Alvo do deploy: **Azure Database for MySQL Flexible Server**. O local onde o app
 roda é decisão de deploy e está em [05-deploy.md](05-deploy.md).
 
-> ✅ **Validado num MySQL 8.0 real em 06/10/2026.** Banco vazio em container, perfil
-> `mysql` sozinho: o Flyway aplicou V1 a V20, a aplicação subiu com
-> `ddl-auto=validate`, e login e `GET /api/v1/racas` responderam 200. A primeira
+> ✅ **Validado num MySQL 8.0 real em 18/10/2026 (V1 a V21).** Banco vazio em container,
+> perfil `mysql` sozinho: o Flyway aplicou as 21 migrations, a aplicação subiu com
+> `ddl-auto=validate` e `GET /actuator/health` respondeu 200. Nesta rodada não se
+> testou login nem o conteúdo da V21 (só que ela aplica); a prova de 06/10/2026
+> (V1 a V20) incluiu login e `GET /api/v1/racas` com 200. A primeira
 > prova, em 06/09/2026 (V1 a V7), foi a que achou as 54 colunas que reprovavam no
 > `validate` — ver o [item 19 das pendências](07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real).
 >
