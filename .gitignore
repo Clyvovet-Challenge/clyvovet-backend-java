@@ -37,6 +37,9 @@ build/
 
 ### Credentials ###
 application-prod.properties
+# Anotacoes de segredos da maquina (ex.: senha dos usuarios de demonstracao).
+# Nunca versionar: o repositorio e publico no GitHub.
+*.local.md
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json
