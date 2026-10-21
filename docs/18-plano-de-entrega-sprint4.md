@@ -142,14 +142,18 @@ da entrega.
 - L1: Web Service Docker na Render (branch `sprint-4`, deploy manual) e MySQL no Aiven. Provado em
   18/10/2026: Flyway validou as 21 migrations, `/actuator/health` respondeu `UP`, cadastro, login,
   raças e login social (Google e GitHub) funcionaram online.
+- **Feito em 18 a 20/10/2026:**
+  1. ~~`git push` da `sprint-4`~~ e ~~2. deploy manual na Render~~ (`dcd7aa0` no ar).
+  3. ~~`CLYVOVET_DEMO_SENHA` na Render~~: o log do app em execução mostrou os 4 usuários criados, e o
+     login do tutor pela tela funcionou. Os outros três perfis ainda **não foram logados** online.
+  - ~~Botão **Excluir pet** em Meus pets~~, provado online: o pet sem histórico foi excluído e o
+    Bolinha (com atendimentos) foi recusado pelo banco do Aiven, com a explicação na tela.
 - **Falta, por ordem:**
-  1. `git push` dos 4 commits da `sprint-4` (Meus pets, limite de cadastro, docs, login pela tela).
-  2. Deploy manual na Render com esses commits.
-  3. Definir `CLYVOVET_DEMO_SENHA` na Render (senha do usuário de demonstração).
   4. Tirar o app do Google do modo *Teste*, ou listar os `Usuários de teste` que vão aparecer no vídeo.
   5. Conferir na Render o 429 do login (limite de 10 por minuto).
   6. Smoke test dos fluxos principais pelas telas e pelo app, apontando `EXPO_PUBLIC_JAVA_BASE_URL`
-     para `https://clyvovet-backend-java.onrender.com`.
+     para `https://clyvovet-backend-java.onrender.com`. Já provados online: login do tutor, Meus pets,
+     cadastrar e excluir pet. Faltam agendar e cancelar consulta e a área do veterinário.
 - **Riscos que o plano aceita:** a subida a frio leva mais de 4 minutos (aquecer o app antes de
   gravar e antes da apresentação); o teste do Aiven vale 30 dias a partir de 18/10/2026, ou seja,
   até **17/11/2026**. Se a correção da entrega passar dessa data, o serviço é desligado, a menos

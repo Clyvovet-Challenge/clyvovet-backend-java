@@ -195,7 +195,10 @@ fora. É idempotente (reiniciar não duplica nem troca a senha) e recusa senha c
 caracteres. Terminada a avaliação, remova a variável; os usuários já criados continuam, e para
 apagá-los é preciso removê-los no banco. Variável nova só vale depois de um **novo deploy**.
 Coberto por `UsuariosDeDemonstracaoSeederTest`; a leitura da variável foi provada subindo o app local
-com ela e logando com os quatro perfis. **Ainda não foi feito na Render.**
+com ela e logando com os quatro perfis. **Na Render:** em 18/10/2026, à noite, o log do app em
+execução mostrou o aviso `Usuarios de demonstracao disponiveis` (não confundir com o log do *build*,
+que roda a suíte e imprime a mesma mensagem). Em 20/10/2026 o login do `demo.tutor@clyvovet.com`
+pela tela funcionou e **Meus pets** mostrou o Bolinha. Os outros três perfis **não foram logados** na Render.
 
 Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
 erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.
