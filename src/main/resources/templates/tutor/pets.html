@@ -34,6 +34,9 @@
                     · nascido em <span th:text="${#temporals.format(p.dataNascimento(), 'dd/MM/yyyy')}">12/03/2022</span>
                 </span>
             </div>
+            <div class="item-acoes">
+                <a class="botao botao-secundario" th:href="@{/tutor/pets/{id}/excluir(id=${p.id()})}">Excluir</a>
+            </div>
         </li>
     </ul>
 

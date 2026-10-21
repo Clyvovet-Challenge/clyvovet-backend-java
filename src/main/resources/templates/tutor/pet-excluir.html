@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Excluir pet')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Excluir pet</h1>
+    <p class="subtitulo">
+        <strong th:text="${pet.nome()}">Bolinha</strong>
+        (<span th:text="${pet.especie()}">Cachorro</span>
+        · <span th:text="${pet.raca()}">Golden Retriever</span>).
+        Esta ação não pode ser desfeita.
+    </p>
+
+    <p class="aviso aviso-erro" role="alert" th:if="${recusa}" th:text="${recusa}">Recusa</p>
+
+    <form class="cartao formulario" th:action="@{/tutor/pets/{id}/excluir(id=${pet.id()})}" method="post"
+          th:unless="${recusa}">
+        <p class="dica">O cadastro do pet será apagado. Um pet com atendimentos ou laudos não pode ser excluído.</p>
+        <button type="submit" class="botao botao-primario">Excluir pet</button>
+    </form>
+
+    <a class="voltar" th:href="@{/tutor/pets}">Voltar sem excluir</a>
+</main>
+
+</body>
+</html>

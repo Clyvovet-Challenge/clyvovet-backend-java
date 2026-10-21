@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -207,6 +208,92 @@ class TutorPetTelaTest extends TesteDeTela {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Cadastre seu primeiro pet")))
                 .andExpect(content().string(containsString("/tutor/pets/novo")));
+    }
+
+    @Test
+    @DisplayName("a lista oferece o botao de excluir de cada pet")
+    void listaOfereceExcluir() throws Exception {
+        abrir("/tutor/pets", LUCAS)
+                .andExpect(content().string(containsString(
+                        "/tutor/pets/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS + "/excluir")));
+    }
+
+    @Test
+    @DisplayName("a confirmacao de exclusao mostra o pet e leva o token CSRF")
+    void confirmacaoMostraOPet() throws Exception {
+        String nome = nomeNovo();
+        cadastrar(LUCAS, nome);
+
+        abrir("/tutor/pets/" + pet(nome).getId() + "/excluir", LUCAS)
+                .andExpect(status().isOk())
+                .andExpect(view().name("tutor/pet-excluir"))
+                .andExpect(content().string(containsString(nome)))
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
+    }
+
+    @Test
+    @DisplayName("pet sem historico e excluido, e a lista volta com a confirmacao")
+    void excluiPetSemHistorico() throws Exception {
+        String nome = nomeNovo();
+        cadastrar(LUCAS, nome);
+        UUID id = pet(nome).getId();
+
+        enviarFormulario("/tutor/pets/" + id + "/excluir", comoUsuario(LUCAS))
+                .andExpect(redirectedUrl("/tutor/pets"))
+                .andExpect(flash().attributeExists("sucesso"));
+
+        assertThat(animalRepository.findById(id)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("pet com atendimento nao e apagado: a tela explica o motivo em vez de dar erro")
+    void petComHistoricoNaoEApagado() throws Exception {
+        enviarFormulario("/tutor/pets/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS + "/excluir", comoUsuario(LUCAS))
+                .andExpect(status().isOk())
+                .andExpect(view().name("tutor/pet-excluir"))
+                .andExpect(content().string(containsString("histórico clínico")));
+
+        assertThat(animalRepository.findById(UUID.fromString(SeedV2.ANIMAL_BOLINHA_DO_LUCAS))).isPresent();
+    }
+
+    @Test
+    @DisplayName("tutor nao exclui pet de outro tutor, nem ve a confirmacao")
+    void naoExcluiPetAlheio() throws Exception {
+        String url = "/tutor/pets/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS + "/excluir";
+
+        abrir(url, MARIA).andExpect(status().isForbidden());
+        enviarFormulario(url, comoUsuario(MARIA)).andExpect(status().isForbidden());
+
+        assertThat(animalRepository.findById(UUID.fromString(SeedV2.ANIMAL_BOLINHA_DO_LUCAS))).isPresent();
+    }
+
+    @Test
+    @DisplayName("id que nao existe e recusado como acesso negado, sem revelar se o pet existe")
+    void petInexistenteEAcessoNegado() throws Exception {
+        String url = "/tutor/pets/" + SeedV2.ID_INEXISTENTE + "/excluir";
+
+        abrir(url, LUCAS).andExpect(status().isForbidden());
+        enviarFormulario(url, comoUsuario(LUCAS)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("exclusao sem token CSRF e recusada")
+    void exclusaoSemCsrfERecusada() throws Exception {
+        String nome = nomeNovo();
+        cadastrar(LUCAS, nome);
+        UUID id = pet(nome).getId();
+
+        mockMvc.perform(post("/tutor/pets/" + id + "/excluir").with(comoUsuario(LUCAS)))
+                .andExpect(status().isForbidden());
+
+        assertThat(animalRepository.findById(id)).isPresent();
+    }
+
+    @Test
+    @DisplayName("veterinario nao entra na confirmacao de exclusao do tutor")
+    void veterinarioNaoExcluiPeloTutor() throws Exception {
+        abrir("/tutor/pets/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS + "/excluir", VETERINARIA)
+                .andExpect(status().isForbidden());
     }
 
     @Test

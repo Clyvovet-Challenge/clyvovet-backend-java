@@ -6,16 +6,21 @@ import br.com.fiap.clyvovet.service.AnimalService;
 import br.com.fiap.clyvovet.service.RacaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.UUID;
 
 /**
  * "Meus pets": o tutor ve e cadastra os proprios pets pela tela.
@@ -67,5 +72,34 @@ public class TutorPetController {
         }
         model.addAttribute("racas", racaService.listar(null));
         return "tutor/pet-novo";
+    }
+
+    @GetMapping("/{id}/excluir")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id)")
+    public String confirmarExclusao(@PathVariable UUID id, Model model) {
+        model.addAttribute("pet", animalService.buscarPorId(id));
+        return "tutor/pet-excluir";
+    }
+
+    /**
+     * Exclui o pet, se ele nao tem prontuario.
+     *
+     * <p>A regra nao esta no service: quem recusa pet com atendimento ou laudo e o
+     * banco, por chave estrangeira (ADR 003; a V20 deixou so essas duas). Aqui a
+     * recusa vira uma explicacao na propria tela, em vez de uma pagina de erro.</p>
+     */
+    @PostMapping("/{id}/excluir")
+    @PreAuthorize("@seguranca.ehDonoOuAdministrador(#id)")
+    public String excluir(@PathVariable UUID id, Model model, RedirectAttributes redirect) {
+        try {
+            animalService.deletar(id);
+        } catch (DataIntegrityViolationException temProntuario) {
+            model.addAttribute("pet", animalService.buscarPorId(id));
+            model.addAttribute("recusa", "Este pet tem histórico clínico registrado (atendimentos ou laudos) "
+                    + "e não pode ser excluído.");
+            return "tutor/pet-excluir";
+        }
+        redirect.addFlashAttribute("sucesso", "Pet excluído.");
+        return "redirect:/tutor/pets";
     }
 }
