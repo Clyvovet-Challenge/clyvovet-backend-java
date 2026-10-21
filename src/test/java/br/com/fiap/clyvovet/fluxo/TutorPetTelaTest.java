@@ -228,7 +228,9 @@ class TutorPetTelaTest extends TesteDeTela {
                 .andExpect(status().isOk())
                 .andExpect(view().name("tutor/pet-excluir"))
                 .andExpect(content().string(containsString(nome)))
-                .andExpect(content().string(containsString("name=\"_csrf\"")));
+                .andExpect(content().string(containsString("name=\"_csrf\"")))
+                // Acao irreversivel: o botao de confirmar nao pode ter a cara de "Cadastrar pet".
+                .andExpect(content().string(containsString("botao-perigo")));
     }
 
     @Test
@@ -251,7 +253,10 @@ class TutorPetTelaTest extends TesteDeTela {
         enviarFormulario("/tutor/pets/" + SeedV2.ANIMAL_BOLINHA_DO_LUCAS + "/excluir", comoUsuario(LUCAS))
                 .andExpect(status().isOk())
                 .andExpect(view().name("tutor/pet-excluir"))
-                .andExpect(content().string(containsString("histórico clínico")));
+                .andExpect(content().string(containsString("histórico clínico")))
+                // Nada vai ser apagado: avisar que "nao pode ser desfeita" seria alarme falso.
+                .andExpect(content().string(not(containsString("não pode ser desfeita"))))
+                .andExpect(content().string(not(containsString("Excluir pet</button>"))));
 
         assertThat(animalRepository.findById(UUID.fromString(SeedV2.ANIMAL_BOLINHA_DO_LUCAS))).isPresent();
     }

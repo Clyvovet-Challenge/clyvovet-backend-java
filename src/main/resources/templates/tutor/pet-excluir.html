@@ -10,7 +10,7 @@
         <strong th:text="${pet.nome()}">Bolinha</strong>
         (<span th:text="${pet.especie()}">Cachorro</span>
         · <span th:text="${pet.raca()}">Golden Retriever</span>).
-        Esta ação não pode ser desfeita.
+        <span th:unless="${recusa}">Esta ação não pode ser desfeita.</span>
     </p>
 
     <p class="aviso aviso-erro" role="alert" th:if="${recusa}" th:text="${recusa}">Recusa</p>
@@ -18,7 +18,7 @@
     <form class="cartao formulario" th:action="@{/tutor/pets/{id}/excluir(id=${pet.id()})}" method="post"
           th:unless="${recusa}">
         <p class="dica">O cadastro do pet será apagado. Um pet com atendimentos ou laudos não pode ser excluído.</p>
-        <button type="submit" class="botao botao-primario">Excluir pet</button>
+        <button type="submit" class="botao botao-perigo">Excluir pet</button>
     </form>
 
     <a class="voltar" th:href="@{/tutor/pets}">Voltar sem excluir</a>

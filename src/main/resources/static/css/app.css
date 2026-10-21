@@ -170,6 +170,9 @@ h2 { font-size: 1.15rem; margin: 0; }
 .botao-primario:hover { background: var(--verde-escuro); }
 .botao-secundario { background: var(--branco); color: var(--verde-escuro); border-color: var(--borda); }
 .botao-secundario:hover { background: var(--verde-claro); }
+/* Acao irreversivel (excluir): a cor de erro avisa que nao ha desfazer. */
+.botao-perigo { background: var(--erro); color: var(--branco); }
+.botao-perigo:hover { background: #a63c2a; }
 
 /* --- Login com Google e GitHub --- */
 .separador {
