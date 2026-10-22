@@ -76,7 +76,7 @@ sistema inteiro; cada uma aponta para onde está a resposta. **Ninguém pode tra
 | 4 | Por que o nível 1 (alergias) é visível sem consentimento? | ADR 003 |
 | 5 | Por que telas Thymeleaf se já existia o app mobile? | [ADR 002](adr/002-telas-thymeleaf-no-spring.md) |
 | 6 | Por que duas cadeias de segurança, e o que muda entre elas? | ADR 002; README, "Duas cadeias de segurança" |
-| 7 | Por que o login social não cria conta? | ADR 002; README, "Login com Google e GitHub" |
+| 7 | O que o login social faz quando o e-mail não tem conta, e por que só com e-mail verificado? | [ADR 009](adr/009-login-social-cria-conta-de-tutor.md); README, "Login com Google e GitHub" |
 | 8 | O que impede um tutor de ver o pet de outro? | README, "Arquitetura" (ownership e chave de cache); [Segurança](08-seguranca.md) |
 | 9 | Por que as duas APIs compartilham o banco, e por que isso é seguro? | [ADR 004](adr/004-banco-compartilhado-java-dona-do-schema.md) |
 | 10 | Por que há duas pastas de migrations e o que garante que não divergem? | [ADR 005](adr/005-perfis-de-banco-e-migrations-por-dialeto.md) |
@@ -87,6 +87,7 @@ sistema inteiro; cada uma aponta para onde está a resposta. **Ninguém pode tra
 | 15 | Por que a conclusão é o único caminho para `REALIZADO`? | README, "Fluxo R" |
 | 16 | Como o app mobile e a API .NET entram no sistema? | README, "Integração multidisciplinar" |
 | 17 | O que ainda não está pronto ou não foi testado? | README, "Limites conhecidos"; [ADR 005](adr/005-perfis-de-banco-e-migrations-por-dialeto.md), "Consequências" |
+| 18 | Quando alguém cria uma conta, como o sistema decide se ela é de tutor ou de veterinário? | Quem se cadastra sozinho (tela `/cadastro`, `POST /auth/registrar` ou login social) **sempre vira TUTOR**: `UsuarioService.registrar` e `registrarPorProvedor` fixam `Perfil.TUTOR`, e a tela nem tem campo de perfil. Veterinário e administradores só nascem em `POST /auth/usuarios`, que a regra de rota fecha para `ADMIN` (`SecurityConfig`, `hasRole(ADMIN)`) e que exige o vínculo certo (`veterinarioId`, `clinicaId`). Motivo: o perfil de menor poder é o padrão, e o que vem de formulário pode ser forjado. Na demonstração, o veterinário vem do `UsuariosDeDemonstracaoSeeder`. ADR 009 |
 
 **Ensaio das perguntas:** cada integrante sorteia cinco números e responde em voz alta, sem olhar, em 30 segundos cada.
 

@@ -278,11 +278,16 @@ conta da API: errar a senha nas telas e na API soma para o mesmo limite.
 
 ### Login com Google e GitHub (OAuth2)
 
-O OAuth2 não cria conta. Ele só confirma o e-mail: o Google ou o GitHub devolve o
-e-mail **verificado** do usuário, e a aplicação procura esse e-mail entre os usuários
-cadastrados. Se não achar, ou se a conta estiver inativa ou bloqueada, a tela de
-login mostra "conta não encontrada". A conta bloqueada por senha errada continua
-bloqueada aqui; senão, um clique no botão do Google contornaria o bloqueio.
+O Google ou o GitHub devolve o e-mail **verificado** do usuário, e a aplicação procura esse
+e-mail entre os usuários cadastrados ([ADR 009](docs/adr/009-login-social-cria-conta-de-tutor.md)):
+
+- **Já existe conta com o e-mail:** a pessoa entra nela.
+- **Não existe:** nasce uma conta de **TUTOR**, o perfil de menor poder, só se o provedor garante
+  que o e-mail é verificado. Veterinário e administradores nunca nascem por aqui.
+- **O e-mail é de um tutor que a clínica cadastrou, mas ainda sem usuário:** a conta **não** é
+  criada nem ligada a ele, e a tela mostra "conta não encontrada".
+- **Conta inativa ou bloqueada:** continua recusada. A conta bloqueada por senha errada continua
+  bloqueada aqui; senão, um clique no botão do Google contornaria o bloqueio.
 
 As credenciais vêm do ambiente ([`comum.properties`](src/main/resources/comum.properties)):
 
