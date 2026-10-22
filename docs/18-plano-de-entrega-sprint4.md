@@ -142,15 +142,20 @@ da entrega.
 - L1: Web Service Docker na Render (branch `sprint-4`, deploy manual) e MySQL no Aiven. Provado em
   18/10/2026: Flyway validou as 21 migrations, `/actuator/health` respondeu `UP`, cadastro, login,
   raças e login social (Google e GitHub) funcionaram online.
-- **Feito em 18 a 20/10/2026:**
+- **Feito em 18 a 21/10/2026:**
   1. ~~`git push` da `sprint-4`~~ e ~~2. deploy manual na Render~~ (`dcd7aa0` no ar).
   3. ~~`CLYVOVET_DEMO_SENHA` na Render~~: o log do app em execução mostrou os 4 usuários criados, e o
      login do tutor pela tela funcionou. Os outros três perfis ainda **não foram logados** online.
   - ~~Botão **Excluir pet** em Meus pets~~, provado online: o pet sem histórico foi excluído e o
     Bolinha (com atendimentos) foi recusado pelo banco do Aiven, com a explicação na tela.
+  - ~~5. Conferir na Render o 429 do login~~, provado em 21/10/2026 com e-mail inexistente: pela API,
+    10 tentativas devolveram 401 e a 11ª em diante 429 (`Retry-After`), e o balde voltou a aceitar
+    depois de 1 minuto. Pela tela (com token CSRF e cookie) o 429 veio na 10ª tentativa, porque o balde
+    é **compartilhado** com a API e uma já tinha sido gasta. Sem token CSRF a tela responde 403 antes do
+    limite. **Não testado:** se um cabeçalho `X-Forwarded-For` forjado escapa do limite (depende de o
+    proxy da Render sobrescrevê-lo).
 - **Falta, por ordem:**
   4. Tirar o app do Google do modo *Teste*, ou listar os `Usuários de teste` que vão aparecer no vídeo.
-  5. Conferir na Render o 429 do login (limite de 10 por minuto).
   6. Smoke test dos fluxos principais pelas telas e pelo app, apontando `EXPO_PUBLIC_JAVA_BASE_URL`
      para `https://clyvovet-backend-java.onrender.com`. Já provados online: login do tutor, Meus pets,
      cadastrar e excluir pet. Faltam agendar e cancelar consulta e a área do veterinário.
