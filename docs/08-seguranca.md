@@ -99,6 +99,23 @@ curl localhost:8080/api/v1/animais -H "Authorization: Bearer $TOKEN"
 
 No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bearer`.
 
+### Swagger em produção: decisão
+
+O Swagger fica **ligado** na Render, em `https://clyvovet-backend-java.onrender.com/swagger-ui.html`,
+**de propósito**: é por ele que o professor corrige e testa a API, sem depender do grupo para
+subir nada. O `SecurityConfig` já o libera de forma pública por esse motivo.
+
+- **O que fica exposto:** a tela e o `/v3/api-docs` mostram **quais rotas existem** (62, conferidas
+  em 22/10/2026). Quem não tem conta não consegue usar nenhuma: toda rota de dados continua exigindo
+  JWT e a regra de dono ou de perfil, como na matriz abaixo.
+- **Como o professor testa com dados:** entra com um dos usuários de demonstração (login em
+  `POST /api/v1/auth/login`) e cola o token em **Authorize**. A senha é entregue por fora, e não
+  está no repositório ([`05-deploy.md`](05-deploy.md)).
+- **Fora do limite de requisições:** o `RateLimitFilter` ignora `/swagger-ui` e `/v3/api-docs`.
+- **Custo aceito:** um estranho pode ler o mapa da API. É o preço de a correção não depender de nós.
+- **Se um dia for preciso fechar:** variáveis de ambiente `springdoc.swagger-ui.enabled=false` e
+  `springdoc.api-docs.enabled=false`, e um deploy. Nenhum código muda.
+
 ---
 
 ## Matriz de autorização
