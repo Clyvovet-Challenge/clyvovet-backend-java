@@ -95,7 +95,17 @@ sistema inteiro; cada uma aponta para onde está a resposta. **Ninguém pode tra
 
 ## 5. O que este roteiro não resolve
 
-- A URL pública, os apps OAuth e o deploy do Java dependem de decisões ainda abertas
-  (conta Azure do Pedro, hospedagem do Java). Ver [`18-plano-de-entrega-sprint4.md`](18-plano-de-entrega-sprint4.md).
+- O Java já está no ar na Render, com o banco MySQL no Aiven e fora da Azure
+  ([ADR 008](adr/008-java-na-render-com-mysql-no-aiven.md)), em
+  `https://clyvovet-backend-java.onrender.com`, com os apps OAuth do Google e do GitHub apontando
+  para ele. O que ainda pode derrubar a demonstração, e o roteiro não resolve:
+  - **Subida a frio:** o plano gratuito derruba o app depois de uns 15 minutos parado, e a primeira
+    requisição leva mais de 4 minutos. Aquecer o app antes de gravar e antes da apresentação.
+  - **Google em modo *Teste*:** só entra quem está na lista de usuários de teste, e aparece o aviso
+    de "app não verificado".
+  - **Aiven:** o período de teste vale até 17/11/2026. Passada a data, o banco desliga, a menos que
+    o grupo cadastre um cartão.
+
+  O que falta provar online está em [`18-plano-de-entrega-sprint4.md`](18-plano-de-entrega-sprint4.md).
 - O vídeo da DevOps (pipeline, alteração de código, deploy) é outro roteiro, no repositório .NET.
 - Quem fala em cada bloco é decisão do grupo.
