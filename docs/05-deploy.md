@@ -163,7 +163,7 @@ Cadastradas no painel da Render, aba *Environment*. Só os **nomes** ficam no re
 
 | Variável | O que é |
 |---|---|
-| `SPRING_PROFILES_ACTIVE` | `mysql` |
+| `SPRING_PROFILES_ACTIVE` | `mysql,demo`. O `mysql` liga o banco; o `demo` roda o `DemoDataSeeder`, que dá catálogo de serviços à VetCare Prime e agenda à Camila Ferreira (veterinária demo). Sem o `demo`, a VetCare responde "Esta clínica ainda não oferece serviços" e uma consulta marcada em outra clínica não aparece para a Camila. Mantenha o `mysql` na frente |
 | `DB_URL` | `jdbc:mysql://<host>:<porta>/<banco>?sslMode=REQUIRED` — host, porta e banco vêm da página *Overview* do serviço no Aiven. O Aiven recusa conexão sem TLS |
 | `DB_USERNAME` | usuário do Aiven (`avnadmin` por padrão) |
 | `DB_PASSWORD` | senha do Aiven. **Segredo: só no painel da Render** |
@@ -199,6 +199,21 @@ com ela e logando com os quatro perfis. **Na Render:** em 18/10/2026, à noite, 
 execução mostrou o aviso `Usuarios de demonstracao disponiveis` (não confundir com o log do *build*,
 que roda a suíte e imprime a mesma mensagem). Em 20/10/2026 o login do `demo.tutor@clyvovet.com`
 pela tela funcionou e **Meus pets** mostrou o Bolinha. Os outros três perfis **não foram logados** na Render.
+
+**Dados de demonstração da VetCare (perfil `demo`).** A V11 semeia serviços e agenda só para
+PetMed, AnimalSaude e CliniPet, e deixa a VetCare Prime de fora **de propósito**: ela é a clínica
+da suíte de testes, e semear ali quebrou 26 testes (a conta exata de vagas de
+`AgendamentoFluxoTest`). Por isso a demonstração não usa migration. O `DemoDataSeeder` só liga com
+o perfil `demo`, é idempotente (cada bloco só insere se a clínica ainda não tem catálogo e a Camila
+ainda não tem agenda) e cria 3 serviços (consulta clínica geral R$ 180, retorno R$ 0, vacinação
+R$ 95) e a agenda da Camila, de segunda a sábado, das 09h às 12h e das 14h às 18h.
+**Na Render, em 22/10/2026:** o log do app em execução mostrou
+`The following 2 profiles are active: "mysql", "demo"` e a linha do `DemoDataSeeder`. Pela tela, a
+VetCare passou a listar os 3 serviços e horários com a Camila; o tutor marcou uma consulta com ela, e
+a consulta apareceu para a veterinária demo em `/veterinario/atendimentos`. **Remover o `demo`
+depois não apaga o que já foi semeado.** As linhas ficam em `t_clyvo_servico` e
+`t_clyvo_disponibilidade_vet`, tabelas que a API .NET também lê. **Não testado:** concluir um
+atendimento (o botão só aparece para consulta de hoje ou anterior, e concluir grava prontuário).
 
 Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
 erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.

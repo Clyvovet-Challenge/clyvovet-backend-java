@@ -105,6 +105,14 @@ sistema inteiro; cada uma aponta para onde está a resposta. **Ninguém pode tra
     de "app não verificado".
   - **Aiven:** o período de teste vale até 17/11/2026. Passada a data, o banco desliga, a menos que
     o grupo cadastre um cartão.
+  - **Perfil `demo` ligado na Render** (`SPRING_PROFILES_ACTIVE=mysql,demo`): é o que dá serviços à
+    VetCare e agenda à Camila. Sem ele, o tutor só consegue agendar na PetMed ou na AnimalSaude, e a
+    veterinária demo (que é da VetCare) não vê a consulta. Ver [`05-deploy.md`](05-deploy.md).
+  - **O botão Concluir só aparece para consulta de hoje ou anterior.** Para mostrar "o tutor
+    agenda, a veterinária conclui" ao vivo, marque o horário **do dia da gravação**, na VetCare, com a
+    Camila. Uma consulta de outro dia aparece na lista dela, mas sem o botão. Concluir grava o
+    prontuário e não tem volta pela tela, então ensaie em outro pet ou aceite que o Bolinha fica com
+    esse atendimento.
 
   O que falta provar online está em [`18-plano-de-entrega-sprint4.md`](18-plano-de-entrega-sprint4.md).
 - O vídeo da DevOps (pipeline, alteração de código, deploy) é outro roteiro, no repositório .NET.

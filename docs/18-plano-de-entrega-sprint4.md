@@ -157,8 +157,12 @@ da entrega.
 - **Falta, por ordem:**
   4. Tirar o app do Google do modo *Teste*, ou listar os `Usuários de teste` que vão aparecer no vídeo.
   6. Smoke test dos fluxos principais pelas telas e pelo app, apontando `EXPO_PUBLIC_JAVA_BASE_URL`
-     para `https://clyvovet-backend-java.onrender.com`. Já provados online: login do tutor, Meus pets,
-     cadastrar e excluir pet. Faltam agendar e cancelar consulta e a área do veterinário.
+     para `https://clyvovet-backend-java.onrender.com`. Já provados online em 21 e 22/10/2026: login do
+     tutor, Meus pets, cadastrar e excluir pet, agendar e cancelar consulta, e a consulta marcada
+     aparecendo para a veterinária demo. A VetCare só tem serviços com o perfil `demo`
+     (`SPRING_PROFILES_ACTIVE=mysql,demo`), ver [`05-deploy.md`](05-deploy.md). **Faltam:** concluir um
+     atendimento (o botão só aparece para consulta de hoje ou anterior, e grava prontuário, então fica
+     para o ensaio), o login do gestor e do administrador, e o app mobile contra a API publicada.
 - **Riscos que o plano aceita:** a subida a frio leva mais de 4 minutos (aquecer o app antes de
   gravar e antes da apresentação); o teste do Aiven vale 30 dias a partir de 18/10/2026, ou seja,
   até **17/11/2026**. Se a correção da entrega passar dessa data, o serviço é desligado, a menos
