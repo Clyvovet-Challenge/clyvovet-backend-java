@@ -11,6 +11,7 @@ import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 
 /**
  * Rate limiting por origem, com Bucket4j.
@@ -190,20 +192,53 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Com {@code server.forward-headers-strategy=framework} o ForwardedHeaderFilter
-     * do Spring esconde o X-Forwarded-For da aplicacao e entrega o endereco do
-     * cliente em {@code getRemoteAddr()} -- por isso o caminho comum aqui e o
-     * segundo. O cabecalho so e lido se alguem desligar a estrategia.
+     * Quantos valores, contados da DIREITA do X-Forwarded-For, a infraestrutura
+     * acrescentou. O IP do cliente e o primeiro deles.
      *
-     * <p>Em producao isso so e confiavel se o proxy sobrescrever o header: do
-     * contrario o cliente poderia forjar o IP e escapar do limite.</p>
+     * <p>Cada proxy acrescenta ao FIM da lista o endereco de quem se conectou a
+     * ele; o que vem antes foi escrito por quem mandou a requisicao. Ler o
+     * primeiro valor, como este filtro fazia, deixava o cliente escolher a
+     * propria chave: medido na Render, 14 logins com um cabecalho diferente
+     * cada passaram sem um unico 429. Com 1, o cliente e o ultimo valor; com 2
+     * (o cliente mais um balanceador da plataforma), o penultimo.</p>
+     */
+    @Value("${clyvovet.rate-limit.proxies-confiaveis:1}")
+    private int proxiesConfiaveis;
+
+    /**
+     * Sem o cabecalho (execucao local, sem proxy), vale o endereco da conexao.
+     *
+     * <p>O cabecalho e lido da requisicao ORIGINAL, e nao da que chega ao filtro:
+     * com {@code server.forward-headers-strategy=framework}, o
+     * ForwardedHeaderFilter do Spring esconde o X-Forwarded-For e entrega em
+     * {@code getRemoteAddr()} o PRIMEIRO valor da lista -- justamente o que o
+     * cliente escreve. A estrategia continua ligada porque o redirect do OAuth2
+     * precisa de X-Forwarded-Proto e -Host; so a escolha do IP e feita aqui.</p>
+     *
+     * <p>Se a lista tiver menos valores do que o configurado, o cabecalho nao veio
+     * da cadeia esperada; usa-se o primeiro, que e o melhor palpite e nao junta
+     * todo mundo num balde so. Varias linhas do mesmo cabecalho valem como uma
+     * lista: mandar duas linhas nao desloca a posicao.</p>
      */
     private String ipDoCliente(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return semPorta(forwarded.split(",")[0].trim());
+        String forwarded = String.join(",",
+                Collections.list(semEnvoltorios(request).getHeaders("X-Forwarded-For")));
+        if (forwarded.isBlank()) {
+            return semPorta(request.getRemoteAddr());
         }
-        return semPorta(request.getRemoteAddr());
+        String[] valores = forwarded.split(",");
+        int posicao = Math.max(valores.length - Math.max(proxiesConfiaveis, 1), 0);
+        return semPorta(valores[posicao].trim());
+    }
+
+    /** Desce os envoltorios (Spring, Security) ate a requisicao que o container entregou. */
+    private static HttpServletRequest semEnvoltorios(HttpServletRequest request) {
+        HttpServletRequest atual = request;
+        while (atual instanceof HttpServletRequestWrapper envoltorio
+                && envoltorio.getRequest() instanceof HttpServletRequest interno) {
+            atual = interno;
+        }
+        return atual;
     }
 
     /**

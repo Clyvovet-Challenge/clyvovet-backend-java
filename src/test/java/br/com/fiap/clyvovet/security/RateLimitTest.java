@@ -68,4 +68,47 @@ class RateLimitTest extends TesteDeApi {
                         .content(LOGIN_INVALIDO))
                 .andExpect(status().isTooManyRequests());
     }
+
+    /**
+     * Medido na Render: 14 logins, cada um com um X-Forwarded-For diferente,
+     * passaram todos sem 429. O proxy so ACRESCENTA o IP de quem se conectou ao
+     * fim da lista; o primeiro valor e o que o cliente escreveu. A chave do
+     * balde precisa vir do valor que o proxy escreveu, e nao do que o cliente
+     * mandou.
+     */
+    @Test
+    @DisplayName("forjar o primeiro valor do X-Forwarded-For nao escapa do limite")
+    void primeiroValorForjadoNaoEscapaDoLimite() throws Exception {
+        for (int tentativa = 1; tentativa <= 10; tentativa++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .header("X-Forwarded-For", "10.0.0." + tentativa + ", 203.0.113.50")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(LOGIN_INVALIDO))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("X-Forwarded-For", "10.0.0.99, 203.0.113.50")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(LOGIN_INVALIDO))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    @DisplayName("clientes diferentes, vistos pelo proxy, continuam com baldes separados")
+    void clientesDiferentesNaoDividemOBalde() throws Exception {
+        for (int tentativa = 1; tentativa <= 10; tentativa++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .header("X-Forwarded-For", "203.0.113.60")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(LOGIN_INVALIDO))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("X-Forwarded-For", "203.0.113.61")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(LOGIN_INVALIDO))
+                .andExpect(status().isUnauthorized());
+    }
 }
