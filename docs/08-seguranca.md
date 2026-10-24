@@ -275,6 +275,29 @@ Credencial errada, e-mail inexistente e conta bloqueada devolvem **a mesma respo
 e-mail não existe, o serviço ainda executa um BCrypt descartável, para que o tempo de
 resposta também não denuncie a diferença.
 
+### CSRF das telas (cookie)
+
+CSRF (*Cross-Site Request Forgery*) é o ataque em que outro site faz o navegador de quem já
+entrou enviar um formulário sem a pessoa perceber. Só as **telas** (Thymeleaf, com sessão) têm
+essa defesa ligada; a API com JWT é stateless e não usa cookie, então fica sem CSRF
+([`10-guia-do-frontend.md`](10-guia-do-frontend.md)).
+
+- **Onde o token mora:** num cookie (`CookieCsrfTokenRepository`), e não só na sessão. Na Render o
+  app dorme depois de uns 15 minutos e a sessão, que vive na memória, some: quem deixava o
+  `/login` aberto levava 403 ao enviar. Com o cookie, o servidor só compara o cookie com o campo
+  escondido do formulário e não precisa lembrar de nada.
+- **Atributos do cookie:** `HttpOnly` (o padrão: só formulários usam o token, nenhum JavaScript
+  precisa lê-lo) e `SameSite=Lax` (o navegador não o envia em POST vindo de outro site).
+- **Token inválido em formulário público:** `/login` e `/cadastro` não fazem nada (nenhum login,
+  nenhuma conta) e voltam a `/login?expirou`, com um aviso de página expirada
+  (`PaginaExpiradaHandler`). Qualquer outra recusa, inclusive CSRF numa tela de quem já entrou,
+  segue como **403**.
+- **Verificação:** o aviso de página expirada foi provado no site da Render e há teste automático
+  do cookie (`CadastroTelaTest`).
+- **Custo aceito:** sem sessão no servidor, a defesa é a comparação cookie × campo (*double submit*)
+  mais o `SameSite=Lax`. Um subdomínio controlado por atacante poderia plantar o cookie; aqui não
+  há subdomínios, então o risco não se aplica.
+
 ### Rate limiting
 
 | Escopo | Limite |
@@ -292,6 +315,22 @@ Os buckets vivem num cache Caffeine com expiração — num `Map` comum, cada IP
 criaria uma entrada permanente e o próprio rate limiter viraria vetor de DoS.
 
 Desligável com `clyvovet.rate-limit.enabled=false` (usado nos testes).
+
+**De onde vem o IP (X-Forwarded-For):** atrás da Render, o IP do cliente chega no cabeçalho
+`X-Forwarded-For`, e cada proxy **acrescenta ao fim** da lista o endereço de quem se conectou a
+ele; o que vem antes foi escrito por quem mandou a requisição. Ler o primeiro valor deixava o
+cliente escolher a própria chave: medido na Render, 14 logins com um cabeçalho diferente cada
+passaram sem nenhum 429. O filtro agora conta a partir da **direita**, pela propriedade
+`clyvovet.rate-limit.proxies-confiaveis` (padrão `1`: o cliente é o último valor). Sem o cabeçalho
+(execução local), vale o endereço da conexão.
+
+- **Limitação:** o número `1` é uma suposição sobre a Render (um proxy). Se a plataforma colocar
+  outro balanceador na frente, todos os clientes cairiam no IP dele e dividiriam um balde só;
+  nesse caso o valor deve subir para `2`. Se a lista tiver menos valores que o configurado, o
+  filtro usa o primeiro, que é o melhor palpite.
+- **Coberto por teste automático, mas ainda não provado no site:** a prova que falta é pedir
+  logins de **dois IPs diferentes** (por exemplo, o celular fora do Wi-Fi) e ver que cada um tem o
+  seu balde. Enquanto isso não for feito, o commit `12de007` não deve ir ao ar.
 
 **Limitação conhecida:** o estado é local ao processo. Com mais de uma réplica, cada
 uma teria sua própria contagem; o correto nesse cenário seria Bucket4j sobre Redis.
