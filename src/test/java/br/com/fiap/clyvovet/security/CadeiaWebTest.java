@@ -4,12 +4,17 @@ import br.com.fiap.clyvovet.model.Perfil;
 import br.com.fiap.clyvovet.model.Usuario;
 import br.com.fiap.clyvovet.repository.UsuarioRepository;
 import br.com.fiap.clyvovet.support.TesteDeTela;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -63,11 +68,42 @@ class CadeiaWebTest extends TesteDeTela {
     }
 
     @Test
-    @DisplayName("formulario enviado sem token CSRF e recusado com 403")
-    void formularioSemCsrfERecusado() throws Exception {
+    @DisplayName("formulario enviado sem token CSRF nao entra: volta ao login avisando que a pagina expirou")
+    void formularioSemCsrfNaoEntra() throws Exception {
         mockMvc.perform(post("/login").param("email", EMAIL).param("senha", SENHA))
-                .andExpect(status().isForbidden())
+                .andExpect(redirectedUrl("/login?expirou"))
                 .andExpect(unauthenticated());
+    }
+
+    @Test
+    @DisplayName("o aviso de pagina expirada aparece na tela de login")
+    void avisoDePaginaExpirada() throws Exception {
+        mockMvc.perform(get("/login").param("expirou", ""))
+                .andExpect(content().string(containsString("Sua página expirou")));
+    }
+
+    /**
+     * A Render desliga o app depois de uns 15 minutos parado e a sessao some da
+     * memoria. Quem deixou o /login aberto enviava o formulario e levava 403,
+     * porque o token CSRF morava na sessao. Agora ele vai tambem num cookie, e
+     * o servidor so compara os dois -- nao precisa lembrar de nada.
+     */
+    @Test
+    @DisplayName("o token CSRF do login sobrevive a perda da sessao do servidor")
+    void tokenCsrfSobreviveAPerdaDaSessao() throws Exception {
+        MvcResult pagina = mockMvc.perform(get("/login")).andExpect(status().isOk()).andReturn();
+        Cookie cookieDoToken = pagina.getResponse().getCookie("XSRF-TOKEN");
+        assertThat(cookieDoToken).as("cookie XSRF-TOKEN na pagina de login").isNotNull();
+        Matcher campo = Pattern.compile("name=\"_csrf\" value=\"([^\"]+)\"")
+                .matcher(pagina.getResponse().getContentAsString());
+        assertThat(campo.find()).as("campo _csrf no formulario").isTrue();
+
+        // Segunda requisicao SEM a sessao da primeira: o app "reiniciou".
+        mockMvc.perform(post("/login")
+                        .cookie(cookieDoToken)
+                        .param("_csrf", campo.group(1))
+                        .param("email", EMAIL).param("senha", "senhaErrada999"))
+                .andExpect(redirectedUrl("/login?erro"));
     }
 
     @Test

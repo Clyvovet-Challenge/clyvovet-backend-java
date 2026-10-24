@@ -159,7 +159,7 @@ class CadastroTelaTest extends TesteDeTela {
     }
 
     @Test
-    @DisplayName("sem o token CSRF o cadastro e recusado com 403")
+    @DisplayName("sem o token CSRF o cadastro nao cria conta e volta ao login avisando que a pagina expirou")
     void semCsrfEhRecusado() throws Exception {
         String email = emailNovo();
 
@@ -168,7 +168,7 @@ class CadastroTelaTest extends TesteDeTela {
                         .param("email", email)
                         .param("senha", SENHA)
                         .param("confirmacaoDaSenha", SENHA))
-                .andExpect(status().isForbidden());
+                .andExpect(redirectedUrl("/login?expirou"));
 
         assertThat(usuarioRepository.existsByEmail(email)).isFalse();
     }

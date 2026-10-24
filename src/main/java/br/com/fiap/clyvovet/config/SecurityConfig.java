@@ -1,6 +1,7 @@
 package br.com.fiap.clyvovet.config;
 
 import br.com.fiap.clyvovet.security.JwtAuthenticationFilter;
+import br.com.fiap.clyvovet.security.PaginaExpiradaHandler;
 import br.com.fiap.clyvovet.security.OAuth2UsuarioService;
 import br.com.fiap.clyvovet.security.RateLimitFilter;
 import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -46,6 +48,7 @@ public class SecurityConfig {
     private final RespostaErroSeguranca respostaErroSeguranca;
     private final ResultadoDoLoginWeb resultadoDoLoginWeb;
     private final OAuth2UsuarioService oauth2UsuarioService;
+    private final PaginaExpiradaHandler paginaExpiradaHandler;
 
     /** Origens permitidas para CORS. Nunca "*" combinado com credenciais. */
     @Value("${clyvovet.cors.origens:http://localhost:3000,http://localhost:8081}")
@@ -130,6 +133,19 @@ public class SecurityConfig {
     public SecurityFilterChain cadeiaWeb(HttpSecurity http) throws Exception {
         http
             .headers(this::configurarHeaders)
+
+            // O token CSRF vai num cookie, e nao so na sessao. Na Render o app
+            // dorme depois de uns 15 min e a sessao (memoria) some: quem deixou o
+            // /login aberto levava 403 ao enviar. Com o cookie o servidor so
+            // compara cookie e campo do formulario, sem lembrar de nada. HttpOnly
+            // (o padrao): so formularios usam o token, nenhum JavaScript precisa
+            // le-lo. SameSite=Lax impede o envio em POST vindo de outro site.
+            .csrf(csrf -> {
+                CookieCsrfTokenRepository tokens = new CookieCsrfTokenRepository();
+                tokens.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+                csrf.csrfTokenRepository(tokens);
+            })
+            .exceptionHandling(erros -> erros.accessDeniedHandler(paginaExpiradaHandler))
 
             .authorizeHttpRequests(rotas -> rotas
                 // Mesmo motivo da API: o despacho para a pagina de erro e uma

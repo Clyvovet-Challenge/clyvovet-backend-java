@@ -23,6 +23,9 @@
         com e-mail verificado, ou entre com e-mail e senha. Se a sua clínica já
         cadastrou o seu e-mail, peça a ela para vincular a sua conta.
     </p>
+    <p class="aviso aviso-erro" role="alert" th:if="${param.expirou}">
+        Sua página expirou antes de você enviar. Nada foi feito: é só tentar de novo.
+    </p>
     <p class="aviso aviso-ok" role="status" th:if="${param.saiu}">
         Você saiu da sua conta.
     </p>
