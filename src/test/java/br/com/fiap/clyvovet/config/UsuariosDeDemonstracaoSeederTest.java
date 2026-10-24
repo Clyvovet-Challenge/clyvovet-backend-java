@@ -18,6 +18,7 @@ import static br.com.fiap.clyvovet.config.UsuariosDeDemonstracaoSeeder.EMAIL_TUT
 import static br.com.fiap.clyvovet.config.UsuariosDeDemonstracaoSeeder.EMAIL_VETERINARIA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -90,6 +91,48 @@ class UsuariosDeDemonstracaoSeederTest extends TesteDeApi {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"senha\":\"outra-senha-qualquer\"}".formatted(EMAIL_TUTOR)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("o token de cada usuario de demonstracao abre /auth/me com o perfil e o vinculo certos")
+    void tokenAbreOsDadosDoProprioUsuario() throws Exception {
+        seeder.semear(SENHA);
+
+        buscar("/api/v1/auth/me", token(EMAIL_ADMIN, SENHA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(EMAIL_ADMIN))
+                .andExpect(jsonPath("$.perfil").value("ADMIN"));
+        buscar("/api/v1/auth/me", token(EMAIL_ADMIN_DE_CLINICA, SENHA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perfil").value("ADMIN_CLINICA"));
+        buscar("/api/v1/auth/me", token(EMAIL_VETERINARIA, SENHA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perfil").value("VETERINARIO"))
+                .andExpect(jsonPath("$.veterinarioNome").value(org.hamcrest.Matchers.containsString("Camila")));
+        buscar("/api/v1/auth/me", token(EMAIL_TUTOR, SENHA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perfil").value("TUTOR"))
+                .andExpect(jsonPath("$.tutorNome").value(org.hamcrest.Matchers.containsString("Lucas")));
+    }
+
+    @Test
+    @DisplayName("o perfil limita o que o token faz: so o ADMIN passa da porta de criar usuarios")
+    void perfilLimitaOQueOTokenFaz() throws Exception {
+        seeder.semear(SENHA);
+
+        // Corpo vazio de proposito: nenhum usuario e criado. A porta de perfil vem
+        // antes da validacao, entao o ADMIN chega ate o 400 e os outros param no 403.
+        assertThat(criarUsuarioVazio(token(EMAIL_ADMIN, SENHA))).isEqualTo(400);
+        assertThat(criarUsuarioVazio(token(EMAIL_TUTOR, SENHA))).isEqualTo(403);
+        assertThat(criarUsuarioVazio(token(EMAIL_VETERINARIA, SENHA))).isEqualTo(403);
+    }
+
+    private int criarUsuarioVazio(String token) throws Exception {
+        return mockMvc.perform(post("/api/v1/auth/usuarios")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andReturn().getResponse().getStatus();
     }
 
     @Test
