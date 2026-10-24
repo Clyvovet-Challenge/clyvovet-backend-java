@@ -1,5 +1,5 @@
 ===========================================================================
- CLYVOVET - CHALLENGE FIAP 2026 - SPRINT 3
+ CLYVOVET - CHALLENGE FIAP 2026 - SPRINT 4
  Links de entrega
 ===========================================================================
 
@@ -73,11 +73,15 @@
  VIDEOS
 ---------------------------------------------------------------------------
 
-  DevOps Tools & Cloud Computing
-  https://www.youtube.com/watch?v=WBNx3ZSore0
+  DevOps Tools & Cloud Computing (Sprint 4)
+  [ PENDENTE ]
 
-  Java Advanced
-  https://www.youtube.com/watch?v=GzwneyCpGCw
+  Java Advanced (Sprint 4)
+  [ PENDENTE -- gravar ate 04/11 ]
+
+  Videos da Sprint 3 (ja entregues, NAO valem para a Sprint 4):
+    DevOps  https://www.youtube.com/watch?v=WBNx3ZSore0
+    Java    https://www.youtube.com/watch?v=GzwneyCpGCw
 
   Mobile Application Development
   [ PENDENTE ]
@@ -103,7 +107,7 @@
 
 --- inicio ---
 
-CLYVOVET - Challenge FIAP 2026 - Sprint 3
+CLYVOVET - Challenge FIAP 2026 - Sprint 4
 DevOps Tools & Cloud Computing
 
 Integrantes:
@@ -113,10 +117,10 @@ RM565492 - Miguel Henrique Oliveira Dias - 2TDSPW
 RM562312 - Pedro Henrique de Oliveira - 2TDSPW
 
 Repositorio GitHub:
-https://github.com/Clyvovet-Challenge/clyvovet-backend-java
+https://github.com/Clyvovet-Challenge/ClyvoVet-api
 
 Video YouTube:
-https://www.youtube.com/watch?v=WBNx3ZSore0
+[ PENDENTE ]
 
 --- fim ---
 
@@ -131,13 +135,13 @@ Repositorio:
 https://github.com/Clyvovet-Challenge/clyvovet-backend-java
 
 Video:
-https://www.youtube.com/watch?v=GzwneyCpGCw
+[ PENDENTE -- gravar ate 04/11 ]
 
 
 ---------------------------------------------------------------------------
  [3] ADVANCED BUSINESS DEVELOPMENT WITH .NET  ->  link no portal
 ---------------------------------------------------------------------------
- O enunciado da Sprint 3 lista os requisitos (health checks, testes AAA,
+ O enunciado da Sprint 3 listava os requisitos (health checks, testes AAA,
  README) mas nao declara o formato de envio. Confira no portal antes.
 
 Repositorio:
