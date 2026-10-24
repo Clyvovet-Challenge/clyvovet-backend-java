@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -87,8 +88,16 @@ class CadeiaWebTest extends TesteDeTela {
      * memoria. Quem deixou o /login aberto enviava o formulario e levava 403,
      * porque o token CSRF morava na sessao. Agora ele vai tambem num cookie, e
      * o servidor so compara os dois -- nao precisa lembrar de nada.
+     *
+     * <p>O {@code @DirtiesContext} nao e enfeite. O {@code csrf()} do
+     * spring-security-test troca, no filtro do contexto Spring compartilhado, o
+     * repositorio de tokens por um de sessao -- e a troca fica para as proximas
+     * classes. Sem um contexto novo, este teste so passa se rodar antes de
+     * qualquer outro que use {@code csrf()}: passou no meu computador e falhou
+     * no build da Render, que roda as classes em outra ordem.</p>
      */
     @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     @DisplayName("o token CSRF do login sobrevive a perda da sessao do servidor")
     void tokenCsrfSobreviveAPerdaDaSessao() throws Exception {
         MvcResult pagina = mockMvc.perform(get("/login")).andExpect(status().isOk()).andReturn();
