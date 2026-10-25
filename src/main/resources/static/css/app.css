@@ -87,6 +87,11 @@ h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
     padding: 1rem;
 }
 .cartao-login { width: 100%; max-width: 400px; }
+/* Paginas de leitura (politica de privacidade): mais largas e com respiro entre blocos. */
+.cartao-texto { width: 100%; max-width: 720px; line-height: 1.6; }
+.cartao-texto h2 { margin: 1rem 0 0.5rem; }
+.cartao-texto h3 { margin: 1.5rem 0 0.4rem; font-size: 1.05rem; }
+.cartao-texto p, .cartao-texto ul { margin: 0.4rem 0; }
 
 /* --- Formularios --- */
 .formulario { display: flex; flex-direction: column; gap: 0.4rem; }

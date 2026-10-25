@@ -152,7 +152,7 @@ public class SecurityConfig {
                 // nova passagem pela cadeia, e nao pode exigir login de novo.
                 .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                 // /cadastro e publico: e a tela de quem ainda nao tem conta.
-                .requestMatchers("/login", "/cadastro", "/css/**", "/img/**", "/favicon.ico").permitAll()
+                .requestMatchers("/login", "/cadastro", "/privacidade", "/css/**", "/img/**", "/favicon.ico").permitAll()
                 .requestMatchers("/tutor/**").hasRole("TUTOR")
                 .requestMatchers("/veterinario/**").hasAnyRole(VETERINARIO, ADMIN)
                 .anyRequest().authenticated())

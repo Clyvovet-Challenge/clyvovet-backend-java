@@ -37,6 +37,8 @@
            th:errors="*{confirmacaoDaSenha}">As senhas não conferem</p>
 
         <button type="submit" class="botao botao-primario">Criar conta</button>
+        <p class="dica">Ao criar a conta, você concorda com o uso dos seus dados descrito na
+            <a th:href="@{/privacidade}">política de privacidade</a>.</p>
     </form>
 
     <a class="voltar" th:href="@{/login}">Já tenho conta</a>

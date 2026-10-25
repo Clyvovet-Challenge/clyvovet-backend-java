@@ -27,6 +27,16 @@ public class InicioController {
     }
 
     /**
+     * Publica de proposito: o Google exige um endereco aberto para qualquer pessoa
+     * para tirar o login social do modo de teste, e a LGPD pede que o aviso possa
+     * ser lido antes de a pessoa entregar os dados.
+     */
+    @GetMapping("/privacidade")
+    public String privacidade() {
+        return "privacidade";
+    }
+
+    /**
      * Cada perfil tem a sua area, e a raiz so decide para qual ir. O ADMIN entra
      * na do veterinario porque a cadeia web ja o deixa passar ali -- e a mesma
      * visao ampla que ele tem na API.
