@@ -328,9 +328,17 @@ passaram sem nenhum 429. O filtro agora conta a partir da **direita**, pela prop
   outro balanceador na frente, todos os clientes cairiam no IP dele e dividiriam um balde só;
   nesse caso o valor deve subir para `2`. Se a lista tiver menos valores que o configurado, o
   filtro usa o primeiro, que é o melhor palpite.
-- **Coberto por teste automático, mas ainda não provado no site:** a prova que falta é pedir
-  logins de **dois IPs diferentes** (por exemplo, o celular fora do Wi-Fi) e ver que cada um tem o
-  seu balde. Enquanto isso não for feito, o commit `12de007` não deve ir ao ar.
+- **Provado no site (Render, 25/10/2026):** 14 logins com um `X-Forwarded-For` forjado diferente
+  cada deram **401 até o 13º e 429 no 14º**, ou seja, os cabeçalhos inventados caíram no mesmo
+  balde e o cliente não escolhe mais a própria chave. (Antes da correção, em 24/10, os 14 passavam
+  sem nenhum 429.) O 429 veio depois do 10º porque o balde repõe uma ficha a cada 6 segundos e os
+  pedidos levaram uns 12 segundos.
+- **Não verificado:** que dois IPs **reais** diferentes têm baldes separados (por exemplo, o
+  computador no Wi-Fi e o celular em 4G). A correção em `12de007` já está no ar; se a Render
+  tivesse um segundo balanceador na frente, todos dividiriam um balde só, e a saída seria
+  `clyvovet.rate-limit.proxies-confiaveis=2`, sem mudar código.
+- **Cuidado ao testar o limite:** com o app dormindo (subida a frio) cada pedido demora tanto que o
+  balde se repõe no mesmo ritmo e nunca esvazia. Aqueça o site antes de medir.
 
 **Limitação conhecida:** o estado é local ao processo. Com mais de uma réplica, cada
 uma teria sua própria contagem; o correto nesse cenário seria Bucket4j sobre Redis.
