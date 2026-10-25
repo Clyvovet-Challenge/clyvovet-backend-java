@@ -108,7 +108,7 @@ da entrega.
 
 | # | Lacuna | Pesa em | Evidência |
 |---|---|---|---|
-| ~~L1~~ | ~~API fora do ar~~ | 40 pts (demonstração) | ✅ no ar na Render desde 18/10/2026; falta publicar os commits novos |
+| ~~L1~~ | ~~API fora do ar~~ | 40 pts (demonstração) | ✅ no ar na Render desde 18/10/2026; commits publicados e no ar até `1f17c40` (25/10/2026) |
 | ~~L2~~ | ~~Perfil `mysql` nunca rodou num MySQL real~~ | risco de o deploy falhar no boot | ✅ MySQL 8 local, V1 a V20 (06/10/2026); o Azure fica para a Fase 3 |
 | ~~L3~~ | ~~README diverge do código~~ ✅ | 10 pts (organização) | `application.properties:5` diz `mysql`; a suíte tem 392 testes |
 | ~~L4~~ | ~~Índice de `docs/` sem o 17; `LINKS-ENTREGA.txt` da Sprint 3~~ ✅ | 10 pts (organização) | `docs/README.md` |
@@ -152,10 +152,17 @@ da entrega.
     10 tentativas devolveram 401 e a 11ª em diante 429 (`Retry-After`), e o balde voltou a aceitar
     depois de 1 minuto. Pela tela (com token CSRF e cookie) o 429 veio na 10ª tentativa, porque o balde
     é **compartilhado** com a API e uma já tinha sido gasta. Sem token CSRF a tela responde 403 antes do
-    limite. **Não testado:** se um cabeçalho `X-Forwarded-For` forjado escapa do limite (depende de o
-    proxy da Render sobrescrevê-lo).
+    limite. O cabeçalho `X-Forwarded-For` forjado **escapava**: medido em 24/10/2026, 14 logins com um
+    cabeçalho diferente cada passaram sem nenhum 429. Corrigido em `12de007` (a chave do balde passou a
+    ser o último valor da lista, o que o proxy da Render acrescentou) e **provado no ar em 25/10/2026**:
+    14 logins com cabeçalho forjado deram 401 até o 13º e 429 no 14º. **Não verificado:** que dois IPs
+    reais diferentes têm baldes separados; se a Render pusesse um segundo balanceador na frente, bastaria
+    `clyvovet.rate-limit.proxies-confiaveis=2` ([`08-seguranca.md`](08-seguranca.md)).
+  - ~~4. Tirar o app do Google do modo *Teste*~~, provado em 25/10/2026: o Google exige página inicial
+    e **política de privacidade** no domínio autorizado para publicar, então foi criada a página pública
+    `/privacidade` (LGPD, com link no login e no cadastro; `1f17c40`). Com o app **Em produção**, uma
+    conta que não estava na lista de testadores entrou e virou tutor.
 - **Falta, por ordem:**
-  4. Tirar o app do Google do modo *Teste*, ou listar os `Usuários de teste` que vão aparecer no vídeo.
   6. Smoke test dos fluxos principais pelas telas e pelo app, apontando `EXPO_PUBLIC_JAVA_BASE_URL`
      para `https://clyvovet-backend-java.onrender.com`. Já provados online em 21 e 22/10/2026: login do
      tutor, Meus pets, cadastrar e excluir pet, agendar e cancelar consulta, e a consulta marcada
@@ -209,7 +216,7 @@ Revisto em 18/10/2026 para refletir Render e Aiven. A data de entrega não muda.
 | ~~19/10~~ | Fase 2: perfil `mysql` validado num MySQL real local — ✅ feito em 06/10 |
 | ~~26/10~~ | Fase 3: API e telas no ar — ✅ no ar desde 18/10 na Render + Aiven |
 | **20/10** | Push da `sprint-4`, deploy na Render com os 4 commits novos e os passos 3 a 5 da Fase 3 |
-| 26/10 | Smoke test completo pelas telas e pelo app; Google fora do modo *Teste* |
+| 26/10 | Smoke test completo pelas telas e pelo app (Google fora do modo *Teste*: ✅ 25/10) |
 | 31/10 | Roteiro ensaiado e vídeo gravado, navegando pelas telas Thymeleaf |
 | 01–03/11 | Margem para regravar e conferir a entrega |
 | **04/11** | Entrega no portal |
