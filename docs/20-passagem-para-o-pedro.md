@@ -22,11 +22,16 @@ pronto, onde está cada coisa, o que **não** está no git e o que falta até a 
 
 Marque cada um quando receber.
 
-- [ ] **Render**: workspace *Sprint 4 Front End*, serviço `clyvovet-backend-java`. Sem isso você não
-  dispara deploy nem lê logs.
-- [ ] **Aiven**: o serviço MySQL do projeto. O período de teste **vence em 17/11/2026**.
-- [ ] **Google Cloud**: projeto *ClyvoVet* → *Google Auth Platform*. É lá que ficam o cliente
-  OAuth, a tela de consentimento e o status "Em produção".
+- [ ] **Render**: o workspace *Sprint 4 Front End* está no plano **Hobby (gratuito)**, e a Render
+  **não deixa convidar membros** nesse plano (só no Pro, que é pago). Então você **não** entra no
+  workspace: o Leonardo dispara os deploys e, quando você precisar ver um log ou uma variável, ele
+  copia ou compartilha a tela. Se o grupo decidir subir para o Pro, o convite é em *Settings* →
+  *Team members* → *+ Invite members*, com o papel **Developer**.
+- [ ] **Aiven**: peça um **usuário próprio** no serviço MySQL (o Leonardo o cria na aba de usuários
+  do serviço), em vez de usar o usuário principal. Assim o acesso se revoga sem trocar a senha de
+  todo mundo. O período de teste **vence em 17/11/2026**.
+- [ ] **Google Cloud**: convite de membro no projeto *ClyvoVet*. É em *Google Auth Platform* que
+  ficam o cliente OAuth, a tela de consentimento e o status "Em produção".
 - [ ] **OAuth App do GitHub** (login com GitHub): pergunte em qual conta ele foi criado.
 - [ ] **Senha dos usuários de demonstração**, para testar como cada perfil (seção 6).
 
@@ -37,7 +42,16 @@ Só os **nomes** das variáveis estão no repositório ([`05-deploy.md`](05-depl
 
 `DB_PASSWORD`, `JWT_SECRET`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_SECRET`, `CLYVOVET_DEMO_SENHA`.
 
-Com o convite para a Render, você os lê lá. **Variável nova só vale depois de um novo deploy.**
+Como você não entra na Render (seção 2), o Leonardo passa os valores de que você precisar **por
+canal privado** (mensagem direta ou gerenciador de senhas), **nunca** no git, no chat do grupo ou
+em e-mail. **Variável nova na Render só vale depois de um novo deploy.**
+
+**Você quase não precisa deles.** Sem nenhum segredo, o projeto roda no perfil `dev` (H2 em
+memória): `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`. Só vai precisar de valores se
+rodar contra o banco real (`DB_URL`, o usuário e a senha do **seu** usuário do Aiven; o
+`JWT_SECRET` local pode ser qualquer texto longo) ou testar o login social. Guarde-os fora do
+repositório, exportados no terminal ou na configuração de execução do IDE. Um arquivo `.env` está
+no `.gitignore`, mas o Spring **não** o lê sozinho.
 
 ## 4. Onde está cada coisa
 
@@ -56,9 +70,10 @@ Com o convite para a Render, você os lê lá. **Variável nova só vale depois 
   Leonardo pedir o merge (via PR).
 - **CI:** só roda na `main` e em PR para ela. Na `sprint-4` ele **não** roda, então rode a suíte
   antes de cada commit: `./mvnw test`.
-- **Deploy é manual.** O `git push` **não** atualiza o site (o *autoDeploy* está desligado). Para
-  publicar: painel da Render → serviço `clyvovet-backend-java` → *Manual Deploy* → *Deploy latest
-  commit*. O build leva uns 6 minutos, e durante a troca o app antigo ainda responde.
+- **Deploy é manual.** O `git push` **não** atualiza o site (o *autoDeploy* está desligado). Como
+  você não entra na Render, **peça ao Leonardo** depois de cada push: no painel dele, serviço
+  `clyvovet-backend-java` → *Manual Deploy* → *Deploy latest commit*. O build leva uns 6 minutos, e
+  durante a troca o app antigo ainda responde. Só texto de documentação **não** precisa de deploy.
 - **O app dorme** no plano gratuito. Abra o site 1 a 2 minutos antes de gravar ou testar.
 - **Teste primeiro** (TDD), e bug corrigido leva teste de regressão. O `CLAUDE.md` e o
   `.claude/rules/` do projeto valem para quem usar Claude Code.
@@ -103,8 +118,9 @@ entrando e sendo barrados no que não podem.
 
 1. **O Aiven (teste) vence em 17/11/2026.** Se a correção passar dessa data, o site cai, a menos
    que o grupo cadastre um cartão (decisão do grupo).
-2. **A senha do Aiven não foi trocada.** A passagem de bastão é um bom momento, mas a escolha é do
-   Leonardo.
+2. **A senha do usuário principal do Aiven não foi trocada.** Por isso o Pedro recebe um **usuário
+   próprio**, que se revoga sem trocar a senha de ninguém. Trocar a do usuário principal continua
+   sendo escolha do Leonardo.
 3. **O contato da política de privacidade é o e-mail do Leonardo** (`leojp04@gmail.com`), assim
    como o e-mail de suporte no Google. Troque quando assumir: o texto está em
    `src/main/resources/templates/privacidade.html`, e o do Google, em *Branding*.
