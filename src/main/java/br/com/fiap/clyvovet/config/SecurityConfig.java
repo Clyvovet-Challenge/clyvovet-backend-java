@@ -1,13 +1,17 @@
 package br.com.fiap.clyvovet.config;
 
 import br.com.fiap.clyvovet.security.JwtAuthenticationFilter;
+import br.com.fiap.clyvovet.security.PaginaExpiradaHandler;
+import br.com.fiap.clyvovet.security.OAuth2UsuarioService;
 import br.com.fiap.clyvovet.security.RateLimitFilter;
+import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
 import br.com.fiap.clyvovet.security.RespostaErroSeguranca;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -20,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -41,6 +46,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     private final RespostaErroSeguranca respostaErroSeguranca;
+    private final ResultadoDoLoginWeb resultadoDoLoginWeb;
+    private final OAuth2UsuarioService oauth2UsuarioService;
+    private final PaginaExpiradaHandler paginaExpiradaHandler;
 
     /** Origens permitidas para CORS. Nunca "*" combinado com credenciais. */
     @Value("${clyvovet.cors.origens:http://localhost:3000,http://localhost:8081}")
@@ -50,9 +58,35 @@ public class SecurityConfig {
     @Value("${spring.h2.console.enabled:false}")
     private boolean h2ConsoleHabilitado;
 
+    // ====================================================================
+    // DUAS CADEIAS, PORQUE SAO DOIS CLIENTES COM SEGURANCA OPOSTA (ADR 002)
+    //
+    // O app mobile fala com /api/** por token no header: nada de sessao, nada
+    // de CSRF, e erro em JSON. As telas Thymeleaf vivem de cookie de sessao --
+    // e cookie e exatamente o que torna o CSRF um ataque real. Uma cadeia so
+    // teria de escolher um dos dois e quebraria o outro.
+    //
+    // O Spring testa as cadeias em ordem e usa a PRIMEIRA cujo securityMatcher
+    // casar. A da API vem antes e declara as proprias rotas; a web nao declara
+    // nenhuma, entao fica com todo o resto. Rota nova fora de /api nasce, por
+    // isso, protegida pela web: redireciona para o login em vez de abrir.
+    //
+    // O que a API prometia antes da divisao esta fixado no CadeiaDaApiTest.
+    // ====================================================================
+
+    /** Rotas atendidas pela cadeia da API. Tudo o que nao casar aqui e tela. */
+    private static final String[] ROTAS_DA_API = {
+            WebConfig.PREFIXO_API + "/**",
+            "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
+            "/actuator/**", "/h2-console/**"
+    };
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain cadeiaDaApi(HttpSecurity http) throws Exception {
         http
+            .securityMatcher(ROTAS_DA_API)
+
             // ----------------------------------------------------------------
             // CSRF desabilitado — decisao consciente, nao esquecimento.
             //
@@ -62,9 +96,9 @@ public class SecurityConfig {
             // header Authorization, que so e enviado se o cliente o colocar
             // explicitamente — um site malicioso nao consegue faze-lo.
             //
-            // GATILHO PARA REATIVAR: se a Sprint 3 adicionar form login com
-            // sessao (frontend Thymeleaf), o vetor passa a existir e o CSRF
-            // deve ser habilitado para as rotas baseadas em sessao.
+            // O gatilho previsto aqui -- form login com sessao para telas
+            // Thymeleaf -- chegou na Sprint 4. O CSRF foi religado, mas na
+            // cadeiaWeb, que e onde a sessao existe; nesta continua desligado.
             // ----------------------------------------------------------------
             .csrf(AbstractHttpConfigurer::disable)
 
@@ -86,6 +120,72 @@ public class SecurityConfig {
             // login precisa ser barrada antes de custar um BCrypt por request.
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(jwtAuthenticationFilter, RateLimitFilter.class);
+
+        return http.build();
+    }
+
+    /**
+     * As telas: sessao por cookie, CSRF ligado (padrao do Spring) e login por
+     * formulario. Quem nao esta logado e levado ao /login, e nao recebe JSON.
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain cadeiaWeb(HttpSecurity http) throws Exception {
+        http
+            .headers(this::configurarHeaders)
+
+            // O token CSRF vai num cookie, e nao so na sessao. Na Render o app
+            // dorme depois de uns 15 min e a sessao (memoria) some: quem deixou o
+            // /login aberto levava 403 ao enviar. Com o cookie o servidor so
+            // compara cookie e campo do formulario, sem lembrar de nada. HttpOnly
+            // (o padrao): so formularios usam o token, nenhum JavaScript precisa
+            // le-lo. SameSite=Lax impede o envio em POST vindo de outro site.
+            .csrf(csrf -> {
+                CookieCsrfTokenRepository tokens = new CookieCsrfTokenRepository();
+                tokens.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+                csrf.csrfTokenRepository(tokens);
+            })
+            .exceptionHandling(erros -> erros.accessDeniedHandler(paginaExpiradaHandler))
+
+            .authorizeHttpRequests(rotas -> rotas
+                // Mesmo motivo da API: o despacho para a pagina de erro e uma
+                // nova passagem pela cadeia, e nao pode exigir login de novo.
+                .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                // /cadastro e publico: e a tela de quem ainda nao tem conta.
+                .requestMatchers("/login", "/cadastro", "/privacidade", "/css/**", "/img/**", "/favicon.ico").permitAll()
+                .requestMatchers("/tutor/**").hasRole("TUTOR")
+                .requestMatchers("/veterinario/**").hasAnyRole(VETERINARIO, ADMIN)
+                .anyRequest().authenticated())
+
+            // Os nomes dos campos sao os mesmos do JSON de /auth/login: quem le
+            // um formulario e o outro ve a mesma palavra.
+            .formLogin(form -> form
+                .loginPage("/login")
+                .usernameParameter("email")
+                .passwordParameter("senha")
+                .successHandler(resultadoDoLoginWeb)
+                .failureHandler(resultadoDoLoginWeb))
+
+            // Google e GitHub, na mesma tela de login. O provedor so prova quem
+            // e a pessoa; quem decide se ela entra, e como quem, e o
+            // OAuth2UsuarioService -- e o principal que ele devolve e o mesmo
+            // UsuarioAutenticado do formulario. O sucesso passa pelo mesmo
+            // handler: volta a tela que pediu o login e zera as senhas erradas.
+            .oauth2Login(oauth -> oauth
+                .loginPage("/login")
+                .userInfoEndpoint(info -> info
+                    .oidcUserService(oauth2UsuarioService::carregarGoogle)
+                    .userService(oauth2UsuarioService::carregarGithub))
+                .successHandler(resultadoDoLoginWeb)
+                .failureUrl("/login?sem-conta"))
+
+            .logout(logout -> logout.logoutSuccessUrl("/login?saiu"))
+
+            // O limite precisa rodar ANTES do filtro do formulario. Como @Component
+            // ele tambem entra na cadeia do servlet, mas la depois da seguranca:
+            // o POST /login ja teria sido respondido (redirect) sem ser contado.
+            // O OncePerRequestFilter garante que nao conta duas vezes.
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -338,8 +438,16 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Estatico de proposito. O login social cria contas, entao o
+     * OAuth2UsuarioService depende do UsuarioService, que depende deste encoder --
+     * e o SecurityConfig, que injeta o OAuth2UsuarioService, e quem o declara. Um
+     * metodo de instancia pediria o SecurityConfig pronto para criar o encoder, e o
+     * SecurityConfig so fica pronto depois do OAuth2UsuarioService: ciclo, e o
+     * contexto nao sobe. Estatico, o encoder nao precisa do SecurityConfig.
+     */
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

@@ -158,6 +158,27 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <!--
+            Telas Thymeleaf no proprio Spring (ADR 002). O extras-springsecurity6
+            da as telas o usuario logado (sec:authentication) e o token CSRF
+            automatico em todo th:action.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <!--
+            Login das telas com Google e GitHub (ADR 002). So nas telas: a API
+            continua no JWT proprio, e o app mobile nao muda.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <!--
             HATEOAS: leva a API do nivel 2 ao nivel 3 de Richardson.
 
             O cliente deixa de precisar saber, por fora, o que pode fazer com um
@@ -233,6 +254,31 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <!-- Cobertura de testes. O agente liga em `initialize` e o relatorio sai em
+                 `verify`, que e a fase que o CI roda: ./mvnw verify gera
+                 target/site/jacoco/index.html. Sem limite minimo de proposito: a
+                 primeira medicao serve para saber onde estamos, e um numero
+                 escolhido antes de medir nao diz nada. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.13</version>
+                <executions>
+                    <execution>
+                        <id>agente-de-cobertura</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>relatorio-de-cobertura</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

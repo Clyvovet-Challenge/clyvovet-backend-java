@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Criar conta')}"></head>
+<body class="pagina-login">
+
+<main class="cartao cartao-login">
+    <h1 class="marca marca-grande">Clyvo<span>Vet</span></h1>
+    <p class="subtitulo">Crie sua conta de tutor para cuidar da saúde do seu pet.</p>
+
+    <!-- O th:action faz o Thymeleaf incluir o token CSRF sozinho. -->
+    <form th:action="@{/cadastro}" th:object="${cadastro}" method="post" class="formulario" novalidate>
+        <p class="aviso aviso-erro" role="alert" th:if="${#fields.hasGlobalErrors()}"
+           th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erro</p>
+
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" autocomplete="name" required autofocus
+               minlength="3" maxlength="100" th:value="*{nome}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}">Nome obrigatório</p>
+
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="email" required
+               maxlength="200" th:value="*{email}" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">E-mail inválido</p>
+
+        <!-- Os campos de senha nunca voltam preenchidos: o th:value foi omitido
+             de proposito, para a senha nao ser devolvida no HTML de um erro. -->
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="new-password" required
+               minlength="8" maxlength="72" th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('senha')}" th:errors="*{senha}">Senha inválida</p>
+        <p class="dica">Entre 8 e 72 caracteres.</p>
+
+        <label for="confirmacaoDaSenha">Repita a senha</label>
+        <input id="confirmacaoDaSenha" name="confirmacaoDaSenha" type="password"
+               autocomplete="new-password" required th:errorclass="campo-com-erro">
+        <p class="erro-campo" th:if="${#fields.hasErrors('confirmacaoDaSenha')}"
+           th:errors="*{confirmacaoDaSenha}">As senhas não conferem</p>
+
+        <button type="submit" class="botao botao-primario">Criar conta</button>
+        <p class="dica">Ao criar a conta, você concorda com o uso dos seus dados descrito na
+            <a th:href="@{/privacidade}">política de privacidade</a>.</p>
+    </form>
+
+    <a class="voltar" th:href="@{/login}">Já tenho conta</a>
+</main>
+
+</body>
+</html>

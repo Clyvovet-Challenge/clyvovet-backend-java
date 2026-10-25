@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Retornos vencidos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Retornos vencidos</h1>
+    <p class="subtitulo">Pacientes que deviam ter voltado e não voltaram. Os mais atrasados primeiro.</p>
+
+    <p class="cartao vazio" th:if="${#lists.isEmpty(vencidos)}">
+        Nenhum retorno vencido. Todos os pacientes voltaram no prazo.
+    </p>
+
+    <ul class="lista" th:unless="${#lists.isEmpty(vencidos)}">
+        <li class="cartao item" th:each="v : ${vencidos}">
+            <div class="item-dados">
+                <strong th:text="${v.animalNome()}">Bolinha</strong>
+                <span>
+                    Atendido em <span th:text="${#temporals.format(v.dataDoAtendimento(), 'dd/MM/yyyy')}">08/08/2026</span>,
+                    retorno previsto para
+                    <span th:text="${#temporals.format(v.retornoPrevisto(), 'dd/MM/yyyy')}">08/09/2026</span>
+                </span>
+                <!-- O contato vem na linha porque a lista vira ligacao. -->
+                <span class="item-detalhe">
+                    <span th:text="${v.tutorNome()}">Lucas Santos</span>
+                    · <a th:if="${v.tutorTelefone()}" th:href="'tel:' + ${v.tutorTelefone()}"
+                         th:text="${v.tutorTelefone()}">11999990001</a>
+                </span>
+            </div>
+            <div class="item-acoes">
+                <span class="selo" th:text="${v.diasEmAtraso()} + ' dias'">30 dias</span>
+            </div>
+        </li>
+    </ul>
+
+    <a class="voltar" th:href="@{/veterinario/atendimentos}">Voltar aos atendimentos</a>
+</main>
+
+</body>
+</html>

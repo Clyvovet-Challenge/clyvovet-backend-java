@@ -30,9 +30,12 @@ import java.util.List;
  *
  * Concentrar isso aqui e o que mantem os controllers sem try/catch: cada um
  * cuida do caminho feliz, e o desvio vira status e corpo neste lugar so.
+ *
+ * Vale so para o pacote {@code controller}, que e a API. As telas (pacote
+ * {@code web}) tem o proprio tratador: uma recusa ali vira pagina, e nao JSON.
  */
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "br.com.fiap.clyvovet.controller")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Confirmar agendamento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Confirmar agendamento</h1>
+    <p class="subtitulo">Confira os dados antes de marcar.</p>
+
+    <form class="cartao formulario" th:action="@{/tutor/agendamentos}" th:object="${agendamento}" method="post">
+        <!-- Erros de campos que nao aparecem no formulario (pet, servico, veterinario) e erros gerais -->
+        <div class="aviso aviso-erro" role="alert"
+             th:if="${#fields.hasGlobalErrors() or #fields.hasErrors('animalId') or #fields.hasErrors('servicoId') or #fields.hasErrors('veterinarioId')}">
+            <p th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erro</p>
+            <p th:errors="*{animalId}">Erro no pet</p>
+            <p th:errors="*{servicoId}">Erro no serviço</p>
+            <p th:errors="*{veterinarioId}">Erro no veterinário</p>
+        </div>
+
+        <dl class="resumo">
+            <dt>Pet</dt>
+            <dd th:text="${pet != null} ? ${pet.nome()} : '—'">Bolinha</dd>
+            <dt>Serviço</dt>
+            <dd th:text="${servico != null} ? ${servico.nome()} : '—'">Consulta de rotina</dd>
+            <dt>Veterinário</dt>
+            <dd th:text="${veterinario != null} ? ${veterinario.nome()} : '—'">Dra. Camila</dd>
+        </dl>
+
+        <input type="hidden" th:field="*{animalId}">
+        <input type="hidden" th:field="*{servicoId}">
+        <input type="hidden" th:field="*{veterinarioId}">
+        <input type="hidden" name="clinicaId" th:value="${clinicaId}">
+
+        <label for="data">Data</label>
+        <input type="date" th:field="*{data}" th:errorclass="campo-com-erro" required>
+        <p class="erro-campo" th:if="${#fields.hasErrors('data')}" th:errors="*{data}">Data inválida</p>
+
+        <label for="hora">Horário</label>
+        <input type="time" th:field="*{hora}" th:errorclass="campo-com-erro" required>
+        <p class="erro-campo" th:if="${#fields.hasErrors('hora')}" th:errors="*{hora}">Horário inválido</p>
+
+        <label class="opcao">
+            <input type="checkbox" th:field="*{consentimentoHistorico}" value="true">
+            Autorizo a clínica a ver o histórico clínico deste pet.
+        </label>
+        <p class="dica">Opcional. Sem a autorização, o atendimento acontece do mesmo jeito.</p>
+
+        <button type="submit" class="botao botao-primario">Confirmar agendamento</button>
+    </form>
+
+    <a class="voltar" th:href="@{/tutor/agendamentos/novo(animalId=${agendamento.animalId}, clinicaId=${clinicaId}, servicoId=${agendamento.servicoId})}">
+        Escolher outro horário</a>
+</main>
+
+</body>
+</html>

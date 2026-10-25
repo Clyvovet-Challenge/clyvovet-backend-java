@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -15,10 +17,15 @@ import java.util.UUID;
  *
  * Sem campo de status: ele e sempre AGENDADO. Aceita-lo do corpo permitiria um
  * atendimento que nasce REALIZADO sem nunca ter acontecido.
+ *
+ * O @Setter e do formulario das telas: o binding do Spring MVC preenche o
+ * objeto campo a campo. Uma classe *Form so para isso repetiria cada campo e
+ * cada validacao.
  */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class AgendamentoRequest {
 
     @NotNull
@@ -30,8 +37,12 @@ public class AgendamentoRequest {
     @NotNull
     private UUID veterinarioId;
 
-    /** A antecedencia minima e verificada no service, com a hora junto. */
+    /**
+     * A antecedencia minima e verificada no service, com a hora junto. O
+     * formulario manda a data como texto (yyyy-MM-dd); o JSON ja vinha assim.
+     */
     @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Future(message = "Não é possível agendar para uma data passada")
     private LocalDate data;
 

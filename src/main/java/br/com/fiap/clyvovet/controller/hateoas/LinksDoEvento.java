@@ -7,6 +7,8 @@ import br.com.fiap.clyvovet.controller.HistoricoController;
 import br.com.fiap.clyvovet.controller.RetornoController;
 import br.com.fiap.clyvovet.dto.eventoClinico.EventoClinicoResponse;
 import br.com.fiap.clyvovet.model.StatusEvento;
+import br.com.fiap.clyvovet.service.RetornoService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +24,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * maquina de estados para desabilitar o botao.
  */
 @Component
+@RequiredArgsConstructor
 public class LinksDoEvento {
+
+    private final RetornoService retornoService;
 
     public EntityModel<EventoClinicoResponse> comLinks(EventoClinicoResponse evento) {
         EntityModel<EventoClinicoResponse> modelo = EntityModel.of(evento);
@@ -44,8 +49,9 @@ public class LinksDoEvento {
     /**
      * As transicoes possiveis a partir do estado atual.
      *
-     * Quem responde e o proprio StatusEvento, o mesmo que os services consultam:
-     * link oferecido aqui e chamada aceita la sao, por construcao, a mesma regra.
+     * Quem responde e o proprio StatusEvento, o mesmo que os services consultam,
+     * e, para o retorno, a mesma consulta da R14 que o RetornoService faz antes
+     * de aceitar: link oferecido aqui e chamada aceita la sao a mesma regra.
      * Estado terminal nao precisa de ramo — ele simplesmente nao responde sim a
      * pergunta nenhuma.
      */
@@ -63,8 +69,9 @@ public class LinksDoEvento {
             modelo.add(linkTo(methodOn(RetornoController.class)
                     .concluir(evento.id(), null)).withRel("concluir"));
         }
-        // O retorno depende do estado E de haver retorno previsto no atendimento.
-        if (status.podeGerarRetorno() && evento.dataRetornoPrevisto() != null) {
+        // O retorno depende do estado (R11) E de nao haver outro em aberto (R14).
+        // O retorno previsto nao entra: ele so alimenta a lista de vencidos.
+        if (status.podeGerarRetorno() && !retornoService.temRetornoEmAberto(evento.id())) {
             modelo.add(linkTo(methodOn(RetornoController.class)
                     .agendarRetorno(evento.id(), null)).withRel("marcar-retorno"));
         }

@@ -78,7 +78,7 @@ errada, nunca token vencido.
 
 ### ③ API Java → MySQL · 3306, TLS obrigatório
 
-**É a Java quem cria o schema**, pelo Flyway, no primeiro boot: migrations V1 a V9
+**É a Java quem cria o schema**, pelo Flyway, no primeiro boot: migrations V1 a V21
 em `db/migration/mysql`. O banco é provisionado **vazio** de propósito.
 
 `sslMode=REQUIRED` não é enfeite — o Flexible Server recusa a conexão no

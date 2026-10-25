@@ -85,6 +85,23 @@ public class Usuario {
      * propria, existiam tres nocoes de "a minha clinica" livres para divergir — e a
      * que divergisse em silencio seria a do escopo.</p>
      */
+    /**
+     * Cria um usuario novo. O cadastro e as duas semeaduras passam por aqui; o
+     * construtor vazio continua publico so porque o JPA exige.
+     *
+     * <p>Recebe a senha ja com hash porque gerar o hash e da camada de servico,
+     * que tem o PasswordEncoder. O vinculo (tutor, veterinario ou clinica) fica
+     * com quem chama, porque depende do perfil.</p>
+     */
+    public static Usuario novo(String email, String senhaComHash, Perfil perfil) {
+        Usuario usuario = new Usuario();
+        usuario.setEmail(email);
+        usuario.setSenha(senhaComHash);
+        usuario.setPerfil(perfil);
+        usuario.setAtivo(true);
+        return usuario;
+    }
+
     public Clinica getClinicaEfetiva() {
         if (clinica != null) {
             return clinica;

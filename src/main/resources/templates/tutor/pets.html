@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Meus pets')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <div class="titulo-com-acao">
+        <div>
+            <h1>Meus pets</h1>
+            <p class="subtitulo">Os pets cadastrados na sua conta.</p>
+        </div>
+        <a class="botao botao-primario" th:href="@{/tutor/pets/novo}">Cadastrar pet</a>
+    </div>
+
+    <p class="aviso aviso-ok" role="status" th:if="${sucesso}" th:text="${sucesso}">Pet cadastrado.</p>
+
+    <p class="cartao vazio" th:if="${#lists.isEmpty(pets)}">
+        Nenhum pet ainda. Use o botão <strong>Cadastrar pet</strong> para cadastrar o primeiro
+        e poder agendar consultas.
+    </p>
+
+    <ul class="lista" th:unless="${#lists.isEmpty(pets)}">
+        <li class="cartao item" th:each="p : ${pets}">
+            <div class="item-dados">
+                <strong th:text="${p.nome()}">Bolinha</strong>
+                <span>
+                    <span th:text="${p.especie()}">Cachorro</span>
+                    · <span th:text="${p.raca()}">Golden Retriever</span>
+                </span>
+                <span class="item-detalhe">
+                    Porte <span th:text="${#strings.toLowerCase(p.porte())}">grande</span>
+                    · <span th:text="${p.cor()}">Dourado</span>
+                    · nascido em <span th:text="${#temporals.format(p.dataNascimento(), 'dd/MM/yyyy')}">12/03/2022</span>
+                </span>
+            </div>
+            <div class="item-acoes">
+                <a class="botao botao-secundario" th:href="@{/tutor/pets/{id}/excluir(id=${p.id()})}">Excluir</a>
+            </div>
+        </li>
+    </ul>
+
+    <a class="voltar" th:href="@{/tutor}">Voltar ao início</a>
+</main>
+
+</body>
+</html>

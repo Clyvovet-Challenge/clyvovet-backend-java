@@ -20,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -110,6 +112,20 @@ public class RetornoService {
         retorno.setEventoOrigem(origem);
 
         return eventoClinicoMapper.toResponse(eventoClinicoRepository.save(retorno));
+    }
+
+    /** A R14 perguntada antes da chamada: e o que o link "marcar-retorno" consulta. */
+    public boolean temRetornoEmAberto(UUID origemId) {
+        return eventoClinicoRepository.temRetornoEmAberto(origemId);
+    }
+
+    /**
+     * Quais destes atendimentos ja tem retorno em aberto. E a R14 perguntada
+     * antes do clique: a tela esconde o "Marcar retorno" que seria recusado.
+     */
+    public Set<UUID> comRetornoEmAberto(Collection<UUID> origens) {
+        // IN com lista vazia nao e SQL valido em todo banco; sem origem, sem consulta.
+        return origens.isEmpty() ? Set.of() : eventoClinicoRepository.origensComRetornoEmAberto(origens);
     }
 
     /** O resultado do fluxo: a lista sobre a qual a clinica age. */

@@ -1,0 +1,63 @@
+package br.com.fiap.clyvovet.web;
+
+import br.com.fiap.clyvovet.security.ResultadoDoLoginWeb;
+import br.com.fiap.clyvovet.security.UsuarioAutenticado;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.SessionAttribute;
+
+/**
+ * Entrada das telas: o login e a pagina inicial de cada perfil.
+ *
+ * <p>Fica no pacote {@code web}, e nao em {@code controller}, de proposito: o
+ * {@code WebConfig} prefixa {@code /api/v1} so nos controllers daquele pacote.
+ * Aqui as rotas ficam na raiz, que e onde a cadeia web as espera.</p>
+ */
+@Controller
+public class InicioController {
+
+    /** O e-mail da tentativa recusada, quando houver, volta preenchido no campo. */
+    @GetMapping("/login")
+    public String login(@SessionAttribute(name = ResultadoDoLoginWeb.EMAIL_DIGITADO, required = false)
+                        String emailDigitado, Model model) {
+        model.addAttribute("emailDigitado", emailDigitado);
+        return "login";
+    }
+
+    /**
+     * Publica de proposito: o Google exige um endereco aberto para qualquer pessoa
+     * para tirar o login social do modo de teste, e a LGPD pede que o aviso possa
+     * ser lido antes de a pessoa entregar os dados.
+     */
+    @GetMapping("/privacidade")
+    public String privacidade() {
+        return "privacidade";
+    }
+
+    /**
+     * Cada perfil tem a sua area, e a raiz so decide para qual ir. O ADMIN entra
+     * na do veterinario porque a cadeia web ja o deixa passar ali -- e a mesma
+     * visao ampla que ele tem na API.
+     */
+    @GetMapping("/")
+    public String inicio(@AuthenticationPrincipal UsuarioAutenticado usuario) {
+        return switch (usuario.getUsuario().getPerfil()) {
+            case TUTOR -> "redirect:/tutor";
+            case VETERINARIO, ADMIN -> "redirect:/veterinario";
+            // A gestao da clinica nao tem tela nesta versao: segue pelo app.
+            case ADMIN_CLINICA -> "inicio";
+        };
+    }
+
+    @GetMapping("/tutor")
+    public String areaDoTutor() {
+        return "tutor/inicio";
+    }
+
+    @GetMapping("/veterinario")
+    public String areaDoVeterinario() {
+        return "veterinario/inicio";
+    }
+}

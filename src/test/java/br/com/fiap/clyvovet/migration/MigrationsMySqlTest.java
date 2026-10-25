@@ -54,7 +54,7 @@ class MigrationsMySqlTest {
     }
 
     @Test
-    void as_migrations_de_mysql_rodam_da_v1_a_v20() {
+    void as_migrations_de_mysql_rodam_da_v1_a_v21() {
         var ds = h2ModoMySql();
 
         var flyway = Flyway.configure()
@@ -63,8 +63,8 @@ class MigrationsMySqlTest {
                 .load();
         var resultado = flyway.migrate();
 
-        assertThat(resultado.migrationsExecuted).isEqualTo(20);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("20");
+        assertThat(resultado.migrationsExecuted).isEqualTo(21);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
     }
 
     /**
@@ -243,9 +243,11 @@ class MigrationsMySqlTest {
         // O DEFAULT 'REALIZADO' da V5 se aplica as 11 linhas que o seed da V2
         // ja tinha gravado. E a consequencia declarada no cabecalho da migration:
         // taxa de falta retroativa nasce zerada, de proposito.
+        // Sao 9, e nao 11: a V21 devolveu a AGENDADO os dois eventos do seed que
+        // estao no futuro (15/12 e 22/12/2026), que o default tinha pego junto.
         assertThat(jdbc.queryForObject(
                 "select count(*) from t_clyvo_evento_clinico where status_evento = 'REALIZADO'", Integer.class))
-                .isEqualTo(11);
+                .isEqualTo(9);
     }
 
     @Test

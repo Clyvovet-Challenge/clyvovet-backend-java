@@ -127,7 +127,7 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 | # | Item | Origem | Situação |
 |---|---|---|---|
 | ~~D1~~ | **`script_bd.sql`** — DDL em arquivo separado | DevOps S3 | ✅ **31/08/2026** — `documentos/script_bd.sql`, **gerado** das migrations por `scripts/gerar-script-bd.py`. `ScriptDoBancoTest` quebra se defasar |
-| D2 | Banco em nuvem (H2 não é aceito) | DevOps S3 | decidido: **MySQL no Azure**. Perfil `mysql` pronto — **nunca executado contra um MySQL real** (item E5) |
+| D2 | Banco em nuvem (H2 não é aceito) | DevOps S3 | decidido: **MySQL no Azure**. Perfil `mysql` pronto e validado num MySQL 8 real (V1 a V20, 06/10/2026 — item E5); falta o Azure |
 | D3 | **Avisar Mobile e Frontend da mudança de contrato** (`/api/v1` + `page.totalElements`) | Backend, 19/08 | registrado na spec 04 como conflito 8; **o documento sozinho não avisa ninguém** |
 | D4 | Autenticação do app mobile por esta API | Mobile S3 | ✅ JWT pronto e documentado — falta o mobile consumir |
 | D5 | Container sem privilégio de root | DevOps S3 | ✅ usuário `appuser` no `Dockerfile` |
@@ -140,7 +140,7 @@ Cada item traz o que é, quanto vale, e a evidência de que está aberto.
 | ~~E2~~ | `dataPagamento` obrigatória | Média | ✅ **31/08/2026** — opcional no cadastro; a data entra na confirmação (regra P1) |
 | ~~E3~~ | Cache não invalida entre entidades relacionadas | Média | ✅ **31/08/2026** — cada service invalida os caches que consomem seus dados. `CacheCruzadoTest`, verificado contra a ausência da correção |
 | E4 | `especie` e `porte` como texto livre | Baixa | `CAO` e `CACHORRO` convivem; quebra o filtro. **Vira alta com o Painel** — ver risco R3 da spec dos módulos |
-| E5 | Perfil `mysql` nunca rodou contra um MySQL real | Média | validado só em H2 `MODE=MySQL`; `ddl-auto=validate` no servidor real é o teste que importa |
+| ~~E5~~ | Perfil `mysql` contra um MySQL real | Média | ✅ **06/10/2026** — MySQL 8 local, V1 a V20, `ddl-auto=validate` passou. Falta o Azure Flexible Server |
 | E6 | `EventoClinico.hora` como `String`; ordem de campos de `Endereco` divergente | Baixa | resíduo do item 15 |
 | E7 | Verificar `ESCAPE '\'` no Oracle real | Baixa | `EscapeNoOracleTest` existe e fica pulado sem `DB_USERNAME` no ambiente |
 

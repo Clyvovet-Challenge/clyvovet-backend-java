@@ -37,9 +37,19 @@ build/
 
 ### Credentials ###
 application-prod.properties
+# Variaveis de ambiente salvas em arquivo (senha do banco, chaves do Google e do
+# GitHub). O Spring nao le .env sozinho, mas e o nome que todo mundo usa por
+# habito, e o repositorio e publico. Um modelo SEM valores pode ser versionado.
+.env
+.env.*
+!.env.example
+# Anotacoes de segredos da maquina (ex.: senha dos usuarios de demonstracao).
+# Nunca versionar: o repositorio e publico no GitHub.
+*.local.md
 
 ### Claude Code (local/personal, not shared) ###
 .claude/settings.local.json
+CLAUDE.local.md
 
 # Canvas publicado do Claude Design: 2,2 MB de editor embutido, regeravel a
 # partir dos .dc.html ao lado. Fonte entra no git; saida de build nao.

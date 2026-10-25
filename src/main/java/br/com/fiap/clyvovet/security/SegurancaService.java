@@ -100,8 +100,13 @@ public class SegurancaService {
         return tutorId == null || podeAcessarTutor(tutorId);
     }
 
+    /**
+     * Sem id nao ha animal, e entao nao ha tutor dono para comparar: a resposta
+     * e "nao", e nao a excecao do findById(null). Na API o id vem da URL e nunca
+     * e nulo; nas telas ele vem de um campo oculto, que pode chegar vazio.
+     */
     public boolean podeAcessarAnimal(UUID animalId) {
-        return podeAcessar(() -> animalRepository.findById(animalId)
+        return podeAcessar(() -> animalId == null ? Optional.empty() : animalRepository.findById(animalId)
                 .map(Animal::getTutor)
                 .map(Tutor::getId));
     }

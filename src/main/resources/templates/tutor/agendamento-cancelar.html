@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cancelar agendamento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <h1>Cancelar agendamento</h1>
+    <p class="subtitulo">
+        <span th:text="${evento.servicoNome() ?: evento.descricao()}">Consulta de rotina</span> de
+        <span th:text="${evento.animalNome()}">Bolinha</span> em
+        <span th:text="${#temporals.format(evento.data(), 'dd/MM/yyyy')}">20/10/2026</span>
+        às <span th:text="${evento.hora()}">09:00</span>.
+    </p>
+
+    <form class="cartao formulario" th:action="@{/tutor/agendamentos/{id}/cancelar(id=${evento.id()})}"
+          th:object="${cancelamento}" method="post">
+        <p class="aviso aviso-erro" role="alert" th:if="${#fields.hasGlobalErrors()}"
+           th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erro</p>
+
+        <label for="motivo">Motivo do cancelamento</label>
+        <textarea th:field="*{motivo}" th:errorclass="campo-com-erro" rows="3" minlength="5" maxlength="500"
+                  required></textarea>
+        <p class="erro-campo" th:if="${#fields.hasErrors('motivo')}" th:errors="*{motivo}">Motivo obrigatório</p>
+        <p class="dica">A clínica usa o motivo para entender por que o horário ficou livre.</p>
+
+        <button type="submit" class="botao botao-primario">Cancelar agendamento</button>
+    </form>
+
+    <a class="voltar" th:href="@{/tutor/agendamentos}">Voltar sem cancelar</a>
+</main>
+
+</body>
+</html>

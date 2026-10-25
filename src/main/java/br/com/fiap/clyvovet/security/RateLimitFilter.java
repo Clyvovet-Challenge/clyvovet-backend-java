@@ -11,6 +11,7 @@ import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 
 /**
  * Rate limiting por origem, com Bucket4j.
@@ -50,11 +52,12 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final Duration JANELA = Duration.ofMinutes(1);
+    private static final Duration UM_MINUTO = Duration.ofMinutes(1);
+    private static final Duration UMA_HORA = Duration.ofHours(1);
 
     /**
-     * Faixas de limite, cada uma sabendo a propria capacidade e como se
-     * reconhecer numa requisicao.
+     * Faixas de limite, cada uma sabendo a propria capacidade, a propria janela e
+     * como se reconhecer numa requisicao.
      *
      * Antes isso vivia em dois metodos que precisavam concordar entre si: um
      * devolvia a categoria como String, o outro traduzia a mesma String em
@@ -63,18 +66,31 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     private enum Faixa {
 
-        LOGIN(10),
-        AUTH(30),
-        GERAL(100);
+        /** Login pela API e pela tela no MESMO balde: limitar so um deixaria o outro como atalho. */
+        LOGIN(10, UM_MINUTO),
+        /**
+         * Criar conta, pela tela e pela API, no MESMO balde. Janela de uma hora: o
+         * abuso aqui nao e rajada, e volume lento -- 100 contas por minuto da
+         * faixa geral enchem a tabela de tutores em horas. Dez por hora por
+         * endereco deixa folga para uma sala ou clinica atras de um IP so.
+         */
+        CADASTRO(10, UMA_HORA),
+        AUTH(30, UM_MINUTO),
+        GERAL(100, UM_MINUTO);
 
         private final int capacidade;
+        private final Duration janela;
 
-        Faixa(int capacidade) {
+        Faixa(int capacidade, Duration janela) {
             this.capacidade = capacidade;
+            this.janela = janela;
         }
 
         private static final String ROTA_AUTH = WebConfig.PREFIXO_API + "/auth";
         private static final String ROTA_LOGIN = ROTA_AUTH + "/login";
+        private static final String ROTA_LOGIN_NA_TELA = "/login";
+        private static final String ROTA_REGISTRAR_NA_API = ROTA_AUTH + "/registrar";
+        private static final String ROTA_CADASTRO_NA_TELA = "/cadastro";
 
         static Faixa de(HttpServletRequest request) {
             // Os caminhos saem da mesma constante que o WebConfig usa para
@@ -84,8 +100,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // minuto em vez de 10. Nada quebrou, nada apareceu no log -- so a
             // protecao contra forca bruta havia sumido.
             String path = request.getRequestURI();
-            if ("POST".equals(request.getMethod()) && ROTA_LOGIN.equals(path)) {
+            boolean ehPost = "POST".equals(request.getMethod());
+            if (ehPost && (ROTA_LOGIN.equals(path) || ROTA_LOGIN_NA_TELA.equals(path))) {
                 return LOGIN;
+            }
+            // So o POST conta: abrir a tela de cadastro nao cria conta nenhuma.
+            if (ehPost && (ROTA_REGISTRAR_NA_API.equals(path) || ROTA_CADASTRO_NA_TELA.equals(path))) {
+                return CADASTRO;
             }
             return path.startsWith(ROTA_AUTH) ? AUTH : GERAL;
         }
@@ -94,7 +115,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return Bucket.builder()
                     .addLimit(Bandwidth.builder()
                             .capacity(capacidade)
-                            .refillIntervally(capacidade, JANELA)
+                            .refillIntervally(capacidade, janela)
                             .build())
                     .build();
         }
@@ -110,8 +131,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Value("${clyvovet.rate-limit.enabled:true}")
     private boolean habilitado;
 
+    // Maior que a maior janela (uma hora): se o balde expirasse antes de
+    // reabastecer, quem ficasse ocioso por meia hora ganharia um balde cheio e o
+    // limite por hora valeria o dobro.
     private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(30))
+            .expireAfterAccess(Duration.ofHours(2))
             .maximumSize(100_000)
             .build();
 
@@ -130,7 +154,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        recusarPorExcessoDeRequisicoes(response, probe);
+        recusarPorExcessoDeRequisicoes(request, response, probe);
     }
 
     /** Swagger e console H2 ficam fora do limite para nao atrapalhar a avaliacao. */
@@ -145,10 +169,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 || path.startsWith("/h2-console");
     }
 
-    private void recusarPorExcessoDeRequisicoes(HttpServletResponse response, ConsumptionProbe probe) throws IOException {
+    private void recusarPorExcessoDeRequisicoes(HttpServletRequest request, HttpServletResponse response,
+                                                ConsumptionProbe probe) throws IOException {
         long esperaSegundos = Duration.ofNanos(probe.getNanosToWaitForRefill()).toSeconds();
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader("Retry-After", String.valueOf(esperaSegundos));
+        if (!request.getRequestURI().startsWith(WebConfig.PREFIXO_API)) {
+            // Rota de tela: JSON cru nao serve a quem esta num navegador. O sendError
+            // entrega a error.html, que explica e oferece voltar.
+            response.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
+            return;
+        }
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), new ErroValidacao("requisicoes",
@@ -161,15 +192,67 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Considera X-Forwarded-For por causa do proxy da Azure. Em producao isso
-     * so e confiavel se o proxy sobrescrever o header — do contrario o cliente
-     * poderia forjar o IP e escapar do limite.
+     * Quantos valores, contados da DIREITA do X-Forwarded-For, a infraestrutura
+     * acrescentou. O IP do cliente e o primeiro deles.
+     *
+     * <p>Cada proxy acrescenta ao FIM da lista o endereco de quem se conectou a
+     * ele; o que vem antes foi escrito por quem mandou a requisicao. Ler o
+     * primeiro valor, como este filtro fazia, deixava o cliente escolher a
+     * propria chave: medido na Render, 14 logins com um cabecalho diferente
+     * cada passaram sem um unico 429. Com 1, o cliente e o ultimo valor; com 2
+     * (o cliente mais um balanceador da plataforma), o penultimo.</p>
+     */
+    @Value("${clyvovet.rate-limit.proxies-confiaveis:1}")
+    private int proxiesConfiaveis;
+
+    /**
+     * Sem o cabecalho (execucao local, sem proxy), vale o endereco da conexao.
+     *
+     * <p>O cabecalho e lido da requisicao ORIGINAL, e nao da que chega ao filtro:
+     * com {@code server.forward-headers-strategy=framework}, o
+     * ForwardedHeaderFilter do Spring esconde o X-Forwarded-For e entrega em
+     * {@code getRemoteAddr()} o PRIMEIRO valor da lista -- justamente o que o
+     * cliente escreve. A estrategia continua ligada porque o redirect do OAuth2
+     * precisa de X-Forwarded-Proto e -Host; so a escolha do IP e feita aqui.</p>
+     *
+     * <p>Se a lista tiver menos valores do que o configurado, o cabecalho nao veio
+     * da cadeia esperada; usa-se o primeiro, que e o melhor palpite e nao junta
+     * todo mundo num balde so. Varias linhas do mesmo cabecalho valem como uma
+     * lista: mandar duas linhas nao desloca a posicao.</p>
      */
     private String ipDoCliente(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        String forwarded = String.join(",",
+                Collections.list(semEnvoltorios(request).getHeaders("X-Forwarded-For")));
+        if (forwarded.isBlank()) {
+            return semPorta(request.getRemoteAddr());
         }
-        return request.getRemoteAddr();
+        String[] valores = forwarded.split(",");
+        int posicao = Math.max(valores.length - Math.max(proxiesConfiaveis, 1), 0);
+        return semPorta(valores[posicao].trim());
+    }
+
+    /** Desce os envoltorios (Spring, Security) ate a requisicao que o container entregou. */
+    private static HttpServletRequest semEnvoltorios(HttpServletRequest request) {
+        HttpServletRequest atual = request;
+        while (atual instanceof HttpServletRequestWrapper envoltorio
+                && envoltorio.getRequest() instanceof HttpServletRequest interno) {
+            atual = interno;
+        }
+        return atual;
+    }
+
+    /**
+     * O proxy do App Service anexa "ip:porta" e a porta de origem muda a cada
+     * conexao: com ela na chave, cada tentativa cairia num balde novo. Aceita
+     * "1.2.3.4:5678" e "[::1]:5678"; IPv6 sem colchetes fica como veio.
+     */
+    private static String semPorta(String enderecoComPossivelPorta) {
+        if (enderecoComPossivelPorta.startsWith("[")) {
+            int fim = enderecoComPossivelPorta.indexOf(']');
+            return fim > 0 ? enderecoComPossivelPorta.substring(1, fim) : enderecoComPossivelPorta;
+        }
+        int doisPontos = enderecoComPossivelPorta.indexOf(':');
+        boolean ipv4ComPorta = doisPontos > 0 && doisPontos == enderecoComPossivelPorta.lastIndexOf(':');
+        return ipv4ComPorta ? enderecoComPossivelPorta.substring(0, doisPontos) : enderecoComPossivelPorta;
     }
 }

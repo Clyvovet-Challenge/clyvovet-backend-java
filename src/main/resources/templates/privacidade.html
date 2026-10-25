@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Política de privacidade')}"></head>
+<body class="pagina-login">
+
+<!-- Pagina publica (o Google exige um endereco aberto para publicar o login social).
+     O texto descreve o que o codigo faz hoje: se um campo novo passar a ser
+     coletado ou um terceiro novo passar a receber dados, ele entra aqui tambem. -->
+<main class="cartao cartao-texto">
+    <h1 class="marca marca-grande">Clyvo<span>Vet</span></h1>
+    <h2>Política de privacidade</h2>
+
+    <p>O ClyvoVet é um projeto acadêmico da FIAP, sem fins comerciais. Esta página explica,
+        em linguagem simples e de acordo com a LGPD (Lei 13.709/2018), como tratamos os
+        seus dados.</p>
+
+    <h3>Quem é o responsável</h3>
+    <p>A equipe do projeto ClyvoVet. Para qualquer pedido sobre os seus dados, escreva para
+        <a href="mailto:leojp04@gmail.com">leojp04@gmail.com</a>.</p>
+
+    <h3>Quais dados coletamos</h3>
+    <ul>
+        <li>Nome, e-mail e senha. A senha é guardada de forma irreversível, nunca em texto.</li>
+        <li>No perfil de tutor: CPF, data de nascimento, sexo, telefone e endereço.</li>
+        <li>Os dados do seu pet e o histórico clínico dele.</li>
+        <li>Ao entrar com Google ou GitHub, recebemos apenas o seu e-mail verificado e o seu nome.</li>
+    </ul>
+
+    <h3>Para que usamos</h3>
+    <p>Para criar a sua conta, mostrar o histórico do seu pet, agendar atendimentos e permitir
+        que a clínica atenda o seu animal. A base legal é a execução do serviço que você pediu
+        ao criar a conta e, onde o aplicativo pedir, o seu consentimento (por exemplo, para a
+        clínica ver o prontuário).</p>
+
+    <h3>Com quem compartilhamos</h3>
+    <ul>
+        <li>A clínica e o veterinário que atendem o seu pet, conforme as regras de acesso do aplicativo.</li>
+        <li>A Render, que hospeda o aplicativo, em servidores nos Estados Unidos.</li>
+        <li>O Aiven, que mantém o banco de dados.</li>
+        <li>O Google e o GitHub, se você escolher entrar com a conta deles.</li>
+    </ul>
+    <p>Não vendemos dados e não usamos anúncios.</p>
+
+    <h3>Cookies</h3>
+    <p>Usamos só os necessários: o de sessão, que mantém você conectado, e o de segurança do
+        formulário. Nenhum cookie de rastreamento.</p>
+
+    <h3>Por quanto tempo guardamos</h3>
+    <p>Enquanto a sua conta existir. Ao pedir a exclusão, apagamos ou anonimizamos os seus dados.</p>
+
+    <h3>Seus direitos</h3>
+    <p>Você pode pedir a confirmação de que tratamos os seus dados, o acesso a eles, a correção,
+        a anonimização ou a exclusão, a portabilidade e a revogação do consentimento (art. 18 da
+        LGPD). Faça o pedido pelo e-mail acima.</p>
+
+    <h3>Segurança</h3>
+    <p>Conexão criptografada, senhas com hash, limite de tentativas de login e acesso ao
+        prontuário restrito por perfil.</p>
+
+    <a class="voltar" th:href="@{/login}">Voltar ao login</a>
+</main>
+
+</body>
+</html>

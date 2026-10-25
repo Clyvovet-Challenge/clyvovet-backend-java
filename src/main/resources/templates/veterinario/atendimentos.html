@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Atendimentos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <div class="titulo-com-acao">
+        <div>
+            <h1>Atendimentos</h1>
+            <p class="subtitulo">Da semana passada à próxima, na sua clínica.</p>
+        </div>
+        <a class="botao botao-secundario" th:href="@{/veterinario/retornos-vencidos}">Retornos vencidos</a>
+    </div>
+
+    <p class="aviso aviso-ok" role="status" th:if="${sucesso}" th:text="${sucesso}">Atendimento concluído.</p>
+    <p class="aviso aviso-erro" role="alert" th:if="${aviso}" th:text="${aviso}">Peso variou 30%.</p>
+
+    <p class="cartao vazio" th:if="${#lists.isEmpty(atendimentos)}">
+        Nenhum atendimento nesta janela.
+    </p>
+
+    <ul class="lista" th:unless="${#lists.isEmpty(atendimentos)}">
+        <li class="cartao item" th:each="a : ${atendimentos}">
+            <div class="item-dados">
+                <strong th:text="${a.servicoNome() ?: a.descricao()}">Consulta de rotina</strong>
+                <span>
+                    <span th:text="${#temporals.format(a.data(), 'dd/MM/yyyy')}">08/10/2026</span>
+                    às <span th:text="${a.hora()}">09:00</span>
+                    · <span th:text="${a.animalNome()}">Bolinha</span>
+                </span>
+                <span class="item-detalhe" th:text="${a.veterinarioNome()}">Dra. Camila</span>
+            </div>
+            <div class="item-acoes">
+                <span class="selo"
+                      th:text="${#strings.capitalize(#strings.toLowerCase(a.statusEvento().name()))}">Agendado</span>
+                <!-- Concluir o futuro seria registrar consulta que nao houve: o botao so aparece ate hoje. -->
+                <a class="botao botao-primario"
+                   th:if="${a.statusEvento().podeConcluir() and !a.data().isAfter(hoje)}"
+                   th:href="@{/veterinario/atendimentos/{id}/concluir(id=${a.id()})}">Concluir</a>
+                <!-- Com retorno em aberto a R14 recusaria o clique: no lugar do botao, o fato. -->
+                <th:block th:if="${a.statusEvento().podeGerarRetorno()}">
+                    <span class="selo" th:if="${comRetornoEmAberto.contains(a.id())}">Retorno marcado</span>
+                    <a class="botao botao-secundario" th:unless="${comRetornoEmAberto.contains(a.id())}"
+                       th:href="@{/veterinario/atendimentos/{id}/retorno(id=${a.id()})}">Marcar retorno</a>
+                </th:block>
+            </div>
+        </li>
+    </ul>
+</main>
+
+</body>
+</html>

@@ -4,10 +4,10 @@
 
 | Variável | Onde | Observação |
 |---|---|---|
-| `JWT_SECRET` | todos os perfis | Base64 com ≥ 32 bytes. `dev` e `h2` têm default local; **`oracle` não** |
-| `DB_USERNAME` | perfil `oracle` | sem default — a aplicação não sobe sem |
-| `DB_PASSWORD` | perfil `oracle` | idem |
-| `DB_URL` | perfil `oracle` | opcional; default é o Oracle da FIAP |
+| `JWT_SECRET` | todos os perfis | Base64 com ≥ 32 bytes. Só o `dev` tem default local; **`h2`, `mysql` e `oracle` não** |
+| `DB_USERNAME` | perfis `mysql` e `oracle` | sem default — a aplicação não sobe sem |
+| `DB_PASSWORD` | perfis `mysql` e `oracle` | idem |
+| `DB_URL` | perfis `mysql` e `oracle` | opcional; no `mysql` o default é `localhost:3306/clyvovet` com TLS obrigatório, no `oracle` é o Oracle da FIAP |
 
 ```bash
 export JWT_SECRET=$(openssl rand -base64 48)
@@ -44,6 +44,18 @@ Cada pasta tem a linha do tempo completa:
 | `V7__consentimento_e_auditoria.sql` | Autorização de acesso ao histórico e trilha de leitura |
 | `V8__tabelas_dotnet.sql` | Traz as seis tabelas da API .NET para o Flyway |
 | `V9__prefixo_t_clyvo.sql` | Prefixo `t_clyvo_` nas treze tabelas do núcleo clínico |
+| `V10__solicitacao_alteracao_animal.sql` | Solicitação de alteração do cadastro do animal |
+| `V11__seed_catalogo_e_agenda.sql` | Carga do catálogo de serviços e da agenda |
+| `V12__clinica_como_ator.sql` | A clínica passa a ser um ator do sistema |
+| `V13__coordenadas_da_clinica.sql` | Latitude e longitude da clínica |
+| `V14__catalogo_de_racas.sql` | Catálogo de raças |
+| `V15__base_de_doencas_e_parecer_ia.sql` | Base de doenças e parecer de IA |
+| `V16__porte_indicado_do_produto.sql` | Porte indicado do produto |
+| `V17__documento_clinico.sql` | Anexos do prontuário |
+| `V18__lembrete_com_intervalo.sql` | Lembrete com intervalo |
+| `V19__pinscher_fora_do_mvp.sql` | Pinscher fora do MVP |
+| `V20__pet_apagavel_sem_historico.sql` | O pet sem histórico volta a ser apagável |
+| `V21__eventos_futuros_agendados.sql` | Eventos do seed no futuro voltam a `AGENDADO` |
 
 Até agosto de 2026 havia um conjunto só, porque os dois bancos em uso eram Oracle e
 H2 — e o H2 tem `MODE=Oracle`. Com a entrada do MySQL isso acabou: **MySQL não tem
@@ -74,13 +86,14 @@ pasta `oracle/`.
 ### O que impede as pastas de divergirem
 
 [`MigrationsMySqlTest`](../src/test/java/br/com/fiap/clyvovet/migration/MigrationsMySqlTest.java)
-roda o conjunto `mysql/` do zero num H2 em `MODE=MySQL` e confere que as quatro
+roda o conjunto `mysql/` do zero num H2 em `MODE=MySQL` e confere que as 21
 migrations aplicam e que o seed carrega as mesmas contagens. A build quebra se
 alguém adicionar uma migration só de um lado.
 
 Ele **não** substitui um MySQL real: H2 em `MODE=MySQL` valida sintaxe e semântica
 principal, não o comportamento de tipos do servidor. Verde ali é "o SQL está
-coerente", não "validado em produção".
+coerente", não "validado em produção". A prova contra o servidor real é feita à mão,
+e está registrada na [seção do perfil `mysql`](#perfil-mysql).
 
 ### Bancos já provisionados
 
@@ -107,7 +120,7 @@ a aplicação subiria contra um banco sem tabela.
 | [`application-oracle.properties`](../src/main/resources/application-oracle.properties) | Oracle FIAP — **banco de teste contra servidor real** |
 | [`application-h2.properties`](../src/main/resources/application-h2.properties) | H2 em modo servidor — usado dentro do Docker |
 | [`application-dev.properties`](../src/main/resources/application-dev.properties) | H2 em memória — desenvolvimento local |
-| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Ainda não executado contra um MySQL real |
+| [`application-mysql.properties`](../src/main/resources/application-mysql.properties) | Azure Database for MySQL — **produção, e o perfil padrão**. Validado num MySQL 8.0 em container e no Aiven MySQL 8.4 (V1 a V21, 18/10/2026); falta o servidor da Azure |
 
 O arquivo raiz define o perfil padrão e importa a configuração compartilhada:
 
@@ -169,7 +182,7 @@ local use o perfil `dev`.
 | Console H2 | — | — | `/h2-console` | `/h2-console` |
 | Roda fora do Docker? | sim | sim | **não** | sim |
 | Uso pretendido | **banco de teste real** | **produção (padrão)** | container | desenvolvimento local |
-| Já rodou de verdade? | sim | **não** | sim | sim |
+| Já rodou de verdade? | sim | **sim, num MySQL 8 local** (V1 a V21); o Azure não | sim | sim |
 
 > ⚠️ O perfil `h2` aponta para o host `clyvovet-db`, que só existe na rede do
 > docker-compose. Para rodar localmente sem Docker, use o perfil **`dev`**.
@@ -179,60 +192,78 @@ local use o perfil `dev`.
 ## Perfil `oracle`
 
 ```properties
-server.port=8080
-spring.jackson.serialization.write-dates-as-timestamps=false
-
-# Credenciais NUNCA versionadas — vêm do ambiente.
 spring.datasource.url=${DB_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl}
 spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
 
 spring.flyway.locations=classpath:db/migration/oracle
-spring.flyway.enabled=true
 spring.flyway.baseline-on-migrate=true
 spring.flyway.baseline-version=2
 
 spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.OracleDialect
-spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
-spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
 
 clyvovet.jwt.secret=${JWT_SECRET}
 ```
 
+O que não aparece aí (porta, formato de datas, UUID→`CHAR`, `flyway.enabled`) vem do
+[`comum.properties`](../src/main/resources/comum.properties).
+
 Pontos de atenção:
 
-- **`ddl-auto=none`** — o schema precisa existir antes. Execute
-  [`db-oracle.sql`](../src/main/resources/db/db-oracle.sql) no SQL Developer com
-  **Run Script (F5)** antes do primeiro boot.
-- As duas propriedades `uuid_jdbc_type=CHAR` são o que faz o UUID gravar como texto em
-  `VARCHAR2(36)`. Sem elas o Hibernate usaria `RAW(16)` e não leria o seed.
-- `write-dates-as-timestamps=false` faz o Jackson serializar `LocalDate` como
-  `"2025-05-20"` em vez de array numérico.
-- **As credenciais estão versionadas em texto puro.** Ver
-  [07-pendencias-e-divergencias.md](07-pendencias-e-divergencias.md).
+- **`ddl-auto=validate`** — o Hibernate só confere o schema, não o cria. Quem cria é o
+  Flyway, no primeiro boot, pela pasta `db/migration/oracle`.
+- O [`db-oracle.sql`](../src/main/resources/db/db-oracle.sql) é o script **antigo**, de
+  antes do Flyway. Só importa para bancos que foram criados por ele: é o que o
+  `baseline-version=2` pressupõe (ver [Bancos já provisionados](#bancos-já-provisionados)).
+- As duas propriedades `uuid_jdbc_type=CHAR` (no `comum.properties`) são o que faz o UUID
+  gravar como texto em `VARCHAR2(36)`. Sem elas o Hibernate usaria `RAW(16)` e não leria
+  o seed.
+- **Nenhuma credencial fica versionada:** usuário, senha e chave JWT vêm do ambiente e
+  a aplicação não sobe sem elas.
+- **É um banco compartilhado de sala de aula.** A suíte contra ele
+  (`PERFIL_TESTE=oracle ./mvnw test`) grava de verdade: aplica migrations, cria os
+  usuários do seeder e insere linhas.
 
-Para usar credenciais próprias sem editar o arquivo:
+Para rodar a aplicação contra ele:
 
 ```bash
-mvn spring-boot:run \
-  -Dspring-boot.run.arguments="--spring.datasource.username=SEU_RM --spring.datasource.password=SUA_SENHA"
+export SPRING_PROFILES_ACTIVE=oracle
+export DB_USERNAME=rm000000
+export DB_PASSWORD=suasenha
+export JWT_SECRET=$(openssl rand -base64 48)
+./mvnw spring-boot:run
 ```
 
 ---
 
 ## Perfil `mysql`
 
-Alvo do deploy no **Azure Container Apps + Azure Database for MySQL Flexible
-Server**.
+Banco do deploy da Sprint 4: **Aiven MySQL 8.4**, com o app na Render
+([ADR 008](adr/008-java-na-render-com-mysql-no-aiven.md)). Os scripts de `azure/` continuam
+apontando para o **Azure Database for MySQL Flexible Server**. O local onde o app roda é
+decisão de deploy e está em [05-deploy.md](05-deploy.md).
 
-> ⚠️ **Este perfil ainda não foi executado contra um MySQL real.** Ele foi escrito
-> junto com as migrations de `db/migration/mysql/` enquanto a infraestrutura era
-> definida com o time de devops, e validado apenas por
-> `MigrationsMySqlTest` (H2 em `MODE=MySQL`). Trate-o como ponto de partida
-> revisado, não como configuração validada em produção.
+> ✅ **Validado num MySQL 8.0 real em 18/10/2026 (V1 a V21).** Banco vazio em container,
+> perfil `mysql` sozinho: o Flyway aplicou as 21 migrations, a aplicação subiu com
+> `ddl-auto=validate` e `GET /actuator/health` respondeu 200. Nesta rodada não se
+> testou login nem o conteúdo da V21 (só que ela aplica); a prova de 06/10/2026
+> (V1 a V20) incluiu login e `GET /api/v1/racas` com 200. A primeira
+> prova, em 06/09/2026 (V1 a V7), foi a que achou as 54 colunas que reprovavam no
+> `validate` — ver o [item 19 das pendências](07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real).
+>
+> ✅ **Validado também no Aiven MySQL 8.4, em 18/10/2026** (deploy na Render). Com TLS
+> obrigatório (`sslMode=REQUIRED`) e o usuário admin do Aiven, o Flyway validou as 21
+> migrations (schema na versão 21), o app subiu com `ddl-auto=validate` e
+> `GET /actuator/health` respondeu `UP`. A tela de login respondeu 200. **Não** foram
+> exercitados login nem leitura de dados nessa rodada. O Flyway avisa que o MySQL 8.4 é mais
+> novo que a versão que ele testou (a última é a 8.1); nada falhou por causa disso.
+>
+> ⚠️ **Ainda não exercitado:** o Azure Database for MySQL Flexible Server, que difere
+> do MySQL de container nos privilégios do admin. Só a API .NET na DevOps deve tocá-lo, e
+> isso ainda não aconteceu.
 
 ```properties
 spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/clyvovet?sslMode=REQUIRED}
@@ -240,8 +271,9 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.flyway.locations=classpath:db/migration/mysql
 spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
-spring.jpa.properties.hibernate.id.uuid_jdbc_type=CHAR
-spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=CHAR
+spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type=VARCHAR
+spring.jpa.properties.hibernate.type.preferred_enum_jdbc_type=VARCHAR
+spring.jpa.show-sql=false
 ```
 
 Três pontos que não são óbvios:
@@ -254,16 +286,21 @@ que não sofre conversão de fuso — foi justamente para evitar essa conversão
 `bloqueado_ate` não é `TIMESTAMP` no MySQL. Definir `serverTimezone` reintroduziria a
 classe de bug que a escolha do tipo eliminou.
 
-**As duas linhas de `uuid_jdbc_type` são obrigatórias.** Os ids são `UUID` gravados
-como `VARCHAR(36)`, igual ao Oracle. Sem elas o Hibernate grava UUID como
-`BINARY(16)` no MySQL, e os ids deixariam de casar com o seed da V2 e com qualquer
-dado migrado do Oracle.
+**As duas linhas de tipo JDBC são obrigatórias.** Os ids são `UUID` gravados como
+`VARCHAR(36)`, igual ao Oracle, e os enums como `VARCHAR`. O `comum.properties` pede
+`CHAR` para o UUID, mas o `ddl-auto=validate` compara a família do tipo e esperaria
+`char(36)`; as migrations criam `VARCHAR(36)`, então este perfil sobrescreve para
+`VARCHAR`. O enum precisa da segunda linha porque, desde o Hibernate 6.2, o
+`MySQLDialect` mapearia `@Enumerated(STRING)` para o `ENUM` nativo, e as migrations
+usam `VARCHAR` de propósito (acrescentar um valor ao enum Java não exige `ALTER TABLE`).
+Sem as duas a aplicação não sobe.
 
 ### Segredos
 
 `DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` não têm default — a aplicação não sobe
-sem eles. No Azure Container Apps eles entram como **secrets do container** ou
-referência ao Key Vault, nunca como variável de ambiente em texto no manifesto.
+sem eles. Na nuvem eles entram como **variáveis protegidas da plataforma**
+(application settings do App Service, secrets do container ou referência ao Key
+Vault), nunca em texto num arquivo versionado.
 
 ---
 
@@ -332,14 +369,13 @@ Banco vazio em `http://localhost:8080`. Comece criando um tutor e uma clínica.
 
 ### Localmente contra o Oracle FIAP
 
-Pré-requisito: ter executado o `db-oracle.sql` no seu schema.
+O Flyway cria o schema no primeiro boot, então não há script a rodar antes. O
+perfil padrão é o `mysql`: para usar o Oracle é preciso pedir o perfil e passar as
+variáveis, como mostra a seção [Perfil `oracle`](#perfil-oracle).
 
 ```bash
-./mvnw spring-boot:run
+SPRING_PROFILES_ACTIVE=oracle ./mvnw spring-boot:run
 ```
-
-O perfil `oracle` já é o default. Se as credenciais no arquivo não forem as suas,
-sobrescreva pela linha de comando (ver acima).
 
 ### Via Docker Compose
 

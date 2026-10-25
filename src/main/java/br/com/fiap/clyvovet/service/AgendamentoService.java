@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +40,12 @@ public class AgendamentoService {
 
     /** Prazo em que o tutor cancela sem marca de cancelamento tardio (regra A12). */
     private static final int HORAS_PARA_CANCELAR_SEM_MARCA = 24;
+
+    /** "HH:mm" com zero a esquerda: a ordem do texto ja e a ordem da hora. */
+    private static final Comparator<VagaResponse> EM_ORDEM_DE_DATA_E_HORA =
+            Comparator.comparing(VagaResponse::data)
+                    .thenComparing(VagaResponse::horaInicio)
+                    .thenComparing(VagaResponse::veterinarioNome);
 
     private final EventoClinicoRepository eventoClinicoRepository;
     private final AnimalRepository animalRepository;
@@ -124,6 +131,10 @@ public class AgendamentoService {
                 }
             }
         }
+        // A busca anda veterinario por veterinario, mas quem le a lista procura
+        // por data: sem isto, a quarta da 2a semana de um aparecia antes da
+        // quinta da 1a semana do outro.
+        vagas.sort(EM_ORDEM_DE_DATA_E_HORA);
         return vagas;
     }
 

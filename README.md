@@ -1,10 +1,11 @@
 # CLYVO VET — Backend Java
 
-API REST em Spring Boot para o CLYVO VET, plataforma de saúde contínua para pets.
-Challenge FIAP 2026 — 2º ano ADS.
+API REST e telas web em Spring Boot para o CLYVO VET, plataforma de saúde contínua
+para pets. Challenge FIAP 2026 — 2º ano ADS.
 
-**Stack:** Java 17 · Spring Boot 3.5 · Spring Security (JWT) · JPA/Hibernate 6.6 ·
-Flyway · Oracle 19c / MySQL / H2 · OpenAPI 3
+**Stack:** Java 17 · Spring Boot 3.5 · Spring Security (JWT na API, sessão e OAuth2
+Google/GitHub nas telas) · Thymeleaf · JPA/Hibernate 6.6 · Flyway · Oracle 19c / MySQL / H2 ·
+OpenAPI 3
 
 ---
 
@@ -38,9 +39,12 @@ pior do que expor um dado. E há **quebra de vidro** — acesso emergencial sem
 consentimento, que exige justificativa, notifica o tutor e fica registrado; uso
 recorrente pelo mesmo profissional gera alerta.
 
-O sistema é consumido por um **aplicativo móvel** em React Native/Expo e
-complementado por uma **API .NET** de engajamento (lembretes, sugestão de produtos,
-widget de saúde preditiva), que compartilha o mesmo banco.
+O mesmo projeto serve **telas web** (Thymeleaf) para o tutor agendar e cancelar
+consultas e para o veterinário concluir atendimentos e marcar retornos — ver
+[Aplicação web](#aplicação-web). A API também é consumida por um **aplicativo
+móvel** em React Native/Expo e complementada por uma **API .NET** de engajamento
+(lembretes, sugestão de produtos, widget de saúde preditiva), que compartilha o
+mesmo banco.
 
 ---
 
@@ -65,11 +69,14 @@ transportar a informação clínica do próprio animal.
 | Nome | RM |
 |---|---|
 | Fabrício Henrique Pereira | RM 563237 |
+| Henrique Sinkevicius Maran | RM 562977 |
 | Leonardo José Pereira | RM 563065 |
 | Miguel Henrique Oliveira Dias | RM 565492 |
 | Pedro Henrique de Oliveira | RM 562312 |
 
 ---
+
+**🎥 Vídeo — Java Advanced (Sprint 4):** a gravar (roteiro em preparação).
 
 **🎥 Vídeo — Java Advanced (Sprint 3):** [assista aqui](https://www.youtube.com/watch?v=GzwneyCpGCw)
 
@@ -77,6 +84,30 @@ transportar a informação clínica do próprio animal.
 > funcionalidades completas). O vídeo de DevOps — outra disciplina, sobre o
 > deploy na Azure — está mais abaixo, no capítulo
 > [Deploy na Azure](#deploy-na-azure--passo-a-passo).
+
+---
+
+## Aplicação online (Sprint 4)
+
+**Endereço:** https://clyvovet-backend-java.onrender.com — abre direto na tela de login.
+
+O Java roda na **Render** (container Docker, plano gratuito), com banco **MySQL 8.4 no
+Aiven**. A Azure ficou reservada à disciplina de DevOps. A decisão e o que foi descartado estão
+no [ADR 008](docs/adr/008-java-na-render-com-mysql-no-aiven.md); o passo a passo e as variáveis
+de ambiente estão em [docs/05-deploy.md](docs/05-deploy.md).
+
+Conferido em 18/10/2026: o Flyway validou as 21 migrations no MySQL do Aiven, o app subiu com
+`ddl-auto=validate`, `/actuator/health` respondeu `UP` e a tela de login respondeu 200.
+
+> ⚠️ **Antes de testar, leia isto:**
+> - **A primeira abertura demora.** No plano gratuito a Render desliga o app depois de uns 15
+>   minutos sem uso. A primeira requisição depois disso espera a subida do Spring, que passou
+>   de 4 minutos na primeira medição. Abra o endereço e aguarde.
+> - **O banco tem prazo.** O período de teste do Aiven vai até cerca de **17/11/2026**; depois
+>   disso o serviço é desligado, a menos que o grupo cadastre um cartão.
+> - **Login com Google e GitHub não está configurado** nesse endereço. Use e-mail e senha.
+> - Se o endereço não abrir, rode localmente, sem configurar nada:
+>   `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` (ver [Começando](#começando)).
 
 ---
 
@@ -94,9 +125,9 @@ cd clyvovet-backend-java
 A aplicação sobe em `http://localhost:8080` e o Swagger fica em
 `http://localhost:8080/swagger-ui.html`.
 
-> ⚠️ O perfil ativo por padrão é `oracle`, não `dev`. Rodar `./mvnw spring-boot:run`
-> sem argumento faz a aplicação tentar conectar no Oracle da FIAP e falhar se as
-> variáveis de ambiente não estiverem definidas.
+> ⚠️ O perfil ativo por padrão é `mysql`, não `dev`. Rodar `./mvnw spring-boot:run`
+> sem argumento faz a aplicação tentar conectar num MySQL em `localhost:3306` e falhar
+> se ele não existir ou se as variáveis de ambiente não estiverem definidas.
 
 ### A API exige autenticação
 
@@ -147,7 +178,22 @@ Sem o cabeçalho, a resposta é **401**. Com um token de perfil insuficiente, **
 | `dev` | H2 em memória | desenvolvimento local — **recomendado** |
 | `h2` | H2 em modo servidor | dentro do docker-compose (o host `clyvovet-db` só existe lá) |
 | `oracle` | Oracle 19c FIAP | entrega e banco de testes |
-| `mysql` | Azure Database for MySQL | alvo do deploy — [ainda não validado](docs/07-pendencias-e-divergencias.md) |
+| `mysql` | Azure Database for MySQL | alvo do deploy — [validado num MySQL 8 local, V1 a V21 (18/10/2026); falta o Azure](docs/07-pendencias-e-divergencias.md#19-perfil-mysql-validado-contra-um-mysql-real) |
+
+| `demo` | o do perfil ao lado | demonstração — **soma-se** a outro perfil, nunca sozinho |
+
+**Perfil de demonstração.** O [`DemoDataSeeder`](src/main/java/br/com/fiap/clyvovet/config/DemoDataSeeder.java)
+dá à VetCare Prime um catálogo (consulta, retorno, vacinação) e à Camila uma agenda de
+segunda a sábado, 09h–12h e 14h–18h. Assim o tutor agenda com ela pelas telas, e o
+atendimento aparece na lista da veterinária. Ele não entra no `dev` porque a suíte de
+testes roda nesse perfil e conta vagas exatas da Camila (o motivo está no cabeçalho da
+V11). É idempotente: subir de novo não duplica nada.
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev,demo
+```
+
+No Docker de desenvolvimento, o equivalente é `SPRING_PROFILES_ACTIVE=mysql,local,demo`.
 
 Os perfis `oracle` e `mysql` não têm credenciais no código: elas vêm do ambiente, e a
 aplicação não sobe sem elas.
@@ -166,27 +212,158 @@ referência histórica. Detalhes em [`docs/04-configuracao.md`](docs/04-configur
 
 ---
 
+## Aplicação web
+
+Além da API, o mesmo Spring Boot serve telas em **Thymeleaf** para os dois fluxos
+que mais importam no dia a dia: o tutor marcando consulta e o veterinário fechando
+o atendimento. A decisão de fazer as telas aqui, e não só no app, está no
+[ADR 002](docs/adr/002-telas-thymeleaf-no-spring.md).
+
+Com a aplicação rodando no perfil `dev`, abra `http://localhost:8080`: quem não está
+logado cai em `/login`. Os usuários são os da tabela de
+[A API exige autenticação](#a-api-exige-autenticação). Depois do login, a raiz manda
+cada perfil para a sua área:
+
+| Perfil | Vai para | Observação |
+|---|---|---|
+| `TUTOR` | `/tutor` | ex.: `lucas.santos@email.com` |
+| `VETERINARIO` | `/veterinario` | ex.: `camila.ferreira@vetcare.com.br` |
+| `ADMIN` | `/veterinario` | a mesma visão ampla que ele tem na API |
+| `ADMIN_CLINICA` | página inicial simples | a gestão da clínica segue pelo app nesta versão |
+
+Um perfil na área do outro (o tutor abrindo `/veterinario/...`, por exemplo) recebe
+a página **Acesso negado**, não um JSON.
+
+### Rotas
+
+| Rota | Perfil | O que faz |
+|---|---|---|
+| `GET /login` | público | e-mail e senha, ou os botões Google e GitHub |
+| `GET /tutor/pets` | `TUTOR` | **Meus pets**: lista os próprios pets, com atalho para cadastrar |
+| `GET /tutor/pets/novo` e `POST /tutor/pets` | `TUTOR` | cadastra um pet novo (já ligado ao tutor logado) escolhendo a raça do catálogo |
+| `GET` e `POST /tutor/pets/{id}/excluir` | `TUTOR` (só o dono do pet) | pede confirmação e exclui o pet; recusa, com a explicação na tela, o pet que tem atendimento ou laudo (o prontuário é protegido, [ADR 003](docs/adr/003-prontuario-pertence-ao-tutor.md)) |
+| `GET /tutor/agendamentos` | `TUTOR` | os agendamentos dos próprios pets, com **Cancelar** enquanto o status permite |
+| `GET /tutor/agendamentos/novo` | `TUTOR` | escolhe pet, clínica e serviço e mostra os horários livres, semana a semana |
+| `GET /tutor/agendamentos/confirmar` | `TUTOR` | resumo do horário escolhido, com o consentimento opcional de acesso ao histórico |
+| `POST /tutor/agendamentos` | `TUTOR` | marca a consulta (só para pet do próprio tutor) |
+| `GET` e `POST /tutor/agendamentos/{id}/cancelar` | `TUTOR` | pede o motivo e cancela |
+| `GET /veterinario/atendimentos` | `VETERINARIO`, `ADMIN` | atendimentos da clínica de 7 dias atrás a 7 dias à frente |
+| `GET` e `POST /veterinario/atendimentos/{id}/concluir` | `VETERINARIO`, `ADMIN` | peso, desfecho, retorno previsto e descrição |
+| `GET` e `POST /veterinario/atendimentos/{id}/retorno` | `VETERINARIO`, `ADMIN` | marca o retorno ligado ao atendimento de origem |
+| `GET /veterinario/retornos-vencidos` | `VETERINARIO`, `ADMIN` | os pets que deviam ter voltado e não voltaram |
+
+As telas **não têm regra própria**: chamam os mesmos services da API
+([Fluxo A](#fluxo-a--agendamento-pelo-tutor) e [Fluxo R](#fluxo-r--retorno-e-falta)).
+Uma recusa do service — horário fora da grade, peso negativo, retorno no passado —
+aparece como mensagem no campo do formulário, e não como erro 500. Os botões seguem o
+mesmo estado: **Concluir** só aparece para atendimento de hoje ou de antes, e **Marcar
+retorno** some quando já existe um retorno em aberto para aquele atendimento.
+
+### Duas cadeias de segurança
+
+API e telas convivem no mesmo app com regras diferentes, por isso o
+[`SecurityConfig`](src/main/java/br/com/fiap/clyvovet/config/SecurityConfig.java)
+tem duas cadeias de filtros:
+
+| | API (`/api/**`, Swagger, actuator) | Telas (todo o resto) |
+|---|---|---|
+| Quem é o usuário | token JWT no cabeçalho, sem estado | sessão com cookie |
+| CSRF | desligado: não há cookie para roubar | **ligado**: o Thymeleaf põe o token em todo `<form>` |
+| Login | `POST /api/v1/auth/login` | formulário em `/login` ou OAuth2 |
+| Sem login | **401** em JSON | redireciona para `/login` |
+| Sem permissão | **403** em JSON | página de erro |
+
+O login por formulário conta as tentativas erradas no mesmo controle de bloqueio de
+conta da API: errar a senha nas telas e na API soma para o mesmo limite.
+
+### Login com Google e GitHub (OAuth2)
+
+O Google ou o GitHub devolve o e-mail **verificado** do usuário, e a aplicação procura esse
+e-mail entre os usuários cadastrados ([ADR 009](docs/adr/009-login-social-cria-conta-de-tutor.md)):
+
+- **Já existe conta com o e-mail:** a pessoa entra nela.
+- **Não existe:** nasce uma conta de **TUTOR**, o perfil de menor poder, só se o provedor garante
+  que o e-mail é verificado. Veterinário e administradores nunca nascem por aqui.
+- **O e-mail é de um tutor que a clínica cadastrou, mas ainda sem usuário:** a conta **não** é
+  criada nem ligada a ele, e a tela mostra "conta não encontrada".
+- **Conta inativa ou bloqueada:** continua recusada. A conta bloqueada por senha errada continua
+  bloqueada aqui; senão, um clique no botão do Google contornaria o bloqueio.
+
+As credenciais vêm do ambiente ([`comum.properties`](src/main/resources/comum.properties)):
+
+```bash
+export GOOGLE_CLIENT_ID=...
+export GOOGLE_CLIENT_SECRET=...
+export GITHUB_CLIENT_ID=...
+export GITHUB_CLIENT_SECRET=...
+```
+
+Sem elas a aplicação sobe normalmente e o login por senha funciona. Só os botões
+falham, com a recusa do próprio Google ou GitHub ("client inválido"). Ao criar o app
+OAuth em cada provedor, a URL de redirecionamento é:
+
+```
+{URL da aplicação}/login/oauth2/code/google
+{URL da aplicação}/login/oauth2/code/github
+```
+
+Localmente, `{URL da aplicação}` é `http://localhost:8080`. Depois do deploy, é a URL
+da Azure.
+
+### As telas
+
+| | |
+|---|---|
+| ![Login com e-mail e senha, e os botões Google e GitHub](docs/img/telas/login.png) | ![Tutor escolhendo pet, clínica e serviço, com os horários livres](docs/img/telas/tutor-agendamento-novo.png) |
+| **Login** | **Tutor: agendar consulta** |
+| ![Lista de agendamentos do tutor, com a consulta recém-marcada e o botão Cancelar](docs/img/telas/tutor-agendamentos.png) | ![Atendimentos da semana da veterinária, com o botão Concluir](docs/img/telas/veterinario-atendimentos.png) |
+| **Tutor: meus agendamentos** | **Veterinária: atendimentos** |
+| ![Formulário de conclusão com peso, desfecho, retorno previsto e descrição](docs/img/telas/veterinario-concluir.png) | |
+| **Veterinária: concluir atendimento** | |
+
+### Limites conhecidos
+
+- **A lista do veterinário mostra no máximo 100 atendimentos.** A janela vai de 7 dias
+  atrás a 7 dias à frente, em ordem de data e hora. Numa clínica com mais de 100
+  atendimentos nesse período, os mais tardios não aparecem, e a tela não avisa. Para o
+  volume de uma clínica do seed isso não chega perto; com volume real, a próxima versão
+  precisa de paginação ou de uma janela menor.
+- **A base `dev` sozinha não traz agenda para a clínica da veterinária do seed.** A
+  VetCare não tem serviço cadastrado no `dev`, então o tutor não consegue marcar com a
+  Camila pelas telas, e a lista dela começa vazia. O perfil `demo` (em
+  [Outros perfis](#outros-perfis)) resolve isso para demonstração. As capturas acima são
+  anteriores a ele: usaram a PetMed Centro para o agendamento e um atendimento criado
+  pela API para a veterinária.
+
+---
+
 ## Arquitetura
 
 ```
-┌─────────────┐    HTTP + Bearer JWT    ┌────────────────────────────────┐
-│  Front-end  │ ──────────────────────► │   Spring Boot API (8080)       │
-│  / Mobile   │                         │                                │
-└─────────────┘                         │   JwtAuthenticationFilter      │
-                                        │   Controller                   │
-                                        │   Service (cache + ownership)  │
-                                        │   Repository (JPA)             │
-                                        │   Entity                       │
-                                        └───────────────┬────────────────┘
-                                                        │  Flyway
-                                        ┌───────────────▼────────────────┐
-                                        │  Oracle 19c · MySQL · H2       │
-                                        └────────────────────────────────┘
+┌─────────────┐  HTTP + Bearer JWT  ┌──────────────────────────────────────────┐
+│  App mobile │ ──────────────────► │            Spring Boot (8080)            │
+│  / Postman  │                     │                                          │
+└─────────────┘                     │  cadeia API (/api/**)   cadeia web       │
+                                    │  JwtAuthenticationFilter  sessão + CSRF  │
+┌─────────────┐  sessão (cookie)    │          │                 │             │
+│  Navegador  │ ──────────────────► │  controller/ (JSON)   web/ (Thymeleaf)   │
+└─────────────┘                     │          └───────┬─────────┘             │
+                                    │   Service (regras, cache + ownership)    │
+                                    │   Repository (JPA) · Entity              │
+                                    └─────────────────────┬────────────────────┘
+                                                          │  Flyway
+                                    ┌─────────────────────▼────────────────────┐
+                                    │         Oracle 19c · MySQL · H2          │
+                                    └──────────────────────────────────────────┘
 ```
 
-Cada requisição passa pelo filtro JWT antes de chegar ao controller. Além do perfil,
-há uma regra de **ownership**: um tutor só enxerga os próprios pets — inclusive no
-cache, cuja chave inclui o `tutorId`.
+Há duas portas de entrada e um só miolo. A API autentica cada requisição pelo token
+JWT; as telas, pela sessão (detalhes em [Duas cadeias de
+segurança](#duas-cadeias-de-segurança)). Os controllers de `controller/` devolvem
+JSON e os de `web/` devolvem páginas, mas os dois chamam os **mesmos services**: uma
+regra de negócio vale igual no app e no navegador. Além do perfil, há uma regra de
+**ownership**: um tutor só enxerga os próprios pets — inclusive no cache, cuja chave
+inclui o `tutorId`.
 
 ---
 
@@ -593,6 +770,28 @@ em [`docs/08-seguranca.md`](docs/08-seguranca.md).
 
 ---
 
+## Integração multidisciplinar
+
+O backend Java é o centro de um sistema que as outras disciplinas do semestre completam.
+A tabela diz o que cada uma entrega, onde está a evidência e, quando falta algo, diz que falta.
+
+| Disciplina | O que entra no sistema | Evidência |
+|---|---|---|
+| **Java Advanced** (este repositório) | API REST com 84 endpoints, telas Thymeleaf, Spring Security (JWT na API; sessão, CSRF e OAuth2 nas telas), Flyway, cache | [Aplicação web](#aplicação-web), [Endpoints](#endpoints), [ADR 002](docs/adr/002-telas-thymeleaf-no-spring.md), [ADR 003](docs/adr/003-prontuario-pertence-ao-tutor.md) |
+| **Mobile** | App React Native/Expo que consome esta API com o token JWT. Na nuvem, o endereço da API vem de `EXPO_PUBLIC_JAVA_BASE_URL` | [Guia do frontend](docs/10-guia-do-frontend.md), [repositório do app](https://github.com/Fabriciopereira-sp/2tdspw-challenge-clyvovet-challenge) |
+| **Advanced Business Development with .NET** | API de engajamento (lembretes, sugestão de produtos, widget de saúde preditiva) no **mesmo banco**, lendo tabelas daqui | [ADR 004](docs/adr/004-banco-compartilhado-java-dona-do-schema.md), [ADR 007](docs/adr/007-contrato-de-erro-com-referencia.md), [repositório da API .NET](https://github.com/Clyvovet-Challenge/ClyvoVet-api) |
+| **Database** | Modelo relacional em 24 tabelas, versionado em 21 migrations (Oracle e MySQL), catálogo de raças e base de doenças | [Modelo de dados](docs/02-modelo-de-dados.md), [Configuração](docs/04-configuracao.md), [ADR 005](docs/adr/005-perfis-de-banco-e-migrations-por-dialeto.md), [ADR 006](docs/adr/006-catalogo-de-racas-com-chave.md), [`script_bd.sql`](documentos/script_bd.sql), [Diagrama de classes](documentos/Diagrama_De_Classes.pdf) |
+| **Disruptive Architectures (IA)** | Saúde preditiva: a base de doenças por raça (migration V15) alimenta o widget da API .NET | [IA de saúde preditiva](docs/16-ia-saude-preditiva.md) |
+| **DevOps Tools & Cloud Computing** | Nesta Sprint o aplicativo da disciplina é a **API .NET**, com pipeline e deploy no Azure DevOps. Este repositório mantém os scripts de Azure da Sprint 3 e o `azure-pipelines.yml` | [Deploy](docs/05-deploy.md), [Arquitetura na Azure](docs/13-arquitetura-na-azure.md), pasta [`azure/`](azure/) |
+
+**O que ainda não tem evidência neste repositório:**
+
+- As procedures de Database chamadas pelo backend (citadas em [`specs/04`](specs/04-dependencias-externas.md)) **não existem aqui**; não há prova de que sejam exigidas.
+- O pipeline de CI/CD da Sprint 4 fica no repositório da API .NET e ainda não existe.
+- Evidências de Mobile, .NET e IA vivem nos repositórios deles, e este README só aponta para lá.
+
+---
+
 ## Documentação Técnica
 
 | Documento | Conteúdo |
@@ -614,6 +813,10 @@ Os requisitos do Challenge que originaram o projeto estão em
 ---
 
 ## Deploy na Azure — passo a passo
+
+> ℹ️ **Sprint 4:** o Java passou a rodar na Render, com banco no Aiven — ver
+> [Aplicação online (Sprint 4)](#aplicação-online-sprint-4). Este capítulo continua valendo
+> como o roteiro de deploy na Azure da Sprint 3 e dos scripts de `azure/`.
 
 > 📋 **Este capítulo é o roteiro do vídeo de DevOps** — a régua exige o deploy
 > *"seguindo exatamente os passos descritos no README.md"*. O roteiro de
@@ -719,8 +922,8 @@ bash azure/05-webapp-dotnet.sh       # Web App DOTNETCORE:8.0
 bash azure/06-configuracoes.sh       # app settings das duas APIs
 ```
 
-O banco nasce **vazio**: o Flyway cria as 20 tabelas no primeiro boot da API Java,
-da V1 à V12. Não rode DDL à mão — é assim que o banco e o
+O banco nasce **vazio**: o Flyway cria as 24 tabelas no primeiro boot da API Java,
+da V1 à V21. Não rode DDL à mão — é assim que o banco e o
 [`documentos/script_bd.sql`](documentos/script_bd.sql) deixam de divergir.
 
 ### 5. Publicar as aplicações
@@ -777,7 +980,7 @@ bash azure/99-destruir.sh
 ### Rodar localmente, sem Azure
 
 ```bash
-./mvnw spring-boot:run                             # perfil dev, H2 em memória
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # H2 em memória
 JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
 ```
 
@@ -797,9 +1000,12 @@ desenvolvimento — **não** é o deploy, e nada dele vai para a nuvem.
 ./mvnw test
 ```
 
-São **205 testes** cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
-ownership, autorização por recurso, os dois fluxos não-CRUD, o acesso ao
-histórico em três níveis e as migrations do MySQL.
+São **451 testes** (4 ignorados) cobrindo CRUD e integração, mappers, JWT, bloqueio de conta,
+ownership, autorização por recurso, os quatro fluxos de negócio, o acesso ao
+histórico em três níveis, as migrations do MySQL e as telas: as duas cadeias de
+segurança, o login por formulário e por OAuth2, e os fluxos do tutor e do
+veterinário pelas telas, com MockMvc (`fluxo/AgendamentoTelaTest`, `fluxo/AtendimentoTelaTest`,
+montados sobre `support/TesteDeTela`).
 
 ---
 
@@ -813,7 +1019,8 @@ não é verdade — um arquivo só atende os dois.
 
 **Como usar:**
 
-1. Suba a aplicação com `./mvnw spring-boot:run` (perfil `dev`, H2 em memória).
+1. Suba a aplicação com `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
+   (H2 em memória).
 2. Rode as três requisições de `0. Autenticação`. Elas guardam os tokens de
    admin, veterinária e tutor nas variáveis da coleção; o resto já usa o token
    do perfil certo em cada rota.
@@ -847,6 +1054,9 @@ acesso ao histórico. É onde está a regra, e não o CRUD.
 | Pipeline de CI | ✅ GitHub Actions e Azure DevOps |
 | DDL em arquivo separado | ✅ `documentos/script_bd.sql`, gerado das migrations |
 | Probe de saúde para deploy | ✅ `/actuator/health` |
+| Telas web (MVC) com formulários e validação | ✅ Thymeleaf: agendamento do tutor, conclusão e retorno do veterinário |
+| Login das telas com OAuth2 | ✅ Google e GitHub, além de e-mail e senha |
+| Proteção CSRF nas telas | ✅ ligada na cadeia web; a API, sem cookie, segue sem |
 
 ---
 
@@ -865,7 +1075,8 @@ clyvovet-backend-java/
 │   ├── 05-deploy.md                    # Docker, docker-compose, VM Azure
 │   ├── 06-guia-de-desenvolvimento.md   # Convenções, como adicionar entidades
 │   ├── 07-pendencias-e-divergencias.md # Divergências conhecidas e seu status
-│   └── 08-seguranca.md                 # JWT, perfis de acesso, ownership
+│   ├── 08-seguranca.md                 # JWT, perfis de acesso, ownership
+│   └── img/telas/                      # Capturas das telas usadas neste README
 │
 │  ── O que o Challenge exige. Registro congelado, extraído dos PDFs oficiais.
 ├── specs/
@@ -897,14 +1108,17 @@ clyvovet-backend-java/
 │   │   │   ├── repository/             # JPA Repositories
 │   │   │   ├── security/               # JWT, filtros, ownership
 │   │   │   ├── service/                # Regras de negócio + cache
+│   │   │   ├── web/                    # Controllers das telas (Thymeleaf)
 │   │   │   └── ClyvovetApplication.java
 │   │   └── resources/
+│   │       ├── templates/              # Páginas: login, tutor/, veterinario/, erro
+│   │       ├── static/css/app.css      # Estilo das telas, sem CDN (a CSP só aceita 'self')
 │   │       ├── db/
 │   │       │   ├── db-oracle.sql       # DDL original, hoje só referência histórica
 │   │       │   └── migration/          # Schema versionado pelo Flyway
 │   │       │       ├── README.md       # Por que há dois conjuntos
-│   │       │       ├── oracle/         # V1..V4 — Oracle e H2 (MODE=Oracle)
-│   │       │       └── mysql/          # V1..V4 — Azure Database for MySQL
+│   │       │       ├── oracle/         # V1..V20 — Oracle e H2 (MODE=Oracle)
+│   │       │       └── mysql/          # V1..V20 — Azure Database for MySQL
 │   │       ├── application.properties
 │   │       ├── application-oracle.properties
 │   │       ├── application-mysql.properties
@@ -912,6 +1126,7 @@ clyvovet-backend-java/
 │   │       └── application-dev.properties
 │   └── test/java/br/com/fiap/clyvovet/
 │       ├── crud/                       # CRUD e integração por entidade
+│       ├── fluxo/                      # Fluxos de negócio, pela API e pelas telas
 │       ├── mapper/
 │       ├── migration/                  # Migrations MySQL sobre H2 em MODE=MySQL
 │       ├── security/                   # JWT, bloqueio de conta, ownership

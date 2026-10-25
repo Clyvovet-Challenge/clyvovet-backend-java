@@ -99,6 +99,23 @@ curl localhost:8080/api/v1/animais -H "Authorization: Bearer $TOKEN"
 
 No Swagger, use o botão **Authorize** e cole apenas o token, sem o prefixo `Bearer`.
 
+### Swagger em produção: decisão
+
+O Swagger fica **ligado** na Render, em `https://clyvovet-backend-java.onrender.com/swagger-ui.html`,
+**de propósito**: é por ele que o professor corrige e testa a API, sem depender do grupo para
+subir nada. O `SecurityConfig` já o libera de forma pública por esse motivo.
+
+- **O que fica exposto:** a tela e o `/v3/api-docs` mostram **quais rotas existem** (62, conferidas
+  em 22/10/2026). Quem não tem conta não consegue usar nenhuma: toda rota de dados continua exigindo
+  JWT e a regra de dono ou de perfil, como na matriz abaixo.
+- **Como o professor testa com dados:** entra com um dos usuários de demonstração (login em
+  `POST /api/v1/auth/login`) e cola o token em **Authorize**. A senha é entregue por fora, e não
+  está no repositório ([`05-deploy.md`](05-deploy.md)).
+- **Fora do limite de requisições:** o `RateLimitFilter` ignora `/swagger-ui` e `/v3/api-docs`.
+- **Custo aceito:** um estranho pode ler o mapa da API. É o preço de a correção não depender de nós.
+- **Se um dia for preciso fechar:** variáveis de ambiente `springdoc.swagger-ui.enabled=false` e
+  `springdoc.api-docs.enabled=false`, e um deploy. Nenhum código muda.
+
 ---
 
 ## Matriz de autorização
@@ -258,13 +275,39 @@ Credencial errada, e-mail inexistente e conta bloqueada devolvem **a mesma respo
 e-mail não existe, o serviço ainda executa um BCrypt descartável, para que o tempo de
 resposta também não denuncie a diferença.
 
+### CSRF das telas (cookie)
+
+CSRF (*Cross-Site Request Forgery*) é o ataque em que outro site faz o navegador de quem já
+entrou enviar um formulário sem a pessoa perceber. Só as **telas** (Thymeleaf, com sessão) têm
+essa defesa ligada; a API com JWT é stateless e não usa cookie, então fica sem CSRF
+([`10-guia-do-frontend.md`](10-guia-do-frontend.md)).
+
+- **Onde o token mora:** num cookie (`CookieCsrfTokenRepository`), e não só na sessão. Na Render o
+  app dorme depois de uns 15 minutos e a sessão, que vive na memória, some: quem deixava o
+  `/login` aberto levava 403 ao enviar. Com o cookie, o servidor só compara o cookie com o campo
+  escondido do formulário e não precisa lembrar de nada.
+- **Atributos do cookie:** `HttpOnly` (o padrão: só formulários usam o token, nenhum JavaScript
+  precisa lê-lo) e `SameSite=Lax` (o navegador não o envia em POST vindo de outro site).
+- **Token inválido em formulário público:** `/login` e `/cadastro` não fazem nada (nenhum login,
+  nenhuma conta) e voltam a `/login?expirou`, com um aviso de página expirada
+  (`PaginaExpiradaHandler`). Qualquer outra recusa, inclusive CSRF numa tela de quem já entrou,
+  segue como **403**.
+- **Verificação:** o aviso de página expirada foi provado no site da Render e há teste automático
+  do cookie (`CadastroTelaTest`).
+- **Custo aceito:** sem sessão no servidor, a defesa é a comparação cookie × campo (*double submit*)
+  mais o `SameSite=Lax`. Um subdomínio controlado por atacante poderia plantar o cookie; aqui não
+  há subdomínios, então o risco não se aplica.
+
 ### Rate limiting
 
 | Escopo | Limite |
 |---|---|
-| `POST /api/v1/auth/login` | 10/min por IP |
+| `POST /api/v1/auth/login` e `POST /login` (tela) | 10/min por IP, no mesmo balde |
+| `POST /api/v1/auth/registrar` e `POST /cadastro` (tela) | 10/hora por IP, no mesmo balde |
 | `/api/v1/auth/**` | 30/min por IP |
 | Demais rotas | 100/min por IP |
+
+O cadastro tem janela de uma hora porque o abuso ali não é rajada, é volume lento: 100 contas por minuto (a faixa geral) encheriam a tabela de tutores em poucas horas. Dez por hora deixa folga para uma sala ou clínica atrás de um IP só. Pela tela, o 429 mostra a página de erro; pela API, o JSON.
 
 Excedido: **429** com `Retry-After`. Swagger e console H2 ficam fora do limite.
 
@@ -272,6 +315,30 @@ Os buckets vivem num cache Caffeine com expiração — num `Map` comum, cada IP
 criaria uma entrada permanente e o próprio rate limiter viraria vetor de DoS.
 
 Desligável com `clyvovet.rate-limit.enabled=false` (usado nos testes).
+
+**De onde vem o IP (X-Forwarded-For):** atrás da Render, o IP do cliente chega no cabeçalho
+`X-Forwarded-For`, e cada proxy **acrescenta ao fim** da lista o endereço de quem se conectou a
+ele; o que vem antes foi escrito por quem mandou a requisição. Ler o primeiro valor deixava o
+cliente escolher a própria chave: medido na Render, 14 logins com um cabeçalho diferente cada
+passaram sem nenhum 429. O filtro agora conta a partir da **direita**, pela propriedade
+`clyvovet.rate-limit.proxies-confiaveis` (padrão `1`: o cliente é o último valor). Sem o cabeçalho
+(execução local), vale o endereço da conexão.
+
+- **Limitação:** o número `1` é uma suposição sobre a Render (um proxy). Se a plataforma colocar
+  outro balanceador na frente, todos os clientes cairiam no IP dele e dividiriam um balde só;
+  nesse caso o valor deve subir para `2`. Se a lista tiver menos valores que o configurado, o
+  filtro usa o primeiro, que é o melhor palpite.
+- **Provado no site (Render, 25/10/2026):** 14 logins com um `X-Forwarded-For` forjado diferente
+  cada deram **401 até o 13º e 429 no 14º**, ou seja, os cabeçalhos inventados caíram no mesmo
+  balde e o cliente não escolhe mais a própria chave. (Antes da correção, em 24/10, os 14 passavam
+  sem nenhum 429.) O 429 veio depois do 10º porque o balde repõe uma ficha a cada 6 segundos e os
+  pedidos levaram uns 12 segundos.
+- **Não verificado:** que dois IPs **reais** diferentes têm baldes separados (por exemplo, o
+  computador no Wi-Fi e o celular em 4G). A correção em `12de007` já está no ar; se a Render
+  tivesse um segundo balanceador na frente, todos dividiriam um balde só, e a saída seria
+  `clyvovet.rate-limit.proxies-confiaveis=2`, sem mudar código.
+- **Cuidado ao testar o limite:** com o app dormindo (subida a frio) cada pedido demora tanto que o
+  balde se repõe no mesmo ritmo e nunca esvazia. Aqueça o site antes de medir.
 
 **Limitação conhecida:** o estado é local ao processo. Com mais de uma réplica, cada
 uma teria sua própria contagem; o correto nesse cenário seria Bucket4j sobre Redis.

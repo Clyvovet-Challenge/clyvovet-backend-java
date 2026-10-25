@@ -140,7 +140,160 @@ Para conectar no console H2, use a JDBC URL `jdbc:h2:tcp://clyvovet-db:1521/clyv
 usuário `sa`, senha vazia.
 
 ---
+## Render + Aiven — onde o Java roda na Sprint 4
+
+O edital de Java Advanced da Sprint 4 pede só que a aplicação esteja *rodando online*. Ela
+roda na **Render** (container) com banco **MySQL no Aiven**, fora da Azure, que ficou para a
+DevOps. O porquê, e o que foi descartado, está no
+[ADR 008](adr/008-java-na-render-com-mysql-no-aiven.md).
+
+**Endereço:** https://clyvovet-backend-java.onrender.com — entra direto na tela de login.
+
+| O quê | Valor |
+|---|---|
+| Serviço | Web Service Docker, plano gratuito, região Ohio |
+| Código | repositório `clyvovet-backend-java`, branch `sprint-4`, usando o `Dockerfile` da raiz |
+| Deploy | manual (auto-deploy desligado) |
+| Banco | Aiven MySQL 8.4, plano Developer (período de teste) |
+| Perfil Spring | `mysql`, o padrão do `application.properties` |
+
+### Variáveis de ambiente
+
+Cadastradas no painel da Render, aba *Environment*. Só os **nomes** ficam no repositório.
+
+| Variável | O que é |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `mysql,demo`. O `mysql` liga o banco; o `demo` roda o `DemoDataSeeder`, que dá catálogo de serviços à VetCare Prime e agenda à Camila Ferreira (veterinária demo). Sem o `demo`, a VetCare responde "Esta clínica ainda não oferece serviços" e uma consulta marcada em outra clínica não aparece para a Camila. Mantenha o `mysql` na frente |
+| `DB_URL` | `jdbc:mysql://<host>:<porta>/<banco>?sslMode=REQUIRED` — host, porta e banco vêm da página *Overview* do serviço no Aiven. O Aiven recusa conexão sem TLS |
+| `DB_USERNAME` | usuário do Aiven (`avnadmin` por padrão) |
+| `DB_PASSWORD` | senha do Aiven. **Segredo: só no painel da Render** |
+| `JWT_SECRET` | texto aleatório longo, gerado para este deploy (`openssl rand -base64 48`). **Segredo** |
+| `GOOGLE_CLIENT_ID` | ID do cliente OAuth criado no Google Cloud Console (termina em `.apps.googleusercontent.com`) |
+| `GOOGLE_CLIENT_SECRET` | segredo desse cliente (começa com `GOCSPX-`). **Segredo** |
+| `GITHUB_CLIENT_ID` | ID do OAuth App do GitHub (começa com `Ov23`, 20 caracteres) |
+| `GITHUB_CLIENT_SECRET` | segredo desse app. **Segredo** |
+| `CLYVOVET_DEMO_SENHA` | senha dos 4 usuários de demonstração (mínimo 12 caracteres). **Segredo**, e opcional: sem ela nenhum usuário é criado |
+
+As quatro últimas ligam o login social. Sem elas o app sobe normal, mas os botões "Entrar com
+Google" e "Entrar com GitHub" mandam o `client_id=nao-configurado` ao provedor e falham lá.
+Variável de ambiente só vale depois de um **novo deploy**: gravar com *Save only* não reinicia o app.
+
+**Usuários de demonstração.** O banco do Aiven nasce com clínicas, veterinários e tutores, mas sem
+nenhum usuário (o `DevDataSeeder` não roda no perfil `mysql`, de propósito). Com
+`CLYVOVET_DEMO_SENHA` definida, o `UsuariosDeDemonstracaoSeeder` cria um usuário por perfil, todos
+com essa mesma senha, ligados a linhas que a V2 já semeia:
+
+| E-mail | Perfil | Ligado a |
+|---|---|---|
+| `demo.admin@clyvovet.com` | ADMIN | (plataforma) |
+| `demo.gestor@clyvovet.com` | ADMIN_CLINICA | clínica VetCare |
+| `demo.veterinaria@clyvovet.com` | VETERINARIO | veterinária Camila |
+| `demo.tutor@clyvovet.com` | TUTOR | tutor Lucas, que já tem pets |
+
+A senha **não está no repositório**: ela entra só no painel da Render e é entregue ao professor por
+fora. É idempotente (reiniciar não duplica nem troca a senha) e recusa senha com menos de 12
+caracteres. Terminada a avaliação, remova a variável; os usuários já criados continuam, e para
+apagá-los é preciso removê-los no banco. Variável nova só vale depois de um **novo deploy**.
+Coberto por `UsuariosDeDemonstracaoSeederTest`; a leitura da variável foi provada subindo o app local
+com ela e logando com os quatro perfis. **Na Render:** em 18/10/2026, à noite, o log do app em
+execução mostrou o aviso `Usuarios de demonstracao disponiveis` (não confundir com o log do *build*,
+que roda a suíte e imprime a mesma mensagem). Em 20/10/2026 o login do `demo.tutor@clyvovet.com`
+pela tela funcionou e **Meus pets** mostrou o Bolinha. Os outros três perfis **não foram logados** na Render.
+
+**Dados de demonstração da VetCare (perfil `demo`).** A V11 semeia serviços e agenda só para
+PetMed, AnimalSaude e CliniPet, e deixa a VetCare Prime de fora **de propósito**: ela é a clínica
+da suíte de testes, e semear ali quebrou 26 testes (a conta exata de vagas de
+`AgendamentoFluxoTest`). Por isso a demonstração não usa migration. O `DemoDataSeeder` só liga com
+o perfil `demo`, é idempotente (cada bloco só insere se a clínica ainda não tem catálogo e a Camila
+ainda não tem agenda) e cria 3 serviços (consulta clínica geral R$ 180, retorno R$ 0, vacinação
+R$ 95) e a agenda da Camila, de segunda a sábado, das 09h às 12h e das 14h às 18h.
+**Na Render, em 22/10/2026:** o log do app em execução mostrou
+`The following 2 profiles are active: "mysql", "demo"` e a linha do `DemoDataSeeder`. Pela tela, a
+VetCare passou a listar os 3 serviços e horários com a Camila; o tutor marcou uma consulta com ela, e
+a consulta apareceu para a veterinária demo em `/veterinario/atendimentos`. **Remover o `demo`
+depois não apaga o que já foi semeado.** As linhas ficam em `t_clyvo_servico` e
+`t_clyvo_disponibilidade_vet`, tabelas que a API .NET também lê. **Não testado:** concluir um
+atendimento (o botão só aparece para consulta de hoje ou anterior, e concluir grava prontuário).
+
+Sem `JWT_SECRET` o app cai no boot, em `Could not resolve placeholder 'JWT_SECRET'`. Foi o
+erro da primeira tentativa de deploy, e mostrou que o build e os testes já passavam.
+
+### Passo a passo
+
+1. No Aiven, crie um serviço **MySQL** e copie host, porta, banco e usuário da *Overview*.
+2. Na Render, crie um **Web Service** a partir do repositório, ambiente **Docker**, branch
+   `sprint-4`, plano gratuito.
+3. Cadastre as variáveis acima e dispare o deploy. As do login social dependem dos passos da
+   seção seguinte.
+4. O build roda `mvn package` **com os testes** dentro do Docker e leva alguns minutos.
+5. No primeiro boot o Flyway cria as 21 migrations no banco vazio. A Render detecta a porta
+   8080 e **reinicia o deploy uma vez**: é normal no primeiro deploy.
+
+### O que foi conferido em 18/10/2026
+
+- O Flyway conectou no MySQL 8.4 do Aiven e validou as 21 migrations (schema na versão 21).
+- O app subiu com `ddl-auto=validate`, o que prova que as tabelas batem com as entidades.
+- `GET /actuator/health` respondeu `UP` e `/` redirecionou para `/login` com HTTP 200.
+
+Conferido depois, no app online, ainda em 18/10/2026:
+
+- Cadastro de tutor (`POST /api/v1/auth/registrar`, 201) e login com e-mail e senha: gravam e
+  leem no Aiven.
+- `GET /api/v1/racas` com token devolveu 200 e 44 raças das cinco espécies. A migração V14 tem
+  45 linhas de inserção; a diferença de uma não foi explicada (a API só lista raças ativas).
+- Login com GitHub e com Google: o redirecionamento sai com o `client_id` real e a
+  `redirect_uri` da Render, e o login com uma conta de tutor já cadastrada entrou no sistema.
+
+**Não foi conferido:** perfis de veterinário e de administrador, as telas de agendamento com
+dados, o refresh e o logout do token, e o limite de tentativas atrás do proxy da Render.
+
+### Login social (Google e GitHub)
+
+No primeiro acesso por Google ou GitHub, quem ainda não tem conta ganha uma de **tutor**, desde
+que o provedor garanta que o e-mail é dele ([ADR 009](adr/009-login-social-cria-conta-de-tutor.md)).
+Quando o provedor não entrega e-mail verificado, a conta está bloqueada, ou o e-mail já é de um
+tutor cadastrado pela clínica, o login volta para `/login` com "Não foi possível entrar com essa
+conta".
+
+1. **GitHub:** *Settings → Developer settings → OAuth Apps → New OAuth App*. Homepage
+   `https://clyvovet-backend-java.onrender.com` e URL de retorno
+   `https://clyvovet-backend-java.onrender.com/login/oauth2/code/github`. O GitHub mostra o
+   segredo **uma vez só**.
+2. **Google:** no Google Cloud Console, crie um projeto, abra *Google Auth Platform*, monte a
+   tela de consentimento (público **Externo**) e crie um cliente do tipo *Aplicativo da Web* com
+   a URL de retorno `https://clyvovet-backend-java.onrender.com/login/oauth2/code/google`.
+   Enquanto o app estiver em modo **Teste**, só entra quem estiver em *Público-alvo → Usuários
+   de teste*, e o Google mostra o aviso de "app não verificado". A configuração pode levar de
+   cinco minutos a algumas horas para valer.
+3. Cadastre as quatro variáveis na Render e faça **Save, rebuild, and deploy**.
+4. Crie um tutor com o e-mail da conta social (`POST /api/v1/auth/registrar`, pelo Swagger).
+
+Cuidado com a troca entre ID e segredo: o ID vai na URL pública do botão; se o segredo for
+colado no campo do ID, ele aparece para qualquer pessoa. Se isso ocorrer, gere um segredo novo
+e apague o antigo no provedor.
+
+### Limites que quem for avaliar precisa saber
+
+- **Subida a frio.** No plano gratuito a Render desliga o app depois de uns 15 minutos sem
+  uso, e a primeira requisição depois disso espera o Spring subir. A Render avisa "50
+  segundos ou mais"; a subida do Spring levou 256 s na primeira medição.
+- **Banco com prazo.** O período de teste do Aiven é de **30 dias a partir de 18/10/2026**.
+  Depois dele o serviço é desligado, a menos que se cadastre um cartão (US$ 5 por mês). O
+  plano Free do Aiven não vence, mas desliga por inatividade e só o dono da conta religa.
+
+### Rodar sem nuvem
+
+O perfil `dev` sobe um H2 em memória, sem configurar nada
+(`./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`). É o caminho para quem não alcançar o
+endereço acima.
+
+---
+
 ## Azure — App Service com banco PaaS
+
+> ℹ️ Este capítulo descreve o deploy da **Sprint 3** (disciplina de DevOps). Na Sprint 4 o Java
+> roda na Render, como descrito acima; o App Service, o plano B1 e os scripts de `azure/`
+> continuam documentados porque a API .NET e a DevOps ainda os usam.
 
 ### Por que não é mais uma VM
 
@@ -199,7 +352,7 @@ na URL JDBC e `SslMode=Required` na connection string da .NET.
 ### Ordem de subida
 
 A **Java sobe primeiro**, e isso é dependência, não preferência: o Flyway dela cria
-as 19 tabelas, incluindo as seis `t_clyvo_*` que a API .NET consome. Se a .NET subir
+as 24 tabelas, incluindo as seis `t_clyvo_*` que a API .NET consome. Se a .NET subir
 antes, ela **sobe normalmente** — o EF Core não valida schema no boot — e falha só na
 primeira consulta, dizendo que a tabela não existe.
 

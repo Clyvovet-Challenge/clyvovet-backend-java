@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Meus agendamentos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: cabecalho}"></header>
+
+<main class="conteudo">
+    <div class="titulo-com-acao">
+        <div>
+            <h1>Meus agendamentos</h1>
+            <p class="subtitulo">As consultas marcadas para os seus pets.</p>
+        </div>
+        <a class="botao botao-primario" th:href="@{/tutor/agendamentos/novo}">Agendar consulta</a>
+    </div>
+
+    <p class="aviso aviso-ok" role="status" th:if="${sucesso}" th:text="${sucesso}">Consulta agendada.</p>
+
+    <p class="cartao vazio" th:if="${#lists.isEmpty(agendamentos)}">
+        Nenhum agendamento ainda. Use o botão <strong>Agendar consulta</strong> para marcar o primeiro.
+    </p>
+
+    <ul class="lista" th:unless="${#lists.isEmpty(agendamentos)}">
+        <li class="cartao item" th:each="a : ${agendamentos}">
+            <div class="item-dados">
+                <strong th:text="${a.servicoNome() ?: a.descricao()}">Consulta de rotina</strong>
+                <span>
+                    <span th:text="${#temporals.format(a.data(), 'dd/MM/yyyy')}">20/10/2026</span>
+                    às <span th:text="${a.hora()}">09:00</span>
+                    · <span th:text="${a.animalNome()}">Bolinha</span>
+                </span>
+                <span class="item-detalhe">
+                    <span th:text="${a.veterinarioNome()}">Dra. Camila</span>
+                    · <span th:text="${a.clinicaNome()}">VetCare</span>
+                </span>
+            </div>
+            <div class="item-acoes">
+                <span class="selo"
+                      th:text="${#strings.capitalize(#strings.toLowerCase(a.statusEvento().name()))}">Agendado</span>
+                <a class="botao botao-secundario" th:if="${a.statusEvento().podeCancelar()}"
+                   th:href="@{/tutor/agendamentos/{id}/cancelar(id=${a.id()})}">Cancelar</a>
+            </div>
+        </li>
+    </ul>
+</main>
+
+</body>
+</html>
