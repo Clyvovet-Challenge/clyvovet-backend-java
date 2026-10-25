@@ -19,9 +19,12 @@ A `main` é a entrega da Sprint 3, cuja nota saiu em 04/10/2026: 34/100. Em 07/1
 informou que ela sobe para 44 (ver L9 e a [seção 2.1](#21-a-nota-da-sprint-3-por-critério)).
 
 - Todo trabalho da Sprint 4 vai para a branch **`sprint-4`**.
-- Merge `sprint-4` → `main` só quando o Leonardo pedir, via PR, sem rebase nem force-push.
-- O CI só roda em push na `main` e em PR para a `main`. Até o PR, a suíte roda localmente
-  antes de cada commit.
+- **Feito em 25/10/2026:** merge `sprint-4` → `main` pelo PR #1 (merge commit `4402446`), com o
+  CI verde nos dois jobs. A entrega da Sprint 3 ficou na tag `sprint-3-entrega`.
+- Daqui para a frente, commits novos vão para a `sprint-4` e chegam à `main` por PR, só quando
+  o Leonardo pedir, com merge commit e sem rebase nem force-push.
+- O CI roda em push na `main` e em PR para a `main`. Push direto na `sprint-4` não o dispara:
+  a suíte roda localmente antes de cada commit.
 
 ## 2. A régua que dirige este plano
 
