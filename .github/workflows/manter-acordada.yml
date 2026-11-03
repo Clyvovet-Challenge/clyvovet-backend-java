@@ -1,0 +1,40 @@
+name: Manter a API acordada
+
+# O plano gratuito da Render desliga o servico depois de 15 min sem requisicao,
+# e a API Java leva minutos para voltar -- o app desiste do login antes. Durante
+# a correcao da Sprint 4, um ping a cada 10 min mantem o servico de pe.
+#
+# PRAZO, E NAO PARA SEMPRE: o plano gratuito da 750 h por mes para o workspace
+# inteiro, e um servico ligado o mes todo gasta 720. Depois de DATA_LIMITE o job
+# nao faz nada; apagar este arquivo quando a nota sair.
+#
+# O agendamento do GitHub atrasa em horario de pico, as vezes alem de 10 min.
+# Por isso o intervalo e menor que os 15 min da Render: um atraso nao basta para
+# o servico dormir.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+env:
+  URL: https://clyvovet-backend-java.onrender.com/actuator/health
+  DATA_LIMITE: "2026-11-15"
+
+jobs:
+  ping:
+    name: Ping no health
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Chamar o /actuator/health
+        run: |
+          if [[ "$(date -u +%F)" > "$DATA_LIMITE" ]]; then
+            echo "Passou de $DATA_LIMITE: nada a fazer."
+            exit 0
+          fi
+          # Se o servico estava dormindo, este pedido e o que o acorda: espera
+          # o boot inteiro em vez de falhar no primeiro timeout.
+          curl --fail --silent --show-error --max-time 420 \
+               --retry 3 --retry-delay 20 --retry-all-errors \
+               -o /dev/null -w "HTTP %{http_code} em %{time_total}s\n" "$URL"
