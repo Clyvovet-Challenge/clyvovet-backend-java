@@ -20,6 +20,20 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
+# JVM PARA MAQUINA PEQUENA
+# No plano gratuito da Render o container tem 512 MB e uma fracao de CPU, e o
+# servico dorme depois de 15 min parado. Com a JVM no padrao, acordar levou de
+# 2 a mais de 5 minutos (medido em 31/10 e 03/11/2026) -- mais do que o app
+# espera no login.
+#   TieredStopAtLevel=1  so o compilador C1: o C2 gasta a pouca CPU no boot
+#                        otimizando codigo que, com este trafego, nunca se paga
+#   UseSerialGC          coletor sem threads paralelas, que aqui so disputariam CPU
+#   MaxRAMPercentage=75  o heap pode usar 384 MB dos 512, e nao os 128 do padrao
+#   Xss512k              metade da pilha por thread, sobra para o heap
+# Em JAVA_TOOL_OPTIONS, e nao no ENTRYPOINT, para poder ser trocado no painel da
+# Render sem rebuild.
+ENV JAVA_TOOL_OPTIONS="-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -XX:MaxRAMPercentage=75 -Xss512k"
+
 # Sem perfil fixo no ENTRYPOINT. O -D de linha de comando tem precedencia sobre
 # a variavel de ambiente, entao o "h2" que ficava aqui vencia qualquer
 # SPRING_PROFILES_ACTIVE que o Azure definisse -- a imagem subiria em H2 em
