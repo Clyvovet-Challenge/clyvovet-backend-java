@@ -66,10 +66,12 @@ no `.gitignore`, mas o Spring **não** o lê sozinho.
 
 ## 5. Como trabalhar
 
-- **Branch:** tudo na `sprint-4`. A `main` é a entrega da Sprint 3 e **fica congelada** até o
-  Leonardo pedir o merge (via PR).
-- **CI:** só roda na `main` e em PR para ela. Na `sprint-4` ele **não** roda, então rode a suíte
-  antes de cada commit: `./mvnw test`.
+- **Branch:** a `main` já tem a Sprint 4 (PR #1, em 25/10/2026), e a Sprint 3 está na tag
+  `sprint-3-entrega`. Continue trabalhando na **`sprint-4`**, que é a que a Render acompanha, e
+  leve para a `main` por **PR**, só quando o Leonardo pedir, com **merge commit** (nunca squash
+  nem rebase). Nada direto na `main`.
+- **CI:** roda na `main` e em PR para ela. Num push direto na `sprint-4` ele **não** roda, então
+  rode a suíte antes de cada commit: `./mvnw test`.
 - **Deploy é manual.** O `git push` **não** atualiza o site (o *autoDeploy* está desligado). Como
   você não entra na Render, **peça ao Leonardo** depois de cada push: no painel dele, serviço
   `clyvovet-backend-java` → *Manual Deploy* → *Deploy latest commit*. O build leva uns 6 minutos, e

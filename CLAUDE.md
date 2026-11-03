@@ -6,14 +6,20 @@ produto é combater o **absenteísmo** (retorno e falta). Visão de negócio em
 [`docs/00-funcionalidades.md`](docs/00-funcionalidades.md); estado atual em
 [`docs/09-estado-do-projeto.md`](docs/09-estado-do-projeto.md).
 
-## Branch: a `main` está congelada
+## Branch: a `main` já tem a Sprint 4
 
-A `main` é a entrega da Sprint 3 (nota 34/100, saiu em 04/10/2026). Todo trabalho da
-Sprint 4 vai para a branch **`sprint-4`**. Nada é commitado nem mergeado na `main` até o
-Leonardo pedir o merge (via PR).
+A `main` recebeu a `sprint-4` em 25/10/2026 (PR #1, merge commit `4402446`, CI verde). A
+entrega da Sprint 3 (nota 34/100, de 04/10/2026) continua achável pela tag
+**`sprint-3-entrega`**.
 
-O CI (`.github/workflows/ci.yml`) só roda em push na `main` e em PR para a `main`. Push
-na `sprint-4` **não** dispara CI: rode a suíte localmente antes de cada commit.
+A **`sprint-4`** segue como branch de trabalho, e a Render acompanha ela, não a `main`. Commits
+novos vão para a `sprint-4` e chegam à `main` por **PR**, quando o Leonardo pedir, com
+**merge commit** (nunca squash nem rebase, para o histórico por integrante não sumir) e sem
+force-push. Nada é commitado direto na `main`.
+
+O CI (`.github/workflows/ci.yml`) roda em push na `main` e em PR para a `main`. Push direto na
+`sprint-4` **não** dispara CI: rode a suíte localmente antes de cada commit. O job
+`Imagem Docker` só roda na `main`, e é pulado nos PRs de propósito.
 
 ## Stack
 
