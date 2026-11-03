@@ -3,7 +3,6 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.historico.*;
 import br.com.fiap.clyvovet.exception.RecursoNaoEncontradoException;
 import br.com.fiap.clyvovet.exception.Recurso;
-import br.com.fiap.clyvovet.exception.LimiteDeAcessoExcedidoException;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.model.*;
 import br.com.fiap.clyvovet.repository.*;
@@ -38,27 +37,12 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class HistoricoService {
 
-    /**
-     * Dois tetos, nao um. O de alerta e o volume de um dia cheio: passar dele
-     * sinaliza, mas nao bloqueia — plantao de feriado e mutirao de castracao
-     * produzem picos legitimos. O absoluto nenhuma jornada clinica alcanca.
-     */
-    private static final int TETO_DE_ALERTA_POR_DIA = 30;
-    private static final int TETO_ABSOLUTO_POR_DIA = 150;
-
-    /**
-     * Quebra de vidro NUNCA bloqueia. Travar no limite significaria devolver 429
-     * no lugar do historico em algum atendimento de emergencia, e essa conta e
-     * paga pelo paciente. O acesso passa e o alarme sobe.
-     */
-    private static final int QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR = 5;
-
     private final AnimalRepository animalRepository;
     private final AutorizacaoAcessoRepository autorizacaoRepository;
     private final AcessoHistoricoRepository acessoRepository;
-    private final UsuarioRepository usuarioRepository;
     private final SegurancaService seguranca;
     private final MontadorDeHistorico montador;
+    private final RegistroDeAcesso registroDeAcesso;
 
     /**
      * Nivel 1, pelo microchip. Sem consentimento e sem vinculo previo — e o
@@ -73,9 +57,9 @@ public class HistoricoService {
 
         garantirQueEVeterinario();
         garantirQueOResumoEstaLigado(animal);
-        aplicarTetoDiario(animal);                                     // C6
+        registroDeAcesso.aplicarTetoDiario(animal);                                     // C6
 
-        registrarAcesso(animal, NivelAcesso.RESUMO_DE_SEGURANCA, false, null);
+        registroDeAcesso.registrarAcesso(animal, NivelAcesso.RESUMO_DE_SEGURANCA, false, null);
         return montador.resumo(animal);
     }
 
@@ -93,7 +77,7 @@ public class HistoricoService {
             throw new RegraDeNegocioException("animalId",
                     "Sem acesso ao histórico deste animal");
         }
-        registrarAcesso(animal, nivel, false, null);
+        registroDeAcesso.registrarAcesso(animal, nivel, false, null);
         return montador.historico(animal, nivel);
     }
 
@@ -109,11 +93,11 @@ public class HistoricoService {
         Animal animal = animalRepository.obterPorId(animalId);
         garantirQueEVeterinario();
 
-        registrarAcesso(animal, NivelAcesso.COMPLETO, true, motivo);
+        registroDeAcesso.registrarAcesso(animal, NivelAcesso.COMPLETO, true, motivo);
         log.warn("QUEBRA DE VIDRO: usuario {} acessou o historico do animal {} sem consentimento. Motivo: {}",
                 seguranca.usuarioAutenticadoId(), animalId, motivo);
-        notificarTutor(animal, "Acesso emergencial ao histórico de " + animal.getNome());
-        alarmarSeQuebraDeVidroVirouRotina();                           // C22
+        registroDeAcesso.notificarTutor(animal, "Acesso emergencial ao histórico de " + animal.getNome());
+        registroDeAcesso.alarmarSeQuebraDeVidroVirouRotina();                           // C22
 
         return montador.historico(animal, NivelAcesso.COMPLETO);
     }
@@ -200,61 +184,6 @@ public class HistoricoService {
 
     // ------------------------------------------------------------------
 
-    /**
-     * Conta ANIMAIS DISTINTOS no dia, nao requisicoes: a tabela de auditoria ja
-     * agrega por (usuario, animal, dia). Reabrir o mesmo prontuario nao consome
-     * teto — e o que separa este controle do rate limit por IP.
-     */
-    private void aplicarTetoDiario(Animal animal) {
-        UUID usuarioId = seguranca.usuarioAutenticadoId();
-        if (usuarioId == null) {
-            return;
-        }
-        // Trava o usuario: dois animais novos consultados juntos liam a mesma
-        // contagem e passavam os dois pelo ultimo lugar do teto.
-        usuarioRepository.travarPorId(usuarioId, Recurso.USUARIO);
-        LocalDate hoje = LocalDate.now();
-
-        boolean jaConsultouEsteAnimalHoje = acessoRepository
-                .findByAnimalIdAndUsuarioIdAndDiaAndEmergencial(animal.getId(), usuarioId, hoje, false)
-                .isPresent();
-        if (jaConsultouEsteAnimalHoje) {
-            return;
-        }
-
-        long animaisHoje = acessoRepository.countByUsuarioIdAndDiaAndEmergencial(usuarioId, hoje, false);
-
-        if (animaisHoje >= TETO_ABSOLUTO_POR_DIA) {
-            log.error("COLETA EM MASSA BLOQUEADA: usuario {} tentou o {}o animal distinto hoje",
-                    usuarioId, animaisHoje + 1);
-            throw new LimiteDeAcessoExcedidoException("microchip",
-                    "Limite diário de consultas ao resumo de segurança atingido. "
-                            + "Procure o administrador da plataforma");
-        }
-        if (animaisHoje == TETO_DE_ALERTA_POR_DIA) {
-            // Uma vez, na travessia do limiar: repetir viraria ruido.
-            log.warn("VOLUME ATIPICO: usuario {} passou de {} animais distintos hoje. "
-                            + "Visivel em GET /auditoria/excessos",
-                    usuarioId, TETO_DE_ALERTA_POR_DIA);
-        }
-    }
-
-    /** Alarma; nao bloqueia. Ver a constante. */
-    private void alarmarSeQuebraDeVidroVirouRotina() {
-        UUID usuarioId = seguranca.usuarioAutenticadoId();
-        if (usuarioId == null) {
-            return;
-        }
-        long noMes = acessoRepository.countByUsuarioIdAndEmergencialTrueAndDiaGreaterThanEqual(
-                usuarioId, LocalDate.now().minusMonths(1));
-
-        if (noMes > QUEBRAS_DE_VIDRO_POR_MES_ANTES_DE_ALARMAR) {
-            log.error("QUEBRA DE VIDRO RECORRENTE: usuario {} acionou {} vezes em 30 dias. "
-                            + "Excecao virou rotina — revisar",
-                    usuarioId, noMes);
-        }
-    }
-
     private void garantirQueEVeterinario() {
         UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
         if (usuario == null || usuario.getUsuario().getPerfil() != Perfil.VETERINARIO) {
@@ -267,57 +196,6 @@ public class HistoricoService {
         if (Boolean.FALSE.equals(animal.getResumoDeSegurancaAtivo())) {
             throw new RegraDeNegocioException("microchip",
                     "O tutor desativou o resumo de segurança deste animal");
-        }
-    }
-
-    /**
-     * Uma linha por (usuario, animal, dia); a segunda leitura incrementa.
-     *
-     * <p>Visivel ao pacote pelo mesmo motivo que {@code nivelSobre}: baixar o
-     * laudo E ler o prontuario, e precisa aparecer na mesma auditoria que o
-     * tutor consulta. Um download que nao registrasse acesso seria a unica porta
-     * do sistema por onde se le o historico sem deixar rastro.</p>
-     */
-    void registrarAcesso(Animal animal, NivelAcesso nivel, boolean emergencial, String motivo) {
-        UsuarioAutenticado usuario = seguranca.autenticadoOuNulo();
-        if (usuario == null) {
-            return;
-        }
-        LocalDate hoje = LocalDate.now();
-
-        acessoRepository.travarDoDia(animal.getId(), usuario.getId(), hoje, emergencial)
-                .ifPresentOrElse(
-                        existente -> {
-                            existente.setVezes(existente.getVezes() + 1);
-                            // O maior nivel do dia prevalece.
-                            existente.setNivel(Math.max(existente.getNivel(), nivel.getCodigo()));
-                            acessoRepository.save(existente);
-                        },
-                        () -> {
-                            AcessoHistorico acesso = new AcessoHistorico();
-                            acesso.setAnimal(animal);
-                            acesso.setUsuario(usuario.getUsuario());
-                            acesso.setClinica(usuario.getUsuario().getVeterinario() != null
-                                    ? usuario.getUsuario().getVeterinario().getClinica() : null);
-                            acesso.setDia(hoje);
-                            acesso.setNivel(nivel.getCodigo());
-                            acesso.setEmergencial(emergencial);
-                            acesso.setMotivo(motivo);
-                            acessoRepository.save(acesso);
-                        });
-
-        if (!emergencial) {
-            notificarTutor(animal, "Seu histórico de " + animal.getNome() + " foi consultado");
-        }
-    }
-
-    /**
-     * Placeholder: vai para o log ate existir canal real (push ou e-mail). O
-     * ponto de chamada ja esta no lugar certo.
-     */
-    private void notificarTutor(Animal animal, String mensagem) {
-        if (animal.getTutor() != null) {
-            log.info("NOTIFICACAO ao tutor {}: {}", animal.getTutor().getId(), mensagem);
         }
     }
 }

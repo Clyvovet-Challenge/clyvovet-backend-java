@@ -16,7 +16,7 @@ public interface AcessoHistoricoRepository extends RepositorioBase<AcessoHistori
     /** A linha do dia, se ja houver — e o que faz o registro incrementar em vez de duplicar. */
     /**
      * A mesma busca, com trava e lendo o ultimo valor gravado. E a do
-     * HistoricoService.registrarAcesso, que decide entre inserir e somar: lida
+     * RegistroDeAcesso.registrarAcesso, que decide entre inserir e somar: lida
      * sem trava, dois primeiros acessos juntos inseriam os dois e o UNIQUE
      * uk_acesso_dia derrubava um deles com 500.
      */

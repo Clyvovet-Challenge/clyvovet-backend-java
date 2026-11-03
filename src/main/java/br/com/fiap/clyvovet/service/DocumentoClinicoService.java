@@ -7,7 +7,6 @@ import br.com.fiap.clyvovet.model.Clinica;
 import br.com.fiap.clyvovet.model.DocumentoClinico;
 import br.com.fiap.clyvovet.model.EventoClinico;
 import br.com.fiap.clyvovet.model.NivelAcesso;
-import br.com.fiap.clyvovet.repository.AcessoHistoricoRepository;
 import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.ClinicaRepository;
 import br.com.fiap.clyvovet.repository.DocumentoClinicoRepository;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,8 +37,8 @@ import static br.com.fiap.clyvovet.service.ValidadorDeArquivo.tituloValido;
  *
  * <p>O laudo em PDF nao e um dado novo: e o historico clinico em outro formato.
  * Entao ele nao ganha politica propria — {@code garantirLeitura} chama o
- * {@code nivelSobre} e o {@code registrarAcesso} do proprio
- * {@code HistoricoService}. Duas consequencias que valem por si:</p>
+ * {@code nivelSobre} do {@code HistoricoService} e o {@code registrarAcesso} do
+ * {@code RegistroDeAcesso}, os mesmos do texto do historico. Duas consequencias que valem por si:</p>
  *
  * <ul>
  *   <li>Baixar um exame <b>aparece na auditoria</b> que o tutor consulta em
@@ -95,8 +93,8 @@ public class DocumentoClinicoService {
     private final AnimalRepository animalRepository;
     private final EventoClinicoRepository eventoRepository;
     private final ClinicaRepository clinicaRepository;
-    private final AcessoHistoricoRepository acessoRepository;
     private final HistoricoService historicoService;
+    private final RegistroDeAcesso registroDeAcesso;
     private final SegurancaService seguranca;
 
     /** O arquivo pronto para virar resposta HTTP. */
@@ -224,14 +222,14 @@ public class DocumentoClinicoService {
     private void garantirLeitura(Animal animal) {
         NivelAcesso nivel = historicoService.nivelSobre(animal);
 
-        if (nivel != NivelAcesso.COMPLETO && !quebrouOVidroHoje(animal)) {
+        if (nivel != NivelAcesso.COMPLETO && !registroDeAcesso.quebrouOVidroHoje(animal)) {
             throw new RegraDeNegocioException("animalId",
                     "Sem acesso aos documentos deste animal");
         }
         // Registrado como COMPLETO porque foi o que a pessoa recebeu: o arquivo
         // inteiro. Gravar o nivel resolvido diria "leu o resumo" sobre quem
         // acabou de baixar o laudo.
-        historicoService.registrarAcesso(animal, NivelAcesso.COMPLETO, false, null);
+        registroDeAcesso.registrarAcesso(animal, NivelAcesso.COMPLETO, false, null);
     }
 
     private void garantirEscrita(Animal animal) {
@@ -239,24 +237,6 @@ public class DocumentoClinicoService {
             throw new RegraDeNegocioException("animalId",
                     "Sem permissao para anexar documentos a este animal");
         }
-    }
-
-    /**
-     * O veterinario abriu a quebra de vidro para este animal hoje?
-     *
-     * <p>Reusa a linha de auditoria que {@code acessoEmergencial} ja grava, em
-     * vez de criar um token ou uma tabela de liberacao temporaria. O efeito
-     * colateral e a propriedade que se queria: a liberacao do arquivo <b>e</b> o
-     * registro dela — nao existe uma sem a outra. E ela expira sozinha a
-     * meia-noite, porque a chave da linha inclui o dia.</p>
-     */
-    private boolean quebrouOVidroHoje(Animal animal) {
-        UUID usuarioId = seguranca.usuarioAutenticadoId();
-        if (usuarioId == null) {
-            return false;
-        }
-        return acessoRepository.findByAnimalIdAndUsuarioIdAndDiaAndEmergencial(
-                animal.getId(), usuarioId, LocalDate.now(), true).isPresent();
     }
 
     private void garantirQueEDesteAnimal(DocumentoClinico documento, UUID animalId) {
