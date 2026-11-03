@@ -429,7 +429,9 @@ public class SecurityConfig {
         // mostrar na mensagem de erro de servidor. Sem expor, o navegador
         // entrega a resposta com o cabecalho escondido, e o suporte perde o
         // unico numero que liga a tela do usuario a linha do log.
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id"));
+        // Idempotency-Key pelo mesmo motivo: o app web o manda em POST /pagamentos
+        // e /agendamentos, e fora da lista o navegador barraria os dois.
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id", "Idempotency-Key"));
         config.setExposedHeaders(List.of("Retry-After", "X-Correlation-Id"));
         config.setMaxAge(3600L);
 
