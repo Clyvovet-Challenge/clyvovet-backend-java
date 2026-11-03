@@ -96,6 +96,10 @@ public interface PagamentoRepository extends RepositorioBase<Pagamento> {
         return obterPorId(id, Recurso.PAGAMENTO);
     }
 
+    default Pagamento travarPorId(UUID id) {
+        return travarPorId(id, Recurso.PAGAMENTO);
+    }
+
     default void garantirQueExiste(UUID id) {
         garantirQueExiste(id, Recurso.PAGAMENTO);
     }

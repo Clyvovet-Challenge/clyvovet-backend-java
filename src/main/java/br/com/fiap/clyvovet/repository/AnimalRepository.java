@@ -41,6 +41,10 @@ public interface AnimalRepository extends RepositorioBase<Animal> {
         return obterPorId(id, Recurso.ANIMAL);
     }
 
+    default Animal travarPorId(UUID id) {
+        return travarPorId(id, Recurso.ANIMAL);
+    }
+
     default void garantirQueExiste(UUID id) {
         garantirQueExiste(id, Recurso.ANIMAL);
     }

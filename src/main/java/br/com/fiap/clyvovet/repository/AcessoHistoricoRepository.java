@@ -1,6 +1,8 @@
 package br.com.fiap.clyvovet.repository;
 
 import br.com.fiap.clyvovet.model.AcessoHistorico;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,6 +14,24 @@ import java.util.UUID;
 public interface AcessoHistoricoRepository extends RepositorioBase<AcessoHistorico> {
 
     /** A linha do dia, se ja houver — e o que faz o registro incrementar em vez de duplicar. */
+    /**
+     * A mesma busca, com trava e lendo o ultimo valor gravado. E a do
+     * HistoricoService.registrarAcesso, que decide entre inserir e somar: lida
+     * sem trava, dois primeiros acessos juntos inseriam os dois e o UNIQUE
+     * uk_acesso_dia derrubava um deles com 500.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT a FROM AcessoHistorico a
+            WHERE a.animal.id = :animalId AND a.usuario.id = :usuarioId
+              AND a.dia = :dia AND a.emergencial = :emergencial
+            """)
+    Optional<AcessoHistorico> travarDoDia(
+            @Param("animalId") UUID animalId,
+            @Param("usuarioId") UUID usuarioId,
+            @Param("dia") LocalDate dia,
+            @Param("emergencial") boolean emergencial);
+
     Optional<AcessoHistorico> findByAnimalIdAndUsuarioIdAndDiaAndEmergencial(
             UUID animalId, UUID usuarioId, LocalDate dia, boolean emergencial);
 

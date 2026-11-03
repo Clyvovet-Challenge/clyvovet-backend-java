@@ -18,6 +18,7 @@ import br.com.fiap.clyvovet.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -156,9 +157,11 @@ public class DocumentoClinicoService {
     // Escrita
     // ------------------------------------------------------------------
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public DocumentoResponse enviar(UUID animalId, UUID eventoId, String titulo, MultipartFile arquivo) {
-        Animal animal = animalRepository.obterPorId(animalId);
+        // Com trava: o mesmo arquivo enviado duas vezes ao mesmo tempo passava
+        // pelas duas conferencias (teto e hash repetido) e entrava em dobro.
+        Animal animal = animalRepository.travarPorId(animalId);
         garantirEscrita(animal);
 
         String tituloLimpo = tituloValido(titulo);

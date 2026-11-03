@@ -30,6 +30,10 @@ public interface VeterinarioRepository extends RepositorioBase<Veterinario> {
         return obterPorId(id, Recurso.VETERINARIO);
     }
 
+    default Veterinario travarPorId(UUID id) {
+        return travarPorId(id, Recurso.VETERINARIO);
+    }
+
     default void garantirQueExiste(UUID id) {
         garantirQueExiste(id, Recurso.VETERINARIO);
     }

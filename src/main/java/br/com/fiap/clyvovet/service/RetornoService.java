@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -51,10 +52,12 @@ public class RetornoService {
      * Unico caminho para AGENDADO -> REALIZADO. Com o status editavel por PATCH,
      * daria para marcar como realizado um atendimento futuro.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "eventos", allEntries = true)
     public ConclusaoResponse concluir(UUID id, ConclusaoRequest request) {
-        EventoClinico evento = eventoClinicoRepository.obterPorId(id);
+        // Com trava: duas conclusoes juntas passavam as duas pela conferencia de
+        // status, e o desfecho de uma sobrescrevia o da outra.
+        EventoClinico evento = eventoClinicoRepository.travarPorId(id);
 
         garantirQuePodeConcluir(evento);                                   // R2, R4, R5
         garantirRetornoCoerente(evento, request.getDataRetornoPrevisto()); // R15
@@ -79,10 +82,13 @@ public class RetornoService {
      * O evento_origem_id transforma RETORNO de rotulo solto em relacao
      * verificavel: sem ele nao da para dizer se o pet voltou.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "eventos", allEntries = true)
     public EventoClinicoResponse agendarRetorno(UUID origemId, RetornoRequest request) {
-        EventoClinico origem = eventoClinicoRepository.obterPorId(origemId);
+        // Trava a origem (um retorno em aberto por atendimento, R14) e, abaixo, o
+        // veterinario (o horario livre, como no AgendamentoService). Sem elas,
+        // dois pedidos juntos geravam dois retornos, ou dois no mesmo horario.
+        EventoClinico origem = eventoClinicoRepository.travarPorId(origemId);
 
         if (!origem.getStatusEvento().podeGerarRetorno()) {                // R11
             throw new RegraDeNegocioException("eventoOrigemId",
@@ -97,9 +103,10 @@ public class RetornoService {
                     "Já existe um retorno em aberto para este atendimento");
         }
 
-        Veterinario veterinario = request.getVeterinarioId() != null
-                ? veterinarioRepository.obterPorId(request.getVeterinarioId())
-                : origem.getVeterinario();
+        Veterinario veterinario = veterinarioRepository.travarPorId(
+                request.getVeterinarioId() != null
+                        ? request.getVeterinarioId()
+                        : origem.getVeterinario().getId());
 
         garantirHorarioLivre(veterinario, origem, request);                // R8
 

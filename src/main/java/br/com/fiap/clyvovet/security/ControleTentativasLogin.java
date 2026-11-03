@@ -41,8 +41,11 @@ public class ControleTentativasLogin {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarFalha(Usuario usuario) {
+        // O incremento e do banco; daqui so se le o resultado para decidir o
+        // bloqueio. Dois pedidos que cheguem juntos no limite bloqueiam os dois,
+        // o que da no mesmo.
+        usuarioRepository.somarFalha(usuario.getId());
         usuarioRepository.findById(usuario.getId()).ifPresent(atual -> {
-            atual.setTentativasFalhas(atual.getTentativasFalhas() + 1);
             if (atual.getTentativasFalhas() >= maxTentativas) {
                 atual.setBloqueadoAte(LocalDateTime.now().plusMinutes(bloqueioMinutos));
                 atual.setTentativasFalhas(0);

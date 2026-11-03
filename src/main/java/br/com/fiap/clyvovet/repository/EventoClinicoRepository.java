@@ -257,6 +257,10 @@ public interface EventoClinicoRepository extends RepositorioBase<EventoClinico> 
         return obterPorId(id, Recurso.EVENTO_CLINICO);
     }
 
+    default EventoClinico travarPorId(UUID id) {
+        return travarPorId(id, Recurso.EVENTO_CLINICO);
+    }
+
     default void garantirQueExiste(UUID id) {
         garantirQueExiste(id, Recurso.EVENTO_CLINICO);
     }

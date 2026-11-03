@@ -19,6 +19,7 @@ import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -53,10 +54,10 @@ public class CobrancaService {
      * A data entra aqui, e não no cadastro: um pagamento pendente não tem data
      * de pagamento, porque ele não foi pago.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "pagamentos", allEntries = true)
     public PagamentoResponse confirmar(UUID id, ConfirmacaoRequest request) {
-        Pagamento pagamento = pagamentoRepository.obterPorId(id);
+        Pagamento pagamento = travarPagamentoEAtendimento(id);
 
         if (pagamento.getStatusPagamento() != StatusPagamento.PENDENTE) {
             throw new RegraDeNegocioException("statusPagamento",
@@ -81,10 +82,10 @@ public class CobrancaService {
      * É o único jeito de desfazer um pagamento. DELETE apagaria a receita do
      * histórico, e com ela a resposta para "quanto essa clínica faturou".
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "pagamentos", allEntries = true)
     public PagamentoResponse estornar(UUID id, EstornoRequest request) {
-        Pagamento pagamento = pagamentoRepository.obterPorId(id);
+        Pagamento pagamento = travarPagamentoEAtendimento(id);
 
         if (pagamento.getStatusPagamento() != StatusPagamento.PAGO) {   // P11
             throw new RegraDeNegocioException("statusPagamento",
@@ -159,6 +160,29 @@ public class CobrancaService {
     }
 
     // ------------------------------------------------------------------
+
+    /**
+     * Confirmar e estornar leem o status e a soma do atendimento e decidem em
+     * cima deles. Dois pedidos ao mesmo tempo liam o mesmo PENDENTE e a mesma
+     * soma, e os dois passavam: confirmacao e estorno em dobro, e R$ 250 pagos
+     * num servico de R$ 200 (RepeticaoSimultaneaTest).
+     *
+     * <p>A trava no pagamento serializa os pedidos sobre ele; a do atendimento,
+     * os pedidos sobre pagamentos diferentes do mesmo atendimento, que disputam
+     * a mesma soma. A ordem e sempre pagamento e depois atendimento, para que
+     * dois pedidos nunca esperem um pelo outro.</p>
+     *
+     * <p>READ_COMMITTED nos dois metodos: no REPEATABLE READ, padrao do MySQL, a
+     * soma seria lida da fotografia do inicio da transacao, e nao enxergaria o
+     * pagamento que o pedido anterior acabou de confirmar.</p>
+     */
+    private Pagamento travarPagamentoEAtendimento(UUID id) {
+        Pagamento pagamento = pagamentoRepository.travarPorId(id);
+        if (pagamento.getEventoClinico() != null) {
+            eventoClinicoRepository.travarPorId(pagamento.getEventoClinico().getId());
+        }
+        return pagamento;
+    }
 
     /**
      * P4 e P6. Evento cancelado não gera cobrança; agendado aceita

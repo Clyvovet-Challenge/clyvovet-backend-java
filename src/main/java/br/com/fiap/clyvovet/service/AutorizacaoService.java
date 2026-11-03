@@ -3,6 +3,7 @@ package br.com.fiap.clyvovet.service;
 import br.com.fiap.clyvovet.dto.autorizacao.AutorizacaoResponse;
 import br.com.fiap.clyvovet.exception.RegraDeNegocioException;
 import br.com.fiap.clyvovet.model.*;
+import br.com.fiap.clyvovet.repository.AnimalRepository;
 import br.com.fiap.clyvovet.repository.AutorizacaoAcessoRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class AutorizacaoService {
     private static final int ANOS_DE_VIGENCIA = 2;
 
     private final AutorizacaoAcessoRepository autorizacaoRepository;
+    private final AnimalRepository animalRepository;
     private final SegurancaService seguranca;
 
     /**
@@ -45,6 +47,12 @@ public class AutorizacaoService {
     @Transactional
     public void conceder(Animal animal, Clinica clinica, EventoClinico origem) {
         LocalDate validade = origem.getData().plusYears(ANOS_DE_VIGENCIA);
+
+        // Dois agendamentos do mesmo pet na mesma clinica, com veterinarios
+        // diferentes, nao achavam autorizacao e inseriam as duas: o UNIQUE
+        // derrubava uma, e com ela o agendamento. Travar o animal os enfileira, e
+        // o segundo encontra a do primeiro.
+        animalRepository.travarPorId(animal.getId());
 
         AutorizacaoAcesso autorizacao = autorizacaoRepository
                 .findByAnimalIdAndClinicaId(animal.getId(), clinica.getId())

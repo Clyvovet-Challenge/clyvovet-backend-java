@@ -2,9 +2,12 @@ package br.com.fiap.clyvovet.repository;
 
 import br.com.fiap.clyvovet.exception.Recurso;
 import br.com.fiap.clyvovet.exception.RecursoNaoEncontradoException;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.NoRepositoryBean;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -26,6 +29,21 @@ public interface RepositorioBase<T> extends JpaRepository<T, UUID> {
 
     default T obterPorId(UUID id, Recurso recurso) {
         return findById(id).orElseThrow(RecursoNaoEncontradoException.naoEncontrado(recurso, id));
+    }
+
+    /**
+     * {@code SELECT ... FOR UPDATE}: a linha fica presa ate o fim da transacao.
+     *
+     * Serve as decisoes do tipo "le, confere e grava" -- confirmar um pagamento,
+     * marcar um horario. Sem a trava, dois pedidos simultaneos leem o mesmo
+     * estado, os dois passam na conferencia e os dois gravam. Com ela, o segundo
+     * espera o primeiro terminar e confere contra o que ele gravou.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<T> findComTravaById(UUID id);
+
+    default T travarPorId(UUID id, Recurso recurso) {
+        return findComTravaById(id).orElseThrow(RecursoNaoEncontradoException.naoEncontrado(recurso, id));
     }
 
     default void garantirQueExiste(UUID id, Recurso recurso) {

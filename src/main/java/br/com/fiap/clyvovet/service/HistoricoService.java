@@ -12,6 +12,7 @@ import br.com.fiap.clyvovet.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -58,6 +59,7 @@ public class HistoricoService {
     private final AlertaClinicoRepository alertaRepository;
     private final AutorizacaoAcessoRepository autorizacaoRepository;
     private final AcessoHistoricoRepository acessoRepository;
+    private final UsuarioRepository usuarioRepository;
     private final SegurancaService seguranca;
 
     /**
@@ -65,7 +67,7 @@ public class HistoricoService {
      * animal que chega numa clinica que nunca o atendeu. Toda leitura e
      * registrada e o tutor avisado.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ResumoDeSegurancaResponse porMicrochip(String microchip) {
         Animal animal = animalRepository.findByMicrochip(microchip)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
@@ -84,7 +86,7 @@ public class HistoricoService {
      * do tempo restrita a propria clinica — resposta menor, e nao 403: negar
      * esconderia que o animal existe e atrapalharia o atendimento em curso.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public HistoricoResponse historico(UUID animalId) {
         Animal animal = animalRepository.obterPorId(animalId);
         NivelAcesso nivel = nivelSobre(animal);
@@ -104,7 +106,7 @@ public class HistoricoService {
      * agendamento — pronto-socorro, encaixe — ficaria sem caminho. O custo que
      * a torna aceitavel: motivo obrigatorio, registro destacado, aviso ao tutor.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public HistoricoResponse acessoEmergencial(UUID animalId, String motivo) {
         Animal animal = animalRepository.obterPorId(animalId);
         garantirQueEVeterinario();
@@ -317,6 +319,9 @@ public class HistoricoService {
         if (usuarioId == null) {
             return;
         }
+        // Trava o usuario: dois animais novos consultados juntos liam a mesma
+        // contagem e passavam os dois pelo ultimo lugar do teto.
+        usuarioRepository.travarPorId(usuarioId, Recurso.USUARIO);
         LocalDate hoje = LocalDate.now();
 
         boolean jaConsultouEsteAnimalHoje = acessoRepository
@@ -389,8 +394,7 @@ public class HistoricoService {
         }
         LocalDate hoje = LocalDate.now();
 
-        acessoRepository.findByAnimalIdAndUsuarioIdAndDiaAndEmergencial(
-                        animal.getId(), usuario.getId(), hoje, emergencial)
+        acessoRepository.travarDoDia(animal.getId(), usuario.getId(), hoje, emergencial)
                 .ifPresentOrElse(
                         existente -> {
                             existente.setVezes(existente.getVezes() + 1);

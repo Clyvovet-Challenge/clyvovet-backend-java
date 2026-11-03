@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -56,13 +57,22 @@ public class AgendamentoService {
     private final SegurancaService seguranca;
     private final AutorizacaoService autorizacaoService;
 
-    /** A ordem das validacoes segue o custo: as mais baratas primeiro. */
-    @Transactional
+    /**
+     * A ordem das validacoes segue o custo: as mais baratas primeiro.
+     *
+     * <p>O veterinario e lido com trava: dois pedidos para a mesma agenda --
+     * dois tutores no mesmo horario, ou o mesmo tutor tocando duas vezes --
+     * passavam juntos pela conferencia de horario livre e gravavam os dois
+     * (RepeticaoSimultaneaTest). Com a trava, o segundo espera e encontra o
+     * horario ocupado. READ_COMMITTED pelo mesmo motivo do CobrancaService: a
+     * conferencia precisa enxergar o que o pedido anterior acabou de gravar.</p>
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "eventos", allEntries = true)
     public EventoClinicoResponse agendar(AgendamentoRequest request) {
         Animal animal = animalRepository.obterPorId(request.getAnimalId());
         Servico servico = servicoRepository.obterPorId(request.getServicoId());
-        Veterinario veterinario = veterinarioRepository.obterPorId(request.getVeterinarioId());
+        Veterinario veterinario = veterinarioRepository.travarPorId(request.getVeterinarioId());
 
         garantirServicoAtivo(servico);                                    // A2
         garantirVeterinarioDaClinica(veterinario, servico);               // A3
@@ -89,10 +99,12 @@ public class AgendamentoService {
      * Nao apaga a linha: sem ela a taxa de cancelamento nao seria calculavel e
      * o horario liberado nao teria rastro.
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @CacheEvict(value = "eventos", allEntries = true)
     public EventoClinicoResponse cancelar(UUID id, String motivo) {
-        EventoClinico evento = eventoClinicoRepository.obterPorId(id);
+        // Com trava: dois cancelamentos juntos respondiam 200 os dois, e o motivo
+        // gravado era o de quem chegasse por ultimo.
+        EventoClinico evento = eventoClinicoRepository.travarPorId(id);
 
         if (!evento.getStatusEvento().podeCancelar()) {
             throw new RegraDeNegocioException("statusEvento",

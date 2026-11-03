@@ -15,6 +15,7 @@ import br.com.fiap.clyvovet.repository.VeterinarioRepository;
 import br.com.fiap.clyvovet.security.SegurancaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -49,9 +50,11 @@ public class SolicitacaoAlteracaoService {
     // O veterinário pede
     // ================================================================
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public SolicitacaoAlteracaoResponse solicitar(UUID animalId, SolicitacaoAlteracaoRequest request) {
-        Animal animal = animalRepository.obterPorId(animalId, Recurso.ANIMAL);
+        // Com trava: o duplo clique passava duas vezes pela conferencia de "ja
+        // tem pedido pendente" e gravava os dois.
+        Animal animal = animalRepository.travarPorId(animalId, Recurso.ANIMAL);
 
         UUID veterinarioId = seguranca.autenticadoOuNulo() == null
                 ? null : seguranca.autenticadoOuNulo().getVeterinarioId();
@@ -92,7 +95,7 @@ public class SolicitacaoAlteracaoService {
     // O tutor responde
     // ================================================================
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public SolicitacaoAlteracaoResponse aprovar(UUID solicitacaoId) {
         SolicitacaoAlteracao solicitacao = pendente(solicitacaoId);
         Animal animal = solicitacao.getAnimal();
@@ -110,7 +113,7 @@ public class SolicitacaoAlteracaoService {
         return paraResposta(repository.save(solicitacao), animal);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public SolicitacaoAlteracaoResponse recusar(UUID solicitacaoId, String motivo) {
         SolicitacaoAlteracao solicitacao = pendente(solicitacaoId);
 
@@ -123,8 +126,10 @@ public class SolicitacaoAlteracaoService {
     }
 
     private SolicitacaoAlteracao pendente(UUID id) {
+        // Com trava: dois toques do tutor -- ou aprovar e recusar juntos -- liam o
+        // mesmo PENDENTE e respondiam os dois.
         SolicitacaoAlteracao solicitacao =
-                repository.obterPorId(id, Recurso.SOLICITACAO_ALTERACAO);
+                repository.travarPorId(id, Recurso.SOLICITACAO_ALTERACAO);
         if (!solicitacao.estaPendente()) {
             throw new RegraDeNegocioException("status",
                     "Este pedido já foi respondido (" + solicitacao.getStatus() + ").");
