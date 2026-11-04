@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static br.com.fiap.clyvovet.repository.TextoDeBusca.literal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,7 +39,7 @@ public class ClinicaService {
      */
     @Cacheable(value = "clinicas", key = "#nome + '-' + #cidade + '-' + #busca + '-' + #pageable")
     public Page<ClinicaResponse> listarTodos(String nome, String cidade, String busca, Pageable pageable) {
-        return clinicaRepository.buscarPorFiltros(nome, cidade, vazioComoNulo(busca), pageable)
+        return clinicaRepository.buscarPorFiltros(literal(nome), literal(cidade), literal(vazioComoNulo(busca)), pageable)
                 .map(clinicaMapper::toResponse);
     }
 

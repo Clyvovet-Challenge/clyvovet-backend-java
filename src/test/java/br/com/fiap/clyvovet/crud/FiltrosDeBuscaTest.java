@@ -72,6 +72,45 @@ class FiltrosDeBuscaTest extends TesteDeApi {
         assertThat(totalDe(buscar("/api/v1/veterinarios?nome=ZZZinexistente", tokenAdmin()))).isZero();
     }
 
+    /**
+     * O que a pessoa digita e procurado como texto. Sem escapar, "%" e "_" iam
+     * crus para o LIKE e viravam curinga: buscar "%" devolvia todo mundo. A
+     * varredura contra o MySQL achou; o defeito valia em qualquer banco.
+     */
+    @Test
+    @DisplayName("% e _ digitados sao texto, nao curinga, em todos os filtros")
+    void curingaDigitadoETexto() throws Exception {
+        String admin = tokenAdmin();
+        for (String[] filtro : List.of(
+                new String[]{"/api/v1/veterinarios", "nome"}, new String[]{"/api/v1/veterinarios", "especialidade"},
+                new String[]{"/api/v1/tutores", "nome"}, new String[]{"/api/v1/tutores", "cidade"},
+                new String[]{"/api/v1/clinicas", "nome"}, new String[]{"/api/v1/clinicas", "busca"},
+                new String[]{"/api/v1/animais", "nome"}, new String[]{"/api/v1/animais", "especie"},
+                new String[]{"/api/v1/eventos-clinicos", "animalNome"})) {
+            for (String digitado : List.of("%", "_")) {
+                assertThat(totalDe(filtrar(filtro[0], filtro[1], digitado, admin)))
+                        .as(filtro[0] + "?" + filtro[1] + "=" + digitado)
+                        .isZero();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("a barra digitada tambem e texto, e nao desarma o escape")
+    void barraDigitadaETexto() throws Exception {
+        String admin = tokenAdmin();
+        assertThat(totalDe(filtrar("/api/v1/veterinarios", "nome", "\\", admin))).isZero();
+        assertThat(totalDe(filtrar("/api/v1/veterinarios", "nome", "Cam", admin))).isPositive();
+    }
+
+    /** O valor vai como parametro, e nao colado na URL: sem isso o "%" chegaria como "%25". */
+    private org.springframework.test.web.servlet.ResultActions filtrar(
+            String rota, String parametro, String valor, String token) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(rota)
+                .param(parametro, valor)
+                .header("Authorization", "Bearer " + token));
+    }
+
     @Test
     @DisplayName("veterinarios: sem filtro, a listagem continua completa")
     void semFiltroTrazTudo() throws Exception {

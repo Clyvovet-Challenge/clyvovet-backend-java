@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static br.com.fiap.clyvovet.repository.TextoDeBusca.literal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,7 +30,7 @@ public class TutorService {
     // ?sort=nome,asc e ?sort=nome,desc colidiam e devolviam a ordem errada.
     @Cacheable(value = "tutores", key = "#nome + '-' + #cidade + '-' + #pageable")
     public Page<TutorResponse> listarTodos(String nome, String cidade, Pageable pageable) {
-        return tutorRepository.buscarPorFiltros(nome, cidade, pageable)
+        return tutorRepository.buscarPorFiltros(literal(nome), literal(cidade), pageable)
                 .map(tutorMapper::toResponse);
     }
 

@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static br.com.fiap.clyvovet.repository.TextoDeBusca.literal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -57,7 +59,7 @@ public class EventoClinicoService {
                                                    UUID veterinarioId, StatusEvento statusEvento,
                                                    LocalDate de, LocalDate ate, Pageable pageable) {
         RecorteDeAcesso recorte = seguranca.recorte();
-        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, animalNome,
+        return eventoClinicoRepository.buscarPorFiltros(tipoEvento, literal(animalNome),
                         recorte.tutorId(), recorte.clinicaId(),
                         veterinarioId, statusEvento, de, ate, pageable)
                 .map(eventoClinicoMapper::toResponse);

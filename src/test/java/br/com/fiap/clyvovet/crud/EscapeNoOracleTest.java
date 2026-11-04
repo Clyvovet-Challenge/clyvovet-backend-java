@@ -2,6 +2,7 @@ package br.com.fiap.clyvovet.crud;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.sql.Connection;
@@ -39,6 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code mvn test} de sempre continua rodando sem banco externo.
  */
 @EnabledIfEnvironmentVariable(named = "DB_USERNAME", matches = ".+")
+// O SQL daqui e de Oracle ('||' concatena, ESCAPE '\' e literal valido). Com o
+// DB_URL apontando para outro banco -- a suite rodando contra o MySQL do docker
+// local, por exemplo -- ele falharia por dialeto, e nao pelo que investiga.
+@DisabledIfEnvironmentVariable(named = "DB_URL", matches = "jdbc:(?!oracle:).*")
 class EscapeNoOracleTest {
 
     private static final String URL_PADRAO = "jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl";

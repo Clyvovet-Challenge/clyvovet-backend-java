@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static br.com.fiap.clyvovet.repository.TextoDeBusca.literal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -42,7 +44,7 @@ public class VeterinarioService {
             key = "#nome + '-' + #especialidade + '-' + #clinicaId + '-' + #pageable")
     public Page<VeterinarioResponse> listarTodos(String nome, String especialidade,
                                                  UUID clinicaId, Pageable pageable) {
-        return veterinarioRepository.buscarPorFiltros(nome, especialidade, clinicaId, pageable)
+        return veterinarioRepository.buscarPorFiltros(literal(nome), literal(especialidade), clinicaId, pageable)
                 .map(veterinarioMapper::toResponse);
     }
 

@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static br.com.fiap.clyvovet.repository.TextoDeBusca.literal;
+
 /**
  * Casos de uso de animal. Orquestra repositorio, mapeamento e cache — a copia
  * campo a campo entre DTO e entidade fica no {@link AnimalMapper}, e a decisao
@@ -52,7 +54,7 @@ public class AnimalService {
         // A consulta filtra so por tutor -- o cadastro do animal e nivel 0 e todo
         // veterinario alcanca. A CHAVE leva as duas dimensoes mesmo assim: ver a
         // assimetria explicada em RecorteDeAcesso.chaveDeCache.
-        return animalRepository.buscarPorFiltros(nome, especie, seguranca.recorte().tutorId(), pageable)
+        return animalRepository.buscarPorFiltros(literal(nome), literal(especie), seguranca.recorte().tutorId(), pageable)
                 .map(animalMapper::toResponse);
     }
 
