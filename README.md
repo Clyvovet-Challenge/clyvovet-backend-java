@@ -76,7 +76,7 @@ transportar a informação clínica do próprio animal.
 
 ---
 
-**🎥 Vídeo — Java Advanced (Sprint 4):** a gravar (roteiro em preparação).
+**🎥 Vídeo — Java Advanced (Sprint 4):** [assista aqui](https://youtu.be/TUt2fyWdPJ0)
 
 **🎥 Vídeo — Java Advanced (Sprint 3):** [assista aqui](https://www.youtube.com/watch?v=GzwneyCpGCw)
 
